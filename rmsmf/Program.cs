@@ -16,6 +16,7 @@ namespace rmsmf
     {
         private static string characterSet;
         private static string writeCharacterSet;
+        private static bool? existByteOrderMark;
         private static string[,] replaceWords;
         private static int replaceWordsCount;
 
@@ -31,6 +32,7 @@ namespace rmsmf
             const string OptionCharacterSet = "c";
             const string OptionWriteCharacterSet = "w";
             const string OptionReplaceWords = "r";
+            const string OptionWriteByteOrderMark = "b";
             string OptionNoValue = string.Empty;
 
             Colipex colipex = new Colipex(args);
@@ -53,6 +55,21 @@ namespace rmsmf
             else
             {
                 Program.writeCharacterSet = Program.characterSet;
+            }
+
+            //書き込みファイルByteOrderMark有無
+            if (colipex.IsOption(OptionWriteByteOrderMark) == true)
+            {
+                if( colipex.Options[OptionWriteByteOrderMark].ToLower() == "false" || 
+                    colipex.Options[OptionWriteByteOrderMark].ToLower() == "no" ||
+                    colipex.Options[OptionWriteByteOrderMark].ToLower() == "n" )
+                    Program.existByteOrderMark = false;
+                else
+                    Program.existByteOrderMark = true;
+            }
+            else
+            {
+                Program.existByteOrderMark = null;
             }
 
             //置換の設定
@@ -173,7 +190,7 @@ namespace rmsmf
             Encoding writeEncoding;
 
             //読み込みと書き込みで文字コードが一致するとき
-            if (Program.writeCharacterSet == Program.characterSet)
+            if (Program.existByteOrderMark == null && Program.writeCharacterSet == Program.characterSet)
             {
                 if (IsBOM(bom))
                 {
@@ -205,28 +222,48 @@ namespace rmsmf
             {
                 //書き込みコードページを取り出す(キャラクタ指定が数字ならコードページと判断する)
                 int writeCodePage;
+                bool existByteOrderMark = Program.existByteOrderMark == true ? true : false;
+
                 if (int.TryParse(Program.writeCharacterSet, out writeCodePage))
                 {
                     // utf-8
                     if (writeCodePage == 65001)
-                        writeEncoding = new UTF8Encoding(false);
+                        writeEncoding = new UTF8Encoding(existByteOrderMark);
                     // utf-16 Little En
                     else if (writeCodePage == 1200)
-                        writeEncoding = new UnicodeEncoding(false, false);
+                        writeEncoding = new UnicodeEncoding(false, existByteOrderMark);
                     // utf-16 Big En
                     else if (writeCodePage == 1201)
-                        writeEncoding = new UnicodeEncoding(true, false);
+                        writeEncoding = new UnicodeEncoding(true, existByteOrderMark);
                     // utf-32 Little En
                     else if (writeCodePage == 12000)
-                        writeEncoding = new UTF32Encoding(false, false);
+                        writeEncoding = new UTF32Encoding(false, existByteOrderMark);
                     // utf-32 Big En
                     else if (writeCodePage == 12001)
-                        writeEncoding = new UTF32Encoding(true, false);
+                        writeEncoding = new UTF32Encoding(true, existByteOrderMark);
                     else
                         writeEncoding = Encoding.GetEncoding(writeCodePage);
                 }
                 else
-                    writeEncoding = Encoding.GetEncoding(Program.writeCharacterSet);
+                {
+                    // utf-8
+                    if (Program.writeCharacterSet == "utf-8")
+                        writeEncoding = new UTF8Encoding(existByteOrderMark);
+                    // utf-16 Little En
+                    else if (Program.writeCharacterSet == "utf-16")
+                        writeEncoding = new UnicodeEncoding(false, existByteOrderMark);
+                    // utf-16 Big En
+                    else if (Program.writeCharacterSet == "unicodeFFFE")
+                        writeEncoding = new UnicodeEncoding(true, existByteOrderMark);
+                    // utf-32 Little En
+                    else if (Program.writeCharacterSet == "utf-32")
+                        writeEncoding = new UTF32Encoding(false, existByteOrderMark);
+                    // utf-32 Big En
+                    else if (Program.writeCharacterSet == "utf-32be")
+                        writeEncoding = new UTF32Encoding(true, existByteOrderMark);
+                    else
+                        writeEncoding = Encoding.GetEncoding(Program.writeCharacterSet);
+                }
             }
 
             if(Program.writeCharacterSet == string.Empty)

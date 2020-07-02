@@ -12,6 +12,8 @@
 .\test1\*.txt /w:utf-32
 .\test1\*.txt /w:unicodeFFFE
 
+ /b
+
 // utf-8
 .\test1\*.txt /w:65001
 
