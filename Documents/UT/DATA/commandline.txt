@@ -1,0 +1,48 @@
+/r:replist1.csv .\test1\*.txt
+
+/r:replist2.csv .\test1\*.txt
+
+
+/r:replist1.csv .\test1\*.txt /c:shift_jis
+
+
+.\test1\*.txt /w:shift_jis
+.\test1\*.txt /w:utf-8
+.\test1\*.txt /w:utf-16
+.\test1\*.txt /w:utf-32
+.\test1\*.txt /w:unicodeFFFE
+
+// utf-8
+.\test1\*.txt /w:65001
+
+// utf-16 Little En
+.\test1\*.txt /w:1200
+
+// utf-16 Big En
+.\test1\*.txt /w:1201
+
+// utf-32 Little En
+.\test1\*.txt /w:12000
+
+// utf-32 Big En
+.\test1\*.txt /w:12001
+
+
+
+ /c:shift_jis
+
+// utf-8
+ /c:65001
+
+// utf-16 Little En
+ /c:1200
+
+// utf-16 Big En
+ /c:1201
+
+// utf-32 Little En
+ /c:12000
+
+// utf-32 Big En
+ /c:12001
+
