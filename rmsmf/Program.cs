@@ -33,7 +33,6 @@ namespace rmsmf
             const string OptionWriteCharacterSet = "w";
             const string OptionReplaceWords = "r";
             const string OptionWriteByteOrderMark = "b";
-            string OptionNoValue = string.Empty;
 
             Colipex colipex = new Colipex(args);
 
@@ -44,7 +43,6 @@ namespace rmsmf
             }
             else
             {
-                //Program.characterSet = OptionNoValue;
                 Program.characterSet = "utf-8";
             }
 
@@ -78,39 +76,20 @@ namespace rmsmf
             //コードページを取り出す(キャラクタ指定が数字ならコードページと判断する)
             Encoding encoding = null;
             int codePage;
-            if(Program.characterSet != OptionNoValue)
-            {
-                if (int.TryParse(Program.characterSet, out codePage))
-                    encoding = Encoding.GetEncoding(codePage);
-                else
-                    encoding = Encoding.GetEncoding(Program.characterSet);
-            }
+            if (int.TryParse(Program.characterSet, out codePage))
+                encoding = Encoding.GetEncoding(codePage);
+            else
+                encoding = Encoding.GetEncoding(Program.characterSet);
 
             //置換処理の分岐(置換処理の'/r'オプションがある)
             if (colipex.IsOption(OptionReplaceWords) == true)
             {
                 //置換単語CSVファイル読み込み
-                if(encoding == null)
+                using (var reader = new StreamReader(colipex.Options[OptionReplaceWords], encoding, true))
                 {
-                    using (var reader = new StreamReader(colipex.Options[OptionReplaceWords]))
+                    while (!reader.EndOfStream)
                     {
-                        while (!reader.EndOfStream)
-                        {
-                            wordsList.Add(reader.ReadLine());
-                        }
-
-                        encoding = reader.CurrentEncoding;
-                        Program.characterSet = encoding.CodePage.ToString();
-                    }
-                }
-                else
-                {
-                    using (var reader = new StreamReader(colipex.Options[OptionReplaceWords], encoding, true))
-                    {
-                        while (!reader.EndOfStream)
-                        {
-                            wordsList.Add(reader.ReadLine());
-                        }
+                        wordsList.Add(reader.ReadLine());
                     }
                 }
             }
@@ -149,19 +128,10 @@ namespace rmsmf
                 }
 
                 //置換元ファイルを開く
-                if(encoding == null)
+                using (var reader = new StreamReader(fileName, encoding, true))
                 {
-                    using (var reader = new StreamReader(fileName))
-                    {
-                        ReadWrite(reader, writeFileName, ref encoding);
-                    }
-                }
-                else
-                {
-                    using (var reader = new StreamReader(fileName, encoding, true))
-                    {
-                        ReadWrite(reader, writeFileName, ref encoding);
-                    }
+                    //読み込み書き込み置換処理(主処理)
+                    ReplaceReadWrite(reader, writeFileName, ref encoding);
                 }
 
                 //置換元ファイル削除
@@ -173,13 +143,13 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// 読み込み書き込み処理(主処理)
+        /// 読み込み書き込み置換処理(主処理)
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="writeFileName"></param>
         /// <param name="encoding"></param>
         /// <returns></returns>
-        static bool ReadWrite(StreamReader reader, string writeFileName, ref Encoding encoding)
+        static bool ReplaceReadWrite(StreamReader reader, string writeFileName, ref Encoding encoding)
         {
             bool rc = true;
 
@@ -277,11 +247,6 @@ namespace rmsmf
             {
                 //置換元ファイル読み込み
                 string readLine = reader.ReadToEnd();
-                if(encoding == null)
-                {
-                    encoding = reader.CurrentEncoding;
-                    Program.characterSet = encoding.CodePage.ToString();
-                }
 
                 //置換先ファイル書き込み
                 for (int i = 0; i < Program.replaceWordsCount; i++)
