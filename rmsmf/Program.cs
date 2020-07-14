@@ -84,9 +84,12 @@ namespace rmsmf
 
             Assembly thisAssem = typeof(Program).Assembly;
             AssemblyName thisAssemName = thisAssem.GetName();
-            Version ver = thisAssemName.Version;
+            AssemblyCopyrightAttribute[] copyrightAttributes = (AssemblyCopyrightAttribute[])thisAssem.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
 
-            Console.WriteLine("{0}  version {1}",thisAssemName.Name, ver);
+            Version ver = thisAssemName.Version;
+            String copyright = copyrightAttributes[0].Copyright;
+
+            Console.WriteLine("{0}  version {1}  {2}", thisAssemName.Name, ver, copyright);
 
             //文字コード設定
             if (colipex.IsOption(OptionCharacterSet) == true)
