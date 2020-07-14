@@ -5,6 +5,9 @@ using System.Text;
 
 namespace rmsmf
 {
+    /// <summary>
+    /// Command line parameter extraction. (Co li p ex)
+    /// </summary>
     public class Colipex
     {
         public const string NonValue = "NonValueOption";
