@@ -44,7 +44,8 @@ namespace rmsmf
             }
             else
             {
-                Program.characterSet = OptionNoValue;
+                //Program.characterSet = OptionNoValue;
+                Program.characterSet = "utf-8";
             }
 
             //書き込みファイル文字コード設定
