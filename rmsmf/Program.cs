@@ -191,7 +191,7 @@ namespace rmsmf
             //読み込みと書き込みで文字コードが違うとき
             else
             {
-                //書き込みコードページを取り出す(キャラクタ指定が数字ならコードページと判断する)
+                //書き込みコードページを取り出す(キャラクタ指定が数字ならコードページと判断する) 
                 int writeCodePage;
                 bool existByteOrderMark = Program.existByteOrderMark == true ? true : false;
 
