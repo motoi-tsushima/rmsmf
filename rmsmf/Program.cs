@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Reflection;
 
 /// <summary>
 /// I replace multiple strings in multiple files.
@@ -42,7 +43,7 @@ namespace rmsmf
             {
                 string[] HelpMessage =
                 {
-                    "RMSMF (Replace Multiple Strings in Multiple Files)\n"
+                    "rmsmf (Replace Multiple Strings in Multiple Files)\n"
                     ,"  rmsmf <File name to replace words (wildcards allowed)>\n"
                     ," Options  "
                     ,"   /c:<Character set name of read file OR CodePage>"
@@ -80,6 +81,12 @@ namespace rmsmf
 
                 return;
             }
+
+            Assembly thisAssem = typeof(Program).Assembly;
+            AssemblyName thisAssemName = thisAssem.GetName();
+            Version ver = thisAssemName.Version;
+
+            Console.WriteLine("{0}  version {1}",thisAssemName.Name, ver);
 
             //文字コード設定
             if (colipex.IsOption(OptionCharacterSet) == true)
