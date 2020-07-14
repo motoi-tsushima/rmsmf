@@ -76,79 +76,125 @@ namespace rmsmf
             //コードページを取り出す(キャラクタ指定が数字ならコードページと判断する)
             Encoding encoding = null;
             int codePage;
-            if (int.TryParse(Program.characterSet, out codePage))
-                encoding = Encoding.GetEncoding(codePage);
-            else
-                encoding = Encoding.GetEncoding(Program.characterSet);
 
-            //置換処理の分岐(置換処理の'/r'オプションがある)
-            if (colipex.IsOption(OptionReplaceWords) == true)
+            try
             {
-                //置換単語CSVファイル読み込み
-                using (var reader = new StreamReader(colipex.Options[OptionReplaceWords], encoding, true))
+                if (int.TryParse(Program.characterSet, out codePage))
+                    encoding = Encoding.GetEncoding(codePage);
+                else
+                    encoding = Encoding.GetEncoding(Program.characterSet);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ArgumentException)
                 {
-                    while (!reader.EndOfStream)
+                    Console.WriteLine(ex.Message);
+                }
+                else if (ex is NotSupportedException)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                else if (ex is ArgumentOutOfRangeException)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                else
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                return;
+            }
+
+            try
+            {
+                //置換処理の分岐(置換処理の'/r'オプションがある)
+                if (colipex.IsOption(OptionReplaceWords) == true)
+                {
+                    //置換単語CSVファイル読み込み
+                    using (var reader = new StreamReader(colipex.Options[OptionReplaceWords], encoding, true))
                     {
-                        wordsList.Add(reader.ReadLine());
+                        while (!reader.EndOfStream)
+                        {
+                            wordsList.Add(reader.ReadLine());
+                        }
                     }
                 }
-            }
 
-            //置換単語表へ登録
-            Program.replaceWordsCount = wordsList.Count;
-            Program.replaceWords = new string[2, Program.replaceWordsCount];
-            for (int i = 0; i < Program.replaceWordsCount; i++)
-            {
-                string[] colmuns = wordsList[i].Split(',');
-                Program.replaceWords[0, i] = colmuns[0];
-                Program.replaceWords[1, i] = colmuns[1];
-            }
-
-            wordsList.Clear();
-            wordsList = null;
-
-            //置換対象ファイル検索
-            string direcrtoryName = Path.GetDirectoryName(colipex.Parameters[0]);
-            string searchWord = Path.GetFileName(colipex.Parameters[0]);
-
-            string[] files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
-
-            //ファイル名のループ
-            foreach (string fileName in files)
-            {
-                if (!File.Exists(fileName))
-                    continue;
-
-                string writeFileName = fileName + ".RP$";
-
-                //書き込みファイルが既に存在していたら削除
-                if (!File.Exists(writeFileName))
+                //置換単語表へ登録
+                Program.replaceWordsCount = wordsList.Count;
+                Program.replaceWords = new string[2, Program.replaceWordsCount];
+                for (int i = 0; i < Program.replaceWordsCount; i++)
                 {
-                    File.Delete(writeFileName);
+                    string[] colmuns = wordsList[i].Split(',');
+                    Program.replaceWords[0, i] = colmuns[0];
+                    Program.replaceWords[1, i] = colmuns[1];
                 }
 
-                //置換元ファイルを開く
-                using (var reader = new StreamReader(fileName, encoding, true))
+                wordsList.Clear();
+                wordsList = null;
+
+                //置換対象ファイル検索
+                string direcrtoryName = Path.GetDirectoryName(colipex.Parameters[0]);
+                string searchWord = Path.GetFileName(colipex.Parameters[0]);
+
+                string[] files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
+
+                //ファイル名のループ
+                foreach (string fileName in files)
                 {
-                    //読み込み書き込み置換処理(主処理)
-                    ReplaceReadWrite(reader, writeFileName, ref encoding);
+                    if (!File.Exists(fileName))
+                        continue;
+
+                    string writeFileName = fileName + ".RP$";
+
+                    //書き込みファイルが既に存在していたら削除
+                    if (!File.Exists(writeFileName))
+                    {
+                        File.Delete(writeFileName);
+                    }
+
+                    //置換元ファイルを開く
+                    using (var reader = new StreamReader(fileName, encoding, true))
+                    {
+                        //読み込み書き込み置換処理(主処理)
+                        ReplaceReadWrite(reader, writeFileName, ref encoding);
+                    }
+
+                    //置換元ファイル削除
+                    File.Delete(fileName);
+
+                    //置換先ファイルを置換元ファイル名に改名
+                    File.Move(writeFileName, fileName);
                 }
-
-                //置換元ファイル削除
-                File.Delete(fileName);
-
-                //置換先ファイルを置換元ファイル名に改名
-                File.Move(writeFileName, fileName);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ArgumentException)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                else if (ex is NotSupportedException)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                else if (ex is ArgumentOutOfRangeException)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                else
+                {
+                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
+                }
             }
         }
 
         /// <summary>
         /// 読み込み書き込み置換処理(主処理)
         /// </summary>
-        /// <param name="reader"></param>
-        /// <param name="writeFileName"></param>
-        /// <param name="encoding"></param>
-        /// <returns></returns>
+        /// <param name="reader">リードファイルストリーム</param>
+        /// <param name="writeFileName">書き込みファイル名</param>
+        /// <param name="encoding">リードファイルエンコーディング</param>
+        /// <returns>正常終了=true</returns>
         static bool ReplaceReadWrite(StreamReader reader, string writeFileName, ref Encoding encoding)
         {
             bool rc = true;
