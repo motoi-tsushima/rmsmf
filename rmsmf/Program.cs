@@ -29,12 +29,35 @@ namespace rmsmf
         /// 改行コードについては.NETが処理系に合わせるはず。</remarks>
         static void Main(string[] args)
         {
+            const string OptionHelp = "h";
             const string OptionCharacterSet = "c";
             const string OptionWriteCharacterSet = "w";
             const string OptionReplaceWords = "r";
             const string OptionWriteByteOrderMark = "b";
 
             Colipex colipex = new Colipex(args);
+
+            //Hlepオプション
+            if (colipex.IsOption(OptionHelp) == true)
+            {
+                string[] HelpMessage =
+                {
+                    "RMSMF (Replace Multiple Strings in Multiple Files)\n"
+                    ,"  rmsmf <Replace FileName>\n"
+                    ," Options  "
+                    ,"   /c:<Read File CharacterSet Name OR CodePage>"
+                    ,"   /w:<Write File CharacterSet Name OR CodePage>"
+                    ,"   /r:<Replace Word List CSV FileName>"
+                    ,"   /b:<BOM , true OR false>"
+                };
+
+                foreach(string message in HelpMessage)
+                {
+                    Console.WriteLine(message);
+                }
+
+                return;
+            }
 
             //文字コード設定
             if (colipex.IsOption(OptionCharacterSet) == true)
