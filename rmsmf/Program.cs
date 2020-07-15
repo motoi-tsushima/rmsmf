@@ -38,6 +38,19 @@ namespace rmsmf
 
             Colipex colipex = new Colipex(args);
 
+            if(colipex.Parameters.Count == 0)
+            {
+                if(colipex.Options.Count == 0)
+                {
+                    Console.WriteLine("Please specify the target file name.");
+                    return;
+                }
+                else if(colipex.IsOption(OptionHelp) == false)
+                {
+                    return;
+                }
+            }
+
             //Hlepオプション
             if (colipex.IsOption(OptionHelp) == true)
             {
@@ -61,15 +74,15 @@ namespace rmsmf
                     ,"Search word n, replacement word n"
                     ,"\n"
                     ,"as an example.\n"
-                    ,"rmsmf /r:words.csv *.txt "
+                    ,"rmsmf /r:words.csv .\\*.txt "
                     ,""
-                    ,"rmsmf /r:words.csv *.txt /c:utf-16 /w:utf-32 /b:true "
+                    ,"rmsmf /r:words.csv .\\*.txt /c:utf-16 /w:utf-32 /b:true "
                     ,""
-                    ,"rmsmf /r:words.csv *.txt /c:shift_jis /w:utf-8 /b:false "
+                    ,"rmsmf /r:words.csv .\\*.txt /c:shift_jis /w:utf-8 /b:false "
                     ,""
                     ,""
                     ,"An example of simply changing the character set.\n"
-                    ,"rmsmf *.txt /c:shift_jis /w:utf-8 /b:true "
+                    ,"rmsmf .\\*.txt /c:shift_jis /w:utf-8 /b:true "
                     ,"(The position of the option is free)"
                     ,""
                 };
@@ -95,6 +108,11 @@ namespace rmsmf
             if (colipex.IsOption(OptionCharacterSet) == true)
             {
                 Program.characterSet = colipex.Options[OptionCharacterSet];
+                if(Program.characterSet == Colipex.NonValue)
+                {
+                    Console.WriteLine("Please specify the encoding name. (/c)");
+                    return;
+                }
             }
             else
             {
@@ -105,6 +123,11 @@ namespace rmsmf
             if (colipex.IsOption(OptionWriteCharacterSet) == true)
             {
                 Program.writeCharacterSet = colipex.Options[OptionWriteCharacterSet];
+                if (Program.writeCharacterSet == Colipex.NonValue)
+                {
+                    Console.WriteLine("Please specify the encoding name. (/w)");
+                    return;
+                }
             }
             else
             {
@@ -165,12 +188,23 @@ namespace rmsmf
                 //置換処理の分岐(置換処理の'/r'オプションがある)
                 if (colipex.IsOption(OptionReplaceWords) == true)
                 {
+                    if(colipex.Options[OptionReplaceWords] == Colipex.NonValue)
+                    {
+                        Console.WriteLine("Please specify a filename for the /r option.");
+                        return;
+                    }
+
                     //置換単語CSVファイル読み込み
                     using (var reader = new StreamReader(colipex.Options[OptionReplaceWords], encoding, true))
                     {
                         while (!reader.EndOfStream)
                         {
-                            wordsList.Add(reader.ReadLine());
+                            string line = reader.ReadLine();
+
+                            if (line.Length == 0) continue;
+                            if (line.IndexOf(',') < 0) continue;
+
+                            wordsList.Add(line);
                         }
                     }
                 }
@@ -212,7 +246,7 @@ namespace rmsmf
                     using (var reader = new StreamReader(fileName, encoding, true))
                     {
                         //読み込み書き込み置換処理(主処理)
-                        ReplaceReadWrite(reader, writeFileName, ref encoding);
+                        ReadWriteForReplace(reader, writeFileName, ref encoding);
                     }
 
                     //置換元ファイル削除
@@ -250,7 +284,7 @@ namespace rmsmf
         /// <param name="writeFileName">書き込みファイル名</param>
         /// <param name="encoding">リードファイルエンコーディング</param>
         /// <returns>正常終了=true</returns>
-        static bool ReplaceReadWrite(StreamReader reader, string writeFileName, ref Encoding encoding)
+        static bool ReadWriteForReplace(StreamReader reader, string writeFileName, ref Encoding encoding)
         {
             bool rc = true;
 
