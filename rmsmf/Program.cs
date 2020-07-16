@@ -33,6 +33,7 @@ namespace rmsmf
             const string OptionHelp = "h";
             const string OptionCharacterSet = "c";
             const string OptionWriteCharacterSet = "w";
+            const string OptionFileNameList = "f";
             const string OptionReplaceWords = "r";
             const string OptionWriteByteOrderMark = "b";
 
@@ -45,7 +46,8 @@ namespace rmsmf
                     Console.WriteLine("Please specify the target file name.");
                     return;
                 }
-                else if(colipex.IsOption(OptionHelp) == false)
+                else if(colipex.IsOption(OptionHelp) == false 
+                    && colipex.IsOption(OptionFileNameList) == false)
                 {
                     return;
                 }
@@ -223,10 +225,39 @@ namespace rmsmf
                 wordsList = null;
 
                 //置換対象ファイル検索
-                string direcrtoryName = Path.GetDirectoryName(colipex.Parameters[0]);
-                string searchWord = Path.GetFileName(colipex.Parameters[0]);
+                string[] files = null;
 
-                string[] files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
+                if (colipex.IsOption(OptionFileNameList) == true)
+                {
+                    if (!File.Exists(colipex.Options[OptionFileNameList]))
+                    {
+                        Console.WriteLine("{0} File not exists ", colipex.Options[OptionFileNameList]);
+                        return;
+                    }
+
+                    List<string> filesList = new List<string>();
+
+                    using (var reader = new StreamReader(colipex.Options[OptionFileNameList], encoding, true))
+                    {
+                        while (!reader.EndOfStream)
+                        {
+                            string getFileName = reader.ReadLine();
+                            if (!File.Exists(getFileName))
+                            {
+                                continue;
+                            }
+                            filesList.Add(getFileName);
+                        }
+
+                        files = filesList.ToArray();                   }
+                }
+                else
+                {
+                    string direcrtoryName = Path.GetDirectoryName(colipex.Parameters[0]);
+                    string searchWord = Path.GetFileName(colipex.Parameters[0]);
+
+                    files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
+                }
 
                 //ファイル名のループ
                 foreach (string fileName in files)
@@ -246,7 +277,7 @@ namespace rmsmf
                     using (var reader = new StreamReader(fileName, encoding, true))
                     {
                         //読み込み書き込み置換処理(主処理)
-                        ReadWriteForReplace(reader, writeFileName, ref encoding);
+                        ReadWriteForReplace(reader, writeFileName, encoding);
                     }
 
                     //置換元ファイル削除
@@ -284,7 +315,7 @@ namespace rmsmf
         /// <param name="writeFileName">書き込みファイル名</param>
         /// <param name="encoding">リードファイルエンコーディング</param>
         /// <returns>正常終了=true</returns>
-        static bool ReadWriteForReplace(StreamReader reader, string writeFileName, ref Encoding encoding)
+        static bool ReadWriteForReplace(StreamReader reader, string writeFileName, Encoding encoding)
         {
             bool rc = true;
 
