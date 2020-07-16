@@ -1,0 +1,11 @@
+﻿C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\replist1.csv
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\replist2.csv
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\text1.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\text2.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\text3.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\test11\text11.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\test11\text12.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\test11\text13.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\test12\text11.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\test12\text12.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\test12\text13.txt
