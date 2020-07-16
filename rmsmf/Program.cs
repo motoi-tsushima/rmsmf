@@ -15,26 +15,28 @@ namespace rmsmf
     /// </summary>
     class Program
     {
-        private static string characterSet;
+        private static string readCharacterSet;
+        private static string replaceWordsCharacterSet;
+        private static string filesCharacterSet;
         private static string writeCharacterSet;
+        private static bool Empty_WriteCharacterSet;
         private static bool? existByteOrderMark;
         private static string[,] replaceWords;
         private static int replaceWordsCount;
 
         /// <summary>
-        /// 複数単語複数ファイル置換
+        /// Multiple word multiple file replacement
         /// </summary>
-        /// <param name="args">(1)置換単語CSVファイル名,(2)置換対象ファイル名フォルダー名(ワイルドカード可),/c:文字コード(デフォルト utf-8)</param>
-        /// <remarks>/c:で使用できる文字コードは、us-ascii,shift_jis,utf-8,utf-16,utf-32,iso-2022-jp,euc-jp,x-mac-japanese などEncoding.GetEncodingで使用できるもの。コードページも使用可能。
-        /// BOMが存在する場合はBOMを優先し「/c」の指定は無視する。
-        /// 改行コードについては.NETが処理系に合わせるはず。</remarks>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             const string OptionHelp = "h";
             const string OptionCharacterSet = "c";
             const string OptionWriteCharacterSet = "w";
             const string OptionFileNameList = "f";
+            const string OptionFileNameListCharacterSet = "fc";
             const string OptionReplaceWords = "r";
+            const string OptionReplaceWordsCharacterSet = "rc";
             const string OptionWriteByteOrderMark = "b";
 
             Colipex colipex = new Colipex(args);
@@ -53,7 +55,17 @@ namespace rmsmf
                 }
             }
 
-            //Hlepオプション
+            Assembly thisAssem = typeof(Program).Assembly;
+            AssemblyName thisAssemName = thisAssem.GetName();
+            AssemblyCopyrightAttribute[] copyrightAttributes = (AssemblyCopyrightAttribute[])thisAssem.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
+
+            Version ver = thisAssemName.Version;
+            String copyright = copyrightAttributes[0].Copyright;
+
+            Console.WriteLine("{0}  version {1}  {2}", thisAssemName.Name, ver, copyright);
+
+
+            //Hlep Option
             if (colipex.IsOption(OptionHelp) == true)
             {
                 string[] HelpMessage =
@@ -97,20 +109,11 @@ namespace rmsmf
                 return;
             }
 
-            Assembly thisAssem = typeof(Program).Assembly;
-            AssemblyName thisAssemName = thisAssem.GetName();
-            AssemblyCopyrightAttribute[] copyrightAttributes = (AssemblyCopyrightAttribute[])thisAssem.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
-
-            Version ver = thisAssemName.Version;
-            String copyright = copyrightAttributes[0].Copyright;
-
-            Console.WriteLine("{0}  version {1}  {2}", thisAssemName.Name, ver, copyright);
-
-            //文字コード設定
+            //Setting Read CharacterSet 
             if (colipex.IsOption(OptionCharacterSet) == true)
             {
-                Program.characterSet = colipex.Options[OptionCharacterSet];
-                if(Program.characterSet == Colipex.NonValue)
+                Program.readCharacterSet = colipex.Options[OptionCharacterSet];
+                if(Program.readCharacterSet == Colipex.NonValue)
                 {
                     Console.WriteLine("Please specify the encoding name. (/c)");
                     return;
@@ -118,10 +121,10 @@ namespace rmsmf
             }
             else
             {
-                Program.characterSet = "utf-8";
+                Program.readCharacterSet = "utf-8";
             }
 
-            //書き込みファイル文字コード設定
+            //Setting Write CharacterSet 
             if (colipex.IsOption(OptionWriteCharacterSet) == true)
             {
                 Program.writeCharacterSet = colipex.Options[OptionWriteCharacterSet];
@@ -130,13 +133,45 @@ namespace rmsmf
                     Console.WriteLine("Please specify the encoding name. (/w)");
                     return;
                 }
+                Program.Empty_WriteCharacterSet = false;
             }
             else
             {
-                Program.writeCharacterSet = Program.characterSet;
+                Program.writeCharacterSet = Program.readCharacterSet;
+                Program.Empty_WriteCharacterSet = true;
             }
 
-            //書き込みファイルByteOrderMark有無
+            //Setting ReplaceWords CharacterSet 
+            if (colipex.IsOption(OptionReplaceWordsCharacterSet) == true)
+            {
+                Program.replaceWordsCharacterSet = colipex.Options[OptionReplaceWordsCharacterSet];
+                if (Program.replaceWordsCharacterSet == Colipex.NonValue)
+                {
+                    Console.WriteLine("Please specify the encoding name. (/rc)");
+                    return;
+                }
+            }
+            else
+            {
+                Program.replaceWordsCharacterSet = Program.readCharacterSet;
+            }
+
+            //Setting FileNameList CharacterSet 
+            if (colipex.IsOption(OptionFileNameListCharacterSet) == true)
+            {
+                Program.filesCharacterSet = colipex.Options[OptionFileNameListCharacterSet];
+                if (Program.filesCharacterSet == Colipex.NonValue)
+                {
+                    Console.WriteLine("Please specify the encoding name. (/fc)");
+                    return;
+                }
+            }
+            else
+            {
+                Program.filesCharacterSet = Program.readCharacterSet;
+            }
+
+            //Setting ByteOrderMark
             if (colipex.IsOption(OptionWriteByteOrderMark) == true)
             {
                 if( colipex.Options[OptionWriteByteOrderMark].ToLower() == "false" || 
@@ -151,43 +186,74 @@ namespace rmsmf
                 Program.existByteOrderMark = null;
             }
 
-            //置換の設定
-            List<string> wordsList = new List<string>();
-            //コードページを取り出す(キャラクタ指定が数字ならコードページと判断する)
             Encoding encoding = null;
+            Encoding writeEncoding = null;
+            Encoding repleaseEncoding = null;
+            Encoding filesEncoding = null;
             int codePage;
+            int writeCodePage;
+            int repleaseCodePage;
+            int filesCodePage;
+            string errorEncoding = null;
 
+            //Setting Encoding and Check error of Encoding
             try
             {
-                if (int.TryParse(Program.characterSet, out codePage))
+                //Setting Read Encoding
+                errorEncoding = "Read Encoding";
+                if (int.TryParse(Program.readCharacterSet, out codePage))
                     encoding = Encoding.GetEncoding(codePage);
                 else
-                    encoding = Encoding.GetEncoding(Program.characterSet);
+                    encoding = Encoding.GetEncoding(Program.readCharacterSet);
+
+                //Setting Write Encoding
+                errorEncoding = "Write Encoding";
+                if (int.TryParse(Program.writeCharacterSet, out writeCodePage))
+                    writeEncoding = Encoding.GetEncoding(writeCodePage);
+                else
+                    writeEncoding = Encoding.GetEncoding(Program.writeCharacterSet);
+
+                //Setting Replease Encoding
+                errorEncoding = "Replease Encoding";
+                if (int.TryParse(Program.replaceWordsCharacterSet, out repleaseCodePage))
+                    repleaseEncoding = Encoding.GetEncoding(repleaseCodePage);
+                else
+                    repleaseEncoding = Encoding.GetEncoding(Program.replaceWordsCharacterSet);
+
+                //Setting Files Encoding
+                errorEncoding = "Files Encoding";
+                if (int.TryParse(Program.filesCharacterSet, out filesCodePage))
+                    filesEncoding = Encoding.GetEncoding(filesCodePage);
+                else
+                    filesEncoding = Encoding.GetEncoding(Program.filesCharacterSet);
             }
             catch (Exception ex)
             {
                 if (ex is ArgumentException)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(errorEncoding +"Error !. " + ex.Message);
                 }
                 else if (ex is NotSupportedException)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(errorEncoding + "Error !. " + ex.Message);
                 }
                 else if (ex is ArgumentOutOfRangeException)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(errorEncoding + "Error !. " + ex.Message);
                 }
                 else
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(errorEncoding + "Error !. " + ex.Message);
                 }
                 return;
             }
 
+            //Setting Replace Words
+            List<string> wordsList = new List<string>();
+
             try
             {
-                //置換処理の分岐(置換処理の'/r'オプションがある)
+                //There is a replacement
                 if (colipex.IsOption(OptionReplaceWords) == true)
                 {
                     if(colipex.Options[OptionReplaceWords] == Colipex.NonValue)
@@ -196,8 +262,8 @@ namespace rmsmf
                         return;
                     }
 
-                    //置換単語CSVファイル読み込み
-                    using (var reader = new StreamReader(colipex.Options[OptionReplaceWords], encoding, true))
+                    //Read replacement word CSV file
+                    using (var reader = new StreamReader(colipex.Options[OptionReplaceWords], repleaseEncoding, true))
                     {
                         while (!reader.EndOfStream)
                         {
@@ -211,7 +277,7 @@ namespace rmsmf
                     }
                 }
 
-                //置換単語表へ登録
+                //Register to the replacement word table
                 Program.replaceWordsCount = wordsList.Count;
                 Program.replaceWords = new string[2, Program.replaceWordsCount];
                 for (int i = 0; i < Program.replaceWordsCount; i++)
@@ -224,7 +290,7 @@ namespace rmsmf
                 wordsList.Clear();
                 wordsList = null;
 
-                //置換対象ファイル検索
+                //Search for files to replace
                 string[] files = null;
 
                 if (colipex.IsOption(OptionFileNameList) == true)
@@ -237,7 +303,7 @@ namespace rmsmf
 
                     List<string> filesList = new List<string>();
 
-                    using (var reader = new StreamReader(colipex.Options[OptionFileNameList], encoding, true))
+                    using (var reader = new StreamReader(colipex.Options[OptionFileNameList], filesEncoding, true))
                     {
                         while (!reader.EndOfStream)
                         {
@@ -259,7 +325,7 @@ namespace rmsmf
                     files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
                 }
 
-                //ファイル名のループ
+                //Loop of files
                 foreach (string fileName in files)
                 {
                     if (!File.Exists(fileName))
@@ -267,23 +333,23 @@ namespace rmsmf
 
                     string writeFileName = fileName + ".RP$";
 
-                    //書き込みファイルが既に存在していたら削除
+                    //Delete the write file if it already exists
                     if (!File.Exists(writeFileName))
                     {
                         File.Delete(writeFileName);
                     }
 
-                    //置換元ファイルを開く
+                    //Open read file
                     using (var reader = new StreamReader(fileName, encoding, true))
                     {
-                        //読み込み書き込み置換処理(主処理)
-                        ReadWriteForReplace(reader, writeFileName, encoding);
+                        //Main processing For Replace
+                        ReadWriteForReplace(reader, writeFileName, encoding, writeEncoding);
                     }
 
-                    //置換元ファイル削除
+                    //Delete read file
                     File.Delete(fileName);
 
-                    //置換先ファイルを置換元ファイル名に改名
+                    //Read write file and rename to read file name
                     File.Move(writeFileName, fileName);
                 }
             }
@@ -309,55 +375,55 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// 読み込み書き込み置換処理(主処理)
+        /// Main processing For Replace
         /// </summary>
-        /// <param name="reader">リードファイルストリーム</param>
-        /// <param name="writeFileName">書き込みファイル名</param>
-        /// <param name="encoding">リードファイルエンコーディング</param>
+        /// <param name="reader">Read File Stream</param>
+        /// <param name="writeFileName">Write File Name</param>
+        /// <param name="encoding">Read File Encoding</param>
+        /// <param name="writeEncoding">Write File Encoding</param>
         /// <returns>正常終了=true</returns>
-        static bool ReadWriteForReplace(StreamReader reader, string writeFileName, Encoding encoding)
+        static bool ReadWriteForReplace(StreamReader reader, string writeFileName, Encoding encoding, Encoding writeEncoding)
         {
             bool rc = true;
 
-            //BOMを仮読みする
+            // I am read BOM of readfile.
             byte[] bom = new byte[4];
             int readCount = reader.BaseStream.Read(bom, 0, 4);
             reader.BaseStream.Position = 0;
 
-            Encoding writeEncoding;
-
-            //読み込みと書き込みで文字コードが一致するとき
-            if (Program.existByteOrderMark == null && Program.writeCharacterSet == Program.characterSet)
+            //Empty ByteOrderMark and WriteCharacterSet
+            if (Program.existByteOrderMark == null && Program.Empty_WriteCharacterSet == true)
             {
                 if (IsBOM(bom))
                 {
+                    // I follow BOM.
                     writeEncoding = reader.CurrentEncoding;
                 }
                 else
                 {
+                    // reset writeEncoding
                     // utf-8
-                    if (reader.CurrentEncoding.CodePage == 65001)
+                    if (writeEncoding.CodePage == 65001)
                         writeEncoding = new UTF8Encoding(false);
                     // utf-16 Little En
-                    else if (reader.CurrentEncoding.CodePage == 1200)
+                    else if (writeEncoding.CodePage == 1200)
                         writeEncoding = new UnicodeEncoding(false, false);
                     // utf-16 Big En
-                    else if (reader.CurrentEncoding.CodePage == 1201)
+                    else if (writeEncoding.CodePage == 1201)
                         writeEncoding = new UnicodeEncoding(true, false);
                     // utf-32 Little En
-                    else if (reader.CurrentEncoding.CodePage == 12000)
+                    else if (writeEncoding.CodePage == 12000)
                         writeEncoding = new UTF32Encoding(false, false);
                     // utf-32 Big En
-                    else if (reader.CurrentEncoding.CodePage == 12001)
+                    else if (writeEncoding.CodePage == 12001)
                         writeEncoding = new UTF32Encoding(true, false);
-                    else
-                        writeEncoding = reader.CurrentEncoding;
+                    // If other writeEncoding, use as it is
                 }
             }
-            //読み込みと書き込みで文字コードが違うとき
+            // ByteOrderMark or WriteCharacterSet specified
             else
             {
-                //書き込みコードページを取り出す(キャラクタ指定が数字ならコードページと判断する) 
+                //reset writeEncoding and ByteOrderMark
                 int writeCodePage;
                 bool existByteOrderMark = Program.existByteOrderMark == true ? true : false;
 
@@ -403,24 +469,24 @@ namespace rmsmf
                 }
             }
 
-            if(Program.writeCharacterSet == string.Empty)
+            if(Program.Empty_WriteCharacterSet == true)
             {
                 Program.writeCharacterSet = writeEncoding.CodePage.ToString();
             }
 
-            //置換先ファイルを開く
+            //Open Write File.
             using (var writer = new StreamWriter(writeFileName, true, writeEncoding))
             {
-                //置換元ファイル読み込み
+                //Read Readfile.
                 string readLine = reader.ReadToEnd();
 
-                //置換先ファイル書き込み
+                //Words Replace at Line.
                 for (int i = 0; i < Program.replaceWordsCount; i++)
                 {
                     readLine = readLine.Replace(Program.replaceWords[0, i], Program.replaceWords[1, i]);
                 }
 
-                //置換先ファイル上書き
+                //Writefile Overwrite .
                 writer.Write(readLine);
             }
 
@@ -429,10 +495,10 @@ namespace rmsmf
 
 
         /// <summary>
-        /// BOMであるか判定する
+        /// Determine if it is BOM
         /// </summary>
-        /// <param name="bom">検査対象配列(4byte)</param>
-        /// <returns>true=BOMである。</returns>
+        /// <param name="bom">Array to be inspected (4 bytes)</param>
+        /// <returns>true=BOM.</returns>
         static bool IsBOM(byte[] bomByte)
         {
             bool result = false;
@@ -461,11 +527,11 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// BOM配列比較
+        /// BOM sequence comparison
         /// </summary>
-        /// <param name="data">検査対象配列</param>
-        /// <param name="bom">BOM配列</param>
-        /// <returns>true=一致する</returns>
+        /// <param name="data">Sequence to be inspected</param>
+        /// <param name="bom">BOM array</param>
+        /// <returns>true=match</returns>
         static bool IsMatched(byte[] data, byte[] bom)
         {
             bool result = true;
