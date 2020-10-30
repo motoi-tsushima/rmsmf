@@ -236,6 +236,11 @@ namespace rmsmf
                 {
                     Console.WriteLine(errorEncoding +"Error !. " + ex.Message);
                 }
+                else if (ex is DirectoryNotFoundException)
+                {
+                    Console.WriteLine("指定のパスが存在しません。");
+                    Console.WriteLine(ex.Message);
+                }
                 else if (ex is NotSupportedException)
                 {
                     Console.WriteLine(errorEncoding + "Error !. " + ex.Message);
@@ -360,6 +365,11 @@ namespace rmsmf
             {
                 if (ex is ArgumentException)
                 {
+                    Console.WriteLine(ex.Message);
+                }
+                else if (ex is DirectoryNotFoundException)
+                {
+                    Console.WriteLine("指定のパスが存在しません。");
                     Console.WriteLine(ex.Message);
                 }
                 else if (ex is NotSupportedException)
