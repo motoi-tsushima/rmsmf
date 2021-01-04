@@ -33,6 +33,9 @@ namespace rmsmf
         /// <param name="args"></param>
         static void Main(string[] args)
         {
+            ExecutionState.className = "Program";
+            ExecutionState.stepNumber = 1;
+
             const string OptionHelp = "h";
             const string OptionCharacterSet = "c";
             const string OptionWriteCharacterSet = "w";
@@ -396,7 +399,8 @@ namespace rmsmf
                             filesList.Add(getFileName);
                         }
 
-                        files = filesList.ToArray();                   }
+                        files = filesList.ToArray();
+                    }
                 }
                 else
                 {

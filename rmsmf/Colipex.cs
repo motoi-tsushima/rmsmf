@@ -15,38 +15,31 @@ namespace rmsmf
 
         public Colipex(string[] args)
         {
-            try
-            {
-                this.options = new Dictionary<string, string>();
-                this.parameters = new List<string>();
+            this.options = new Dictionary<string, string>();
+            this.parameters = new List<string>();
 
-                foreach(string parameter in args)
+            foreach(string parameter in args)
+            {
+                if(parameter[0] == '-' || parameter[0] == '/')
                 {
-                    if(parameter[0] == '-' || parameter[0] == '/')
+                    string optionWord = parameter.Substring(1);
+                    string[] optionValue = optionWord.Split(OptionSeparator);
+                    if(optionValue.Length == 1)
                     {
-                        string optionWord = parameter.Substring(1);
-                        string[] optionValue = optionWord.Split(OptionSeparator);
-                        if(optionValue.Length == 1)
-                        {
-                            this.options.Add(optionWord, NonValue);
-                        }
-                        else if(1 < optionValue.Length)
-                        {
-                            this.options.Add(optionValue[0], optionValue[1]);
-                        }
+                        this.options.Add(optionWord, NonValue);
                     }
-                    else
+                    else if(1 < optionValue.Length)
                     {
-                        this.parameters.Add(parameter);
+                        this.options.Add(optionValue[0], optionValue[1]);
                     }
                 }
+                else
+                {
+                    this.parameters.Add(parameter);
+                }
+            }
 
-                this.args = this.parameters.ToArray();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            this.args = this.parameters.ToArray();
         }
 
         private Dictionary<string, string> options;
