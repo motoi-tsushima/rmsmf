@@ -82,8 +82,10 @@
     <Compile Include="CommandOptions.cs" />
     <Compile Include="EncodingJudgment.cs" />
     <Compile Include="ExecutionState.cs" />
+    <Compile Include="Help.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReplaceStringsInFiles.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

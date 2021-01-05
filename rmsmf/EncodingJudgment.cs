@@ -12,6 +12,7 @@ namespace rmsmf
     public class EncodingInfomation
     {
         public int codePage = 0;
+        public string encodingName = null;
         public bool bom = false;
         public Encoding encoding = null;
     }
@@ -24,21 +25,20 @@ namespace rmsmf
         public static int bufferSize = 1000;
 
         /// <summary>
-        /// ファイル読み込み判定版コンストラクタ
-        /// </summary>
-        /// <param name="fileName"></param>
-        public EncodingJudgment(string fileName)
-        {
-
-        }
-
-        /// <summary>
         /// ファイルバイナリ配列
         /// </summary>
         private byte[] _buffer = null;
 
         /// <summary>
-        /// バイナリ判定版コンストラクタ
+        /// コンストラクタ
+        /// </summary>
+        public EncodingJudgment()
+        {
+            this._buffer = new byte[EncodingJudgment.bufferSize];
+        }
+
+        /// <summary>
+        /// バッファを呼び主が与えるコンストラクタ
         /// </summary>
         /// <param name="buffer"></param>
         public EncodingJudgment(byte[] buffer)
@@ -47,22 +47,92 @@ namespace rmsmf
         }
 
         /// <summary>
+        /// コードページからエンコーディング名を取得する
+        /// </summary>
+        /// <param name="codePage">コードページ</param>
+        /// <returns>エンコーディング名</returns>
+        public string EncodingName(int codePage)
+        {
+            string encodingName;
+
+            switch (codePage)
+            {
+                case 20127:
+                    encodingName = "us-ascii";
+                    break;
+                case 50220:
+                    encodingName = "iso-2022-jp";
+                    break;
+                case 65001:
+                    encodingName = "utf-8";
+                    break;
+                case 20932:
+                    encodingName = "euc-jp";
+                    break;
+                case 932:
+                    encodingName = "shift_jis";
+                    break;
+                case 1200:
+                    encodingName = "utf-16";
+                    break;
+                case 1201:
+                    encodingName = "unicodeFFFE";
+                    break;
+                case 12000:
+                    encodingName = "utf-32";
+                    break;
+                case 12001:
+                    encodingName = "utf-32BE";
+                    break;
+                default:
+                    encodingName = "I do not know.";
+                    break;
+            }
+
+            return encodingName;
+        }
+
+        /// <summary>
+        /// ファイルを読んで判定実行
+        /// </summary>
+        /// <param name="fileName">ファイル名</param>
+        /// <returns>文字エンコーディング判定情報</returns>
+        public EncodingInfomation Judgment(string fileName)
+        {
+            EncodingInfomation encInfo = null;
+
+            using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+            {
+                this._buffer = new byte[EncodingJudgment.bufferSize];
+                //ゼロサイズのutf-16LE.BE 対応
+                this._buffer[2] = 0xFF;
+                this._buffer[3] = 0xFF;
+
+                int readCount = fs.Read(this._buffer, 0, EncodingJudgment.bufferSize);
+
+                encInfo = Judgment();
+
+                Console.WriteLine("EncodingJudgment : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
+            }
+
+            return encInfo;
+        }
+
+        /// <summary>
         /// 判定実行
         /// </summary>
         /// <returns>文字エンコーディング判定情報</returns>
         public EncodingInfomation Judgment()
         {
-            EncodingInfomation encInfo = null;
-
-            int codePage = 0;
             bool outOfSpecification;
-
+            EncodingInfomation encInfo = null;
             ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
 
             // Check BOM
             if (bomJudg.IsBOM(this._buffer))
             {
                 encInfo.codePage = bomJudg.CodePage;
+                encInfo.encodingName = this.EncodingName(encInfo.codePage);
                 encInfo.bom = true;
                 return encInfo;
             }
@@ -88,6 +158,9 @@ namespace rmsmf
                     encInfo.codePage = 20127; //us-ascii : US-ASCII
                     encInfo.bom = false;
                 }
+
+                encInfo.encodingName = this.EncodingName(encInfo.codePage);
+
                 return encInfo;
             }
 
@@ -97,6 +170,7 @@ namespace rmsmf
             if (outOfSpecification == false)
             {
                 encInfo.codePage = 65001; //utf-8 : Unicode (UTF-8)
+                encInfo.encodingName = this.EncodingName(encInfo.codePage);
                 encInfo.bom = false;
 
                 return encInfo;
@@ -108,6 +182,7 @@ namespace rmsmf
             if (outOfSpecification == false)
             {
                 encInfo.codePage = 20932; //EUC-JP : Japanese (JIS 0208-1990 and 0212-1990)	
+                encInfo.encodingName = this.EncodingName(encInfo.codePage);
                 encInfo.bom = false;
 
                 return encInfo;
@@ -119,10 +194,10 @@ namespace rmsmf
             if (outOfSpecification == false)
             {
                 encInfo.codePage = 932; //shift_jis : Japanese (Shift-JIS)
+                encInfo.encodingName = this.EncodingName(encInfo.codePage);
                 encInfo.bom = false;
                 return encInfo;
             }
-
 
             // I do not know.
             return encInfo;
@@ -133,7 +208,7 @@ namespace rmsmf
         /// JIS又はASCIIであるか判定する
         /// </summary>
         /// <param name="isJIS">true=JISである(出力引数)</param>
-        /// <returns>true=JIS又はASCIIである</returns>
+        /// <returns>true=JIS又はASCIIでは無い</returns>
         public bool JIS_Judgment(out bool isJIS)
         {
             bool outOfSpecification = false;
@@ -185,7 +260,7 @@ namespace rmsmf
         /// <summary>
         /// UTF8であるか判定する
         /// </summary>
-        /// <returns>true=UTF8である</returns>
+        /// <returns>true=UTF8では無い</returns>
         public bool Utf8_Judgment()
         {
             bool outOfSpecification;
@@ -293,7 +368,7 @@ namespace rmsmf
         /// <param name="topByteChar"></param>
         /// <param name="byteCharCount"></param>
         /// <param name="checkBig"></param>
-        /// <returns></returns>
+        /// <returns>true=UTF-8では無い</returns>
         private bool Utf8OutOfSpecification(uint topByteChar, int byteCharCount, bool checkBig)
         {
             bool outOfSpecification = false;
@@ -344,7 +419,7 @@ namespace rmsmf
         /// <summary>
         /// EUC-JPであるか判定する
         /// </summary>
-        /// <returns>true=EUC-JPである</returns>
+        /// <returns>true=EUC-JPでは無い</returns>
         public bool EUCJP_Judgment()
         {
             bool outOfSpecification = false;
@@ -418,7 +493,7 @@ namespace rmsmf
         /// <summary>
         /// Shift-JIS であるか判定する
         /// </summary>
-        /// <returns>true=Shift-JISである</returns>
+        /// <returns>true=Shift-JISでは無い</returns>
         public bool SJIS_Judgment()
         {
             bool outOfSpecification;
