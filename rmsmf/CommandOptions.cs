@@ -239,7 +239,7 @@ namespace rmsmf
                 }
 
                 //置換単語リストファイル名を保存する
-                this._replaceWordsFileName = this.Options[OptionReplaceWords];
+                this._replaceWordsFileName = this.Options[OptionReplaceWords].TrimEnd(new char[] { '\x0a', '\x0d' }); 
 
                 //置換単語リストファイル名の存在確認
                 if (!File.Exists(this._replaceWordsFileName))
@@ -267,7 +267,7 @@ namespace rmsmf
                 }
 
                 //ファイルリストファイル名を保存する
-                this._fileNameListFileName = this.Options[OptionFileNameList];
+                this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' }); 
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
