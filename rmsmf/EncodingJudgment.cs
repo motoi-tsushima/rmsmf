@@ -125,7 +125,7 @@ namespace rmsmf
         public EncodingInfomation Judgment()
         {
             bool outOfSpecification;
-            EncodingInfomation encInfo = null;
+            EncodingInfomation encInfo = new EncodingInfomation();
             ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
 
             // Check BOM

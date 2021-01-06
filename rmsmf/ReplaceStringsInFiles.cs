@@ -63,11 +63,74 @@ namespace rmsmf
 
                 //Open read file
                 //読み取りファイルを開く。
-                using (var reader = new StreamReader(fileName, encoding, true))
+                using (FileStream fs = new FileStream(fileName, FileMode.Open))
                 {
-                    //Main processing For Replace
-                    //置換メイン処理
-                    ReadWriteForReplace(reader, writeFileName, encoding, writeEncoding);
+                    bool bomExist = false;
+                    int codePage;
+                    int writeCodePage;
+
+                    //読み込みエンコーディングの有無で分岐
+                    if (encoding == null)
+                    {
+                        // エンコーディング指定が無い場合
+
+                        //  読み取りファイルの文字エンコーディングを判定する
+                        byte[] buffer = new byte[EncodingJudgment.bufferSize];
+                        int readCount = fs.Read(buffer, 0, EncodingJudgment.bufferSize);
+
+                        EncodingJudgment encJudgment = new EncodingJudgment(buffer);
+                        EncodingInfomation encInfo = encJudgment.Judgment();
+
+                        fs.Position = 0;
+
+                        bomExist = encInfo.bom;
+                        codePage = encInfo.codePage;
+
+                        encoding = Encoding.GetEncoding(encInfo.codePage);
+                    }
+                    else
+                    {
+                        // エンコーディング指定が有る場合
+
+                        byte[] bomBuffer = new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF };
+                        fs.Read(bomBuffer, 0, 4);
+                        fs.Position = 0;
+
+                        ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
+
+                        if (bomJudg.IsBOM(bomBuffer))
+                        {
+                            bomExist = true;
+                            //codePage = bomJudg.CodePage; //オプション指定のコードページが間違っていた時どうする ?
+                            codePage = encoding.CodePage;
+                        }
+                        else
+                        {
+                            bomExist = false;
+                            codePage = encoding.CodePage;
+                        }
+                    }
+
+                    //書き込みエンコーディングの有無で分岐
+                    if (writeEncoding == null)
+                    {
+                        writeCodePage = codePage;
+                    }
+                    else
+                    {
+                        writeCodePage = writeEncoding.CodePage;
+                    }
+
+                    //書き込みエンコーディングの再作成
+                    writeEncoding = GetWriteEncoding(codePage, bomExist, this._enableBOM);
+
+                    //エンコーディングを指定してテキストストリームを開く
+                    using (var reader = new StreamReader(fs, encoding, true))
+                    {
+                        //Main processing For Replace
+                        //置換メイン処理
+                        ReadWriteForReplace(reader, writeFileName, encoding, writeEncoding);
+                    }
                 }
 
                 //Delete read file
@@ -102,106 +165,6 @@ namespace rmsmf
             //int readCount = reader.BaseStream.Read(bom, 0, 4);
             //reader.BaseStream.Position = 0;
 
-            //  読み取りファイルの文字エンコーディングを判定する
-            byte[] buffer = new byte[EncodingJudgment.bufferSize];
-            int readCount = reader.BaseStream.Read(buffer, 0, EncodingJudgment.bufferSize);
-
-            EncodingJudgment encJudgment = new EncodingJudgment(buffer);
-            EncodingInfomation encInfo = encJudgment.Judgment();
-
-            reader.BaseStream.Position = 0;
-
-
-            //Empty ByteOrderMark and WriteCharacterSet
-            //BOMなし and 書き込み文字エンコーディング
-            if (this._enableBOM == null && writeEncoding == null)
-            {
-                //BOMは存在するか
-                if (encInfo.bom)
-                {
-                    //BOMは存在する
-
-                    // BOM と同じエンコーディングで書き込みます。
-                    writeEncoding = Encoding.GetEncoding(encInfo.codePage);
-                }
-                else
-                {
-                    //BOMは存在しない
-                    // reset writeEncoding
-                    // utf-8
-                    if (encInfo.codePage == 65001)
-                        writeEncoding = new UTF8Encoding(false);
-                    // utf-16 Little En
-                    else if (encInfo.codePage == 1200)
-                        writeEncoding = new UnicodeEncoding(false, false);
-                    // utf-16 Big En
-                    else if (encInfo.codePage == 1201)
-                        writeEncoding = new UnicodeEncoding(true, false);
-                    // utf-32 Little En
-                    else if (encInfo.codePage == 12000)
-                        writeEncoding = new UTF32Encoding(false, false);
-                    // utf-32 Big En
-                    else if (encInfo.codePage == 12001)
-                        writeEncoding = new UTF32Encoding(true, false);
-                    // If other writeEncoding, use as it is
-                    // 他のwriteEncodingの場合は、そのまま使用します
-                }
-            }
-            // ByteOrderMark or WriteCharacterSet specified
-            // BOM有り or 書き込み文字エンコーディング指定有り
-            else
-            {
-                //reset writeEncoding and ByteOrderMark
-                //書き込み文字エンコーディングとBOMを再設定する。
-
-                bool existByteOrderMark = this._enableBOM == true ? true : false;
-
-                if (writeEncoding == null)
-                {
-                    //書き込みエンコーディングの指定が無い場合、BOM指定のみ再設定する
-
-                    // utf-8
-                    if (encInfo.codePage == 65001)
-                        writeEncoding = new UTF8Encoding(existByteOrderMark);
-                    // utf-16 Little En
-                    else if (encInfo.codePage == 1200)
-                        writeEncoding = new UnicodeEncoding(false, existByteOrderMark);
-                    // utf-16 Big En
-                    else if (encInfo.codePage == 1201)
-                        writeEncoding = new UnicodeEncoding(true, existByteOrderMark);
-                    // utf-32 Little En
-                    else if (encInfo.codePage == 12000)
-                        writeEncoding = new UTF32Encoding(false, existByteOrderMark);
-                    // utf-32 Big En
-                    else if (encInfo.codePage == 12001)
-                        writeEncoding = new UTF32Encoding(true, existByteOrderMark);
-                    else
-                        writeEncoding = Encoding.GetEncoding(encInfo.codePage);
-                }
-                else
-                {
-                    //書き込みエンコーディングの指定が有る場合
-
-                    // utf-8
-                    if (writeEncoding.CodePage == 65001)
-                        writeEncoding = new UTF8Encoding(existByteOrderMark);
-                    // utf-16 Little En
-                    else if (writeEncoding.CodePage == 1200)
-                        writeEncoding = new UnicodeEncoding(false, existByteOrderMark);
-                    // utf-16 Big En
-                    else if (writeEncoding.CodePage == 1201)
-                        writeEncoding = new UnicodeEncoding(true, existByteOrderMark);
-                    // utf-32 Little En
-                    else if (writeEncoding.CodePage == 12000)
-                        writeEncoding = new UTF32Encoding(false, existByteOrderMark);
-                    // utf-32 Big En
-                    else if (writeEncoding.CodePage == 12001)
-                        writeEncoding = new UTF32Encoding(true, existByteOrderMark);
-                    else
-                        writeEncoding = Encoding.GetEncoding(writeEncoding.CodePage);
-                }
-            }
-
             //Open Write File.
             //書き込みファイルを開く。
             using (var writer = new StreamWriter(writeFileName, true, writeEncoding))
@@ -228,6 +191,82 @@ namespace rmsmf
             return rc;
         }
 
+        /// <summary>
+        /// 書き込みエンコーディング取得
+        /// </summary>
+        /// <param name="codePage">書き込むコードページ</param>
+        /// <param name="bomExist">読み込みファイルのBOMの有無</param>
+        /// <param name="enableBOM">オプションのBOM指定の有無</param>
+        /// <returns>書き込みエンコーディング</returns>
+        private Encoding GetWriteEncoding(int codePage, bool bomExist, bool? enableBOM)
+        {
+            Encoding writeEncoding = null;
+
+            //BOMなし
+            if (enableBOM == null)
+            {
+                //BOMは存在するか
+                if (bomExist)
+                {
+                    //BOMは存在する
+
+                    // BOM と同じエンコーディングで書き込みます。
+                    writeEncoding = Encoding.GetEncoding(codePage);
+                }
+                else
+                {
+                    //BOMは存在しない
+                    // reset writeEncoding
+                    // utf-8
+                    if (codePage == 65001)
+                        writeEncoding = new UTF8Encoding(false);
+                    // utf-16 Little En
+                    else if (codePage == 1200)
+                        writeEncoding = new UnicodeEncoding(false, false);
+                    // utf-16 Big En
+                    else if (codePage == 1201)
+                        writeEncoding = new UnicodeEncoding(true, false);
+                    // utf-32 Little En
+                    else if (codePage == 12000)
+                        writeEncoding = new UTF32Encoding(false, false);
+                    // utf-32 Big En
+                    else if (codePage == 12001)
+                        writeEncoding = new UTF32Encoding(true, false);
+                    else
+                        writeEncoding = Encoding.GetEncoding(codePage);
+                }
+            }
+            // BOM有り
+            else
+            {
+                //reset writeEncoding and ByteOrderMark
+                //書き込み文字エンコーディングとBOMを再設定する。
+
+                bool existByteOrderMark = enableBOM == true ? true : false;
+
+                //書き込みエンコーディングの指定が無い場合、BOM指定のみ再設定する
+
+                // utf-8
+                if (codePage == 65001)
+                    writeEncoding = new UTF8Encoding(existByteOrderMark);
+                // utf-16 Little En
+                else if (codePage == 1200)
+                    writeEncoding = new UnicodeEncoding(false, existByteOrderMark);
+                // utf-16 Big En
+                else if (codePage == 1201)
+                    writeEncoding = new UnicodeEncoding(true, existByteOrderMark);
+                // utf-32 Little En
+                else if (codePage == 12000)
+                    writeEncoding = new UTF32Encoding(false, existByteOrderMark);
+                // utf-32 Big En
+                else if (codePage == 12001)
+                    writeEncoding = new UTF32Encoding(true, existByteOrderMark);
+                else
+                    writeEncoding = Encoding.GetEncoding(codePage);
+            }
+
+            return writeEncoding;
+        }
 
     }
 }

@@ -62,6 +62,9 @@ namespace rmsmf
                     return;
                 }
 
+                commandOptions.ReadReplaceWords();
+                commandOptions.ReadFileNameList();
+
                 //ファイルの文字列置換処理の実行
                 ReplaceStringsInFiles replace = new ReplaceStringsInFiles(commandOptions.ReplaceWords, commandOptions.Files, commandOptions.EnableBOM);
 
@@ -84,6 +87,7 @@ namespace rmsmf
                     Console.WriteLine("className = " + ExecutionState.className);
                     Console.WriteLine("stepNumber = " + ExecutionState.stepNumber);
                     Console.WriteLine("管理されていないエラーが発生しました。" + ex.ToString());
+                    throw ex;
                 }
 
                 return;

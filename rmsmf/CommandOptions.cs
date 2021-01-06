@@ -35,7 +35,7 @@ namespace rmsmf
             string errorEncoding = null;
 
             //ヘルプオプションの場合
-            if (this.IsOption(OptionHelp) == false)
+            if (this.IsOption(OptionHelp) == true)
             {
                 this._callHelp = false;
                 return;
@@ -366,8 +366,9 @@ namespace rmsmf
             {
                 //ファイル名リストファイルが無い場合はコマンドパラメータのファイル名を検索する
 
-                string direcrtoryName = Path.GetDirectoryName(this.Parameters[0]);
-                string searchWord = Path.GetFileName(this.Parameters[0]);
+                string path = this.Parameters[0].TrimEnd(new char[] { '\x0a', '\x0d' });
+                string direcrtoryName = Path.GetDirectoryName(path);
+                string searchWord = Path.GetFileName(path);
 
                 this._files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
 
