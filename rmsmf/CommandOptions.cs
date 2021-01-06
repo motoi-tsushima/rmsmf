@@ -59,7 +59,7 @@ namespace rmsmf
                 //読み取り文字エンコーディング名を設定する。
                 if (this.IsOption(OptionCharacterSet) == true)
                 {
-                    readCharacterSet = this.Options[OptionCharacterSet];
+                    readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                     if (readCharacterSet == Colipex.NonValue)
                     {
                         //Console.WriteLine("Please specify the encoding name. (/c)");
@@ -76,7 +76,7 @@ namespace rmsmf
                 //書き込み文字エンコーディング名の設定する。
                 if (this.IsOption(OptionWriteCharacterSet) == true)
                 {
-                    writeCharacterSet = this.Options[OptionWriteCharacterSet];
+                    writeCharacterSet = this.Options[OptionWriteCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                     if (writeCharacterSet == Colipex.NonValue)
                     {
                         //Console.WriteLine("Please specify the encoding name. (/w)");
@@ -95,7 +95,7 @@ namespace rmsmf
                 //置換単語リストの文字エンコーディングの設定する。
                 if (this.IsOption(OptionReplaceWordsCharacterSet) == true)
                 {
-                    replaceWordsCharacterSet = this.Options[OptionReplaceWordsCharacterSet];
+                    replaceWordsCharacterSet = this.Options[OptionReplaceWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                     if (replaceWordsCharacterSet == Colipex.NonValue)
                     {
                         //Console.WriteLine("Please specify the encoding name. (/rc)");
@@ -112,7 +112,7 @@ namespace rmsmf
                 //ファイルリストの文字エンコーディングを設定する。
                 if (this.IsOption(OptionFileNameListCharacterSet) == true)
                 {
-                    filesCharacterSet = this.Options[OptionFileNameListCharacterSet];
+                    filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                     if (filesCharacterSet == Colipex.NonValue)
                     {
                         //Console.WriteLine("Please specify the encoding name. (/fc)");
@@ -129,9 +129,9 @@ namespace rmsmf
                 //BOM を設定する。
                 if (this.IsOption(OptionWriteByteOrderMark) == true)
                 {
-                    if (this.Options[OptionWriteByteOrderMark].ToLower() == "false" ||
-                        this.Options[OptionWriteByteOrderMark].ToLower() == "no" ||
-                        this.Options[OptionWriteByteOrderMark].ToLower() == "n")
+                    string optionBOM = this.Options[OptionWriteByteOrderMark].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
+
+                    if (optionBOM == "false" || optionBOM == "no" || optionBOM == "n")
                         existByteOrderMark = false;
                     else
                         existByteOrderMark = true;

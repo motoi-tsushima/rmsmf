@@ -122,7 +122,7 @@ namespace rmsmf
                     }
 
                     //書き込みエンコーディングの再作成
-                    writeEncoding = GetWriteEncoding(codePage, bomExist, this._enableBOM);
+                    writeEncoding = GetWriteEncoding(writeCodePage, bomExist, this._enableBOM);
 
                     //エンコーディングを指定してテキストストリームを開く
                     using (var reader = new StreamReader(fs, encoding, true))

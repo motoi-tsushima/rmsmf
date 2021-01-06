@@ -1,4 +1,4 @@
-﻿C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\text1.txt
+C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\text1.txt
 C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\text2.txt
 C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\text3.txt
 C:\Users\motoi\Dropbox\MyDevelopment\Visual Studio 2017\Projects\rmsmf\rmsmf\bin\Debug\test1\test11\text11.txt
