@@ -26,7 +26,7 @@ namespace rmsmf
                 {
                     if(parameter[0] == '-' || parameter[0] == '/')
                     {
-                        string optionWord = parameter.Substring(1);
+                        string optionWord = parameter.Substring(1).TrimEnd(new char[] { '\x0a', '\x0d' });
                         string[] optionValue = optionWord.Split(OptionSeparator);
                         if(optionValue.Length == 1)
                         {

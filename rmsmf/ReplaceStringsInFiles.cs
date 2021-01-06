@@ -159,12 +159,6 @@ namespace rmsmf
         {
             bool rc = true;
 
-            // I am read BOM of readfile.
-            //  読み取りファイルのBOMを読みます。
-            //byte[] bom = new byte[4];
-            //int readCount = reader.BaseStream.Read(bom, 0, 4);
-            //reader.BaseStream.Position = 0;
-
             //Open Write File.
             //書き込みファイルを開く。
             using (var writer = new StreamWriter(writeFileName, true, writeEncoding))
@@ -173,14 +167,16 @@ namespace rmsmf
                 //読み取りファイルを全て読み込む。
                 string readLine = reader.ReadToEnd();
 
-                //Replace Performs a line-by-line replacement in the word list.
-                //置換単語リストの行単位に置換を実施します。
-
-                int replaceWordsCount = this._replaceWords.GetLength(1);
-
-                for (int i = 0; i < replaceWordsCount; i++)
+                if(this._replaceWords != null)
                 {
-                    readLine = readLine.Replace(this._replaceWords[0, i], this._replaceWords[1, i]);
+                    //Replace Performs a line-by-line replacement in the word list.
+                    //置換単語リストの行単位に置換を実施します。
+                    int replaceWordsCount = this._replaceWords.GetLength(1);
+
+                    for (int i = 0; i < replaceWordsCount; i++)
+                    {
+                        readLine = readLine.Replace(this._replaceWords[0, i], this._replaceWords[1, i]);
+                    }
                 }
 
                 //Writefile Overwrite .
