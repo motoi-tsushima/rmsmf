@@ -44,6 +44,8 @@ namespace rmsmf
         public bool Replace(Encoding encoding, Encoding writeEncoding)
         {
             bool success = false;
+            Encoding inEncoding;
+            Encoding inWriteEncoding;
 
             //Loop of files
             //ファイル単位のループ
@@ -86,11 +88,13 @@ namespace rmsmf
                         bomExist = encInfo.bom;
                         codePage = encInfo.codePage;
 
-                        encoding = Encoding.GetEncoding(encInfo.codePage);
+                        inEncoding = Encoding.GetEncoding(encInfo.codePage);
                     }
                     else
                     {
                         // エンコーディング指定が有る場合
+
+                        inEncoding = encoding;
 
                         byte[] bomBuffer = new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF };
                         fs.Read(bomBuffer, 0, 4);
@@ -122,14 +126,14 @@ namespace rmsmf
                     }
 
                     //書き込みエンコーディングの再作成
-                    writeEncoding = GetWriteEncoding(writeCodePage, bomExist, this._enableBOM);
+                    inWriteEncoding = GetWriteEncoding(writeCodePage, bomExist, this._enableBOM);
 
                     //エンコーディングを指定してテキストストリームを開く
-                    using (var reader = new StreamReader(fs, encoding, true))
+                    using (var reader = new StreamReader(fs, inEncoding, true))
                     {
                         //Main processing For Replace
                         //置換メイン処理
-                        ReadWriteForReplace(reader, writeFileName, encoding, writeEncoding);
+                        ReadWriteForReplace(reader, writeFileName, inEncoding, inWriteEncoding);
                     }
                 }
 

@@ -37,7 +37,7 @@ namespace rmsmf
             //ヘルプオプションの場合
             if (this.IsOption(OptionHelp) == true)
             {
-                this._callHelp = false;
+                this._callHelp = true;
                 return;
             }
 
@@ -278,6 +278,49 @@ namespace rmsmf
                     throw new Exception(ExecutionState.errorMessage);
                 }
             }
+
+            //------------------------------------------------------------
+            // オプションの正当性確認
+            //-
+            if(this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
+            {
+                ExecutionState.isError = true;
+                ExecutionState.isNormal = !ExecutionState.isError;
+                ExecutionState.errorMessage = "必須パラメータが入力されていません。";
+
+                throw new Exception(ExecutionState.errorMessage);
+            }
+
+            if(this.IsOption(OptionReplaceWords) == false)
+            {
+                if(this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false)
+                {
+                    ExecutionState.isError = true;
+                    ExecutionState.isNormal = !ExecutionState.isError;
+                    ExecutionState.errorMessage = "文字エンコーディングの変換をする場合は、/w:により出力先の文字エンコーディングを指定してください。";
+
+                    throw new Exception(ExecutionState.errorMessage);
+                }
+            }
+
+            if (this.IsOption(OptionFileNameList) == true && this.Parameters.Count > 0)
+            {
+                ExecutionState.isError = true;
+                ExecutionState.isNormal = !ExecutionState.isError;
+                ExecutionState.errorMessage = "/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。";
+
+                throw new Exception(ExecutionState.errorMessage);
+            }
+
+            if (this.IsOption(OptionReplaceWords) == true && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
+            {
+                ExecutionState.isError = true;
+                ExecutionState.isNormal = !ExecutionState.isError;
+                ExecutionState.errorMessage = "置換対象となるファイルを指定してください。";
+
+                throw new Exception(ExecutionState.errorMessage);
+            }
+
         }
 
         /// <summary>
@@ -370,7 +413,18 @@ namespace rmsmf
                 string direcrtoryName = Path.GetDirectoryName(path);
                 string searchWord = Path.GetFileName(path);
 
-                this._files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
+                try
+                {
+                    this._files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, System.IO.SearchOption.AllDirectories);
+                }
+                catch(System.ArgumentException ex)
+                {
+                    ExecutionState.isError = true;
+                    ExecutionState.isNormal = !ExecutionState.isError;
+                    ExecutionState.errorMessage = path + " が存在しないか、検索キーワードとして無効です。";
+                    ExecutionState.className = "CommandOptions.ReadFileNameList";
+                    throw ex;
+                }
 
                 normal = true;
                 return normal;

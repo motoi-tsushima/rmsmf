@@ -78,8 +78,8 @@ namespace rmsmf
                 if (ExecutionState.isError)
                 {
                     Console.WriteLine(ExecutionState.errorMessage);
-                    Console.WriteLine("className = " + ExecutionState.className);
-                    Console.WriteLine("stepNumber = " + ExecutionState.stepNumber);
+                    //Console.WriteLine("className = " + ExecutionState.className);
+                    //Console.WriteLine("stepNumber = " + ExecutionState.stepNumber);
                 }
                 else
                 {
