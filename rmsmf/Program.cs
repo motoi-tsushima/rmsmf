@@ -17,15 +17,6 @@ namespace rmsmf
     /// </summary>
     class Program
     {
-        private static string readCharacterSet;
-        private static string replaceWordsCharacterSet;
-        private static string filesCharacterSet;
-        private static string writeCharacterSet;
-        private static bool Empty_WriteCharacterSet;
-        private static bool? existByteOrderMark;
-        private static string[,] replaceWords;
-        private static int replaceWordsCount;
-
         /// <summary>
         /// Multiple word multiple file replacement
         /// 複数の単語の複数のファイルの置換。
