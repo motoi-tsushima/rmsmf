@@ -152,7 +152,10 @@ namespace rmsmf
             }
             catch (UnauthorizedAccessException uae)
             {
-                Console.WriteLine(uae.Message);
+                ExecutionState.isError = true;
+                ExecutionState.isNormal = !ExecutionState.isError;
+                ExecutionState.errorMessage = uae.Message;
+                throw uae;
             }
             catch (AggregateException ae)
             {
