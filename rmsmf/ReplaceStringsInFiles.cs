@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace rmsmf
 {
@@ -47,105 +49,126 @@ namespace rmsmf
             Encoding inEncoding;
             Encoding inWriteEncoding;
 
-            //Loop of files
-            //ファイル単位のループ
-            foreach (string fileName in this._files)
+            try
             {
-                if (!File.Exists(fileName))
-                    continue;
-
-                string writeFileName = fileName + ".RP$";
-
-                //Delete the write file if it already exists
-                //書き込み対象ファイルがすでに存在する場合は削除します。
-                if (!File.Exists(writeFileName))
-                {
-                    File.Delete(writeFileName);
-                }
-
-                //Open read file
-                //読み取りファイルを開く。
-                using (FileStream fs = new FileStream(fileName, FileMode.Open))
-                {
-                    bool bomExist = false;
-                    int codePage;
-                    int writeCodePage;
-
-                    //読み込みエンコーディングの有無で分岐
-                    if (encoding == null)
+                //ファイル単位のマルチスレッド作成
+                Parallel.ForEach(this._files, (fileName) =>
                     {
-                        // エンコーディング指定が無い場合
-
-                        //  読み取りファイルの文字エンコーディングを判定する
-                        byte[] buffer = new byte[EncodingJudgment.bufferSize];
-                        int readCount = fs.Read(buffer, 0, EncodingJudgment.bufferSize);
-
-                        EncodingJudgment encJudgment = new EncodingJudgment(buffer);
-                        EncodingInfomation encInfo = encJudgment.Judgment();
-
-                        fs.Position = 0;
-
-                        bomExist = encInfo.bom;
-                        codePage = encInfo.codePage;
-
-                        inEncoding = Encoding.GetEncoding(encInfo.codePage);
-                    }
-                    else
-                    {
-                        // エンコーディング指定が有る場合
-
-                        inEncoding = encoding;
-
-                        byte[] bomBuffer = new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF };
-                        fs.Read(bomBuffer, 0, 4);
-                        fs.Position = 0;
-
-                        ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
-
-                        if (bomJudg.IsBOM(bomBuffer))
+                        if (File.Exists(fileName))
                         {
-                            bomExist = true;
-                            //codePage = bomJudg.CodePage; //オプション指定のコードページが間違っていた時どうする ?
-                            codePage = encoding.CodePage;
+                            string writeFileName = fileName + ".RP$";
+
+                            //Delete the write file if it already exists
+                            //書き込み対象ファイルがすでに存在する場合は削除します。
+                            if (!File.Exists(writeFileName))
+                            {
+                                File.Delete(writeFileName);
+                            }
+
+                            //Open read file
+                            //読み取りファイルを開く。
+                            using (FileStream fs = new FileStream(fileName, FileMode.Open))
+                            {
+                                bool bomExist = false;
+                                int codePage;
+                                int writeCodePage;
+
+                                //読み込みエンコーディングの有無で分岐
+                                if (encoding == null)
+                                {
+                                    // エンコーディング指定が無い場合
+
+                                    //  読み取りファイルの文字エンコーディングを判定する
+                                    byte[] buffer = new byte[EncodingJudgment.bufferSize];
+                                    int readCount = fs.Read(buffer, 0, EncodingJudgment.bufferSize);
+
+                                    EncodingJudgment encJudgment = new EncodingJudgment(buffer);
+                                    EncodingInfomation encInfo = encJudgment.Judgment();
+
+                                    fs.Position = 0;
+
+                                    bomExist = encInfo.bom;
+                                    codePage = encInfo.codePage;
+
+                                    inEncoding = Encoding.GetEncoding(encInfo.codePage);
+                                }
+                                else
+                                {
+                                    // エンコーディング指定が有る場合
+
+                                    inEncoding = encoding;
+
+                                    byte[] bomBuffer = new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF };
+                                    fs.Read(bomBuffer, 0, 4);
+                                    fs.Position = 0;
+
+                                    ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
+
+                                    if (bomJudg.IsBOM(bomBuffer))
+                                    {
+                                        bomExist = true;
+                                        //codePage = bomJudg.CodePage; //オプション指定のコードページが間違っていた時どうする ?
+                                        codePage = encoding.CodePage;
+                                    }
+                                    else
+                                    {
+                                        bomExist = false;
+                                        codePage = encoding.CodePage;
+                                    }
+                                }
+
+                                //書き込みエンコーディングの有無で分岐
+                                if (writeEncoding == null)
+                                {
+                                    writeCodePage = codePage;
+                                }
+                                else
+                                {
+                                    writeCodePage = writeEncoding.CodePage;
+                                }
+
+                                //書き込みエンコーディングの再作成
+                                inWriteEncoding = GetWriteEncoding(writeCodePage, bomExist, this._enableBOM);
+
+                                //エンコーディングを指定してテキストストリームを開く
+                                using (var reader = new StreamReader(fs, inEncoding, true))
+                                {
+                                    //Main processing For Replace
+                                    //置換メイン処理
+                                    ReadWriteForReplace(reader, writeFileName, inEncoding, inWriteEncoding);
+                                }
+                            }
+
+                            //Delete read file
+                            //読み取りファイルを削除する。
+                            File.Delete(fileName);
+
+                            //Read write file and rename to read file name
+                            //書き込み対象ファイルを読み取りファイル名に変更。
+                            File.Move(writeFileName, fileName);
                         }
-                        else
-                        {
-                            bomExist = false;
-                            codePage = encoding.CodePage;
-                        }
                     }
-
-                    //書き込みエンコーディングの有無で分岐
-                    if (writeEncoding == null)
-                    {
-                        writeCodePage = codePage;
-                    }
-                    else
-                    {
-                        writeCodePage = writeEncoding.CodePage;
-                    }
-
-                    //書き込みエンコーディングの再作成
-                    inWriteEncoding = GetWriteEncoding(writeCodePage, bomExist, this._enableBOM);
-
-                    //エンコーディングを指定してテキストストリームを開く
-                    using (var reader = new StreamReader(fs, inEncoding, true))
-                    {
-                        //Main processing For Replace
-                        //置換メイン処理
-                        ReadWriteForReplace(reader, writeFileName, inEncoding, inWriteEncoding);
-                    }
-                }
-
-                //Delete read file
-                //読み取りファイルを削除する。
-                File.Delete(fileName);
-
-                //Read write file and rename to read file name
-                //書き込み対象ファイルを読み取りファイル名に変更。
-                File.Move(writeFileName, fileName);
+                );
             }
+            catch (UnauthorizedAccessException uae)
+            {
+                Console.WriteLine(uae.Message);
+            }
+            catch (AggregateException ae)
+            {
+                int errorCount = 0;
+                foreach(var ie in ae.InnerExceptions)
+                {
+                    errorCount++;
+                    Console.WriteLine(ie.Message);
+                }
 
+                ExecutionState.isError = true;
+                ExecutionState.isNormal = !ExecutionState.isError;
+                ExecutionState.errorMessage = errorCount + "件のエラーが発生しました。他のファイルは正常に処理しました。";
+
+                throw ae;
+            }
 
             return success;
         }
