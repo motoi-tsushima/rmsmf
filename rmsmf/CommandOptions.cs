@@ -214,7 +214,13 @@ namespace rmsmf
             {
                 ExecutionState.isError = true;
                 ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "管理下のエラー:ArgumentException" + errorEncoding;
+                if(errorEncoding == null)
+                    ExecutionState.errorMessage = "管理下のエラー:ArgumentException" + errorEncoding;
+                else
+                {
+                    ExecutionState.errorMessage = errorEncoding + " のエンコーディング名が不正です。";
+                }
+
                 throw ex;
             }
             catch (Exception ex)
@@ -293,7 +299,7 @@ namespace rmsmf
 
             if(this.IsOption(OptionReplaceWords) == false)
             {
-                if(this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false)
+                if(this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false && this.IsOption(OptionWriteByteOrderMark) == false)
                 {
                     ExecutionState.isError = true;
                     ExecutionState.isNormal = !ExecutionState.isError;
@@ -321,6 +327,23 @@ namespace rmsmf
                 throw new Exception(ExecutionState.errorMessage);
             }
 
+            if(this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionReplaceWordsCharacterSet) == true)
+            {
+                ExecutionState.isError = true;
+                ExecutionState.isNormal = !ExecutionState.isError;
+                ExecutionState.errorMessage = "置換単語ファイルが指定されていないのに、置換単語ファイルのエンコーディングが指定されています。";
+
+                throw new Exception(ExecutionState.errorMessage);
+            }
+
+            if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet) == true)
+            {
+                ExecutionState.isError = true;
+                ExecutionState.isNormal = !ExecutionState.isError;
+                ExecutionState.errorMessage = "ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。";
+
+                throw new Exception(ExecutionState.errorMessage);
+            }
         }
 
         /// <summary>
