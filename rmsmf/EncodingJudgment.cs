@@ -272,7 +272,7 @@ namespace rmsmf
             for (int i = 0; i < EncodingJudgment.bufferSize; i++)
             {
                 //２バイト文字以上である
-                if (0x80 <= this._buffer[i])
+                if ((uint)0x80 <= (uint)this._buffer[i])
                 {
                     //２バイト文字
                     uint char2byte = (uint)0b11100000 & (uint)this._buffer[i];
@@ -332,6 +332,12 @@ namespace rmsmf
                             outOfSpecification = true;
                             break;
                         }
+                        // 1文字が4バイトを超えるなら規格外
+                        if (4 < byteCharCount)
+                        {
+                            outOfSpecification = true;
+                            break;
+                        }
 
                         //セカンドコードを保存
                         byteChar[byteCharCount] = charSecond;
@@ -355,7 +361,12 @@ namespace rmsmf
                 {
                     // 7bit文字
                     byteChar[0] = 0;
-                    byteCharCount = 1;
+                    byteChar[1] = 0;
+                    byteChar[2] = 0;
+                    byteChar[3] = 0;
+                    byteChar[4] = 0;
+                    byteChar[5] = 0;
+                    byteCharCount = 0;
                 }
             }
 
