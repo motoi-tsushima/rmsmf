@@ -101,6 +101,19 @@ namespace rmsmf
             return encodingName;
         }
 
+        private bool IsMatched(byte[] data, byte[] bom)
+        {
+            bool result = true;
+
+            for (int i = 0; i < bom.Length; i++)
+            {
+                if (bom[i] != data[i])
+                    result = false;
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// ファイルを読んで判定実行
         /// </summary>
@@ -113,7 +126,6 @@ namespace rmsmf
             using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             {
                 this.bufferSize = (int)fs.Length;
-                Console.WriteLine("EncodingJudgment File Size: " + bufferSize.ToString() + " bytes");
                 this._buffer = new byte[this.bufferSize];
                 //ゼロサイズのutf-16LE.BE 対応
                 this._buffer[2] = 0xFF;
@@ -123,7 +135,7 @@ namespace rmsmf
 
                 encInfo = Judgment();
 
-                Console.WriteLine("EncodingJudgment : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
+                //Console.WriteLine("EncodingJudgment : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
             }
 
             return encInfo;
@@ -222,14 +234,25 @@ namespace rmsmf
         /// <returns>true=JIS又はASCIIでは無い</returns>
         public bool JIS_Judgment(out bool isJIS)
         {
-            bool outOfSpecification = false;
-            bool esc1 = false;
-            bool esc2 = false;
-            byte[] byteESC1 = { 0x1B, 0x28, 0x42 };
-            byte[] byteESC2 = { 0x1B, 0x24, 0x42 };
-            byte[] backESC = { 0, 0, 0 };
-
-            ByteOrderMarkJudgment match = new ByteOrderMarkJudgment();
+            bool outOfSpecification = false;    //規格外フラグ
+            bool escExist = false;  //ESCシーケンス存在フラグ
+            byte[][] byteESC = new byte[][] {   //ESCシーケンス一覧
+                  new byte[] { 0x1B, 0x28, 0x42 } //ASCII
+                , new byte[] { 0x1B, 0x24, 0x42 } //JIS X 0208-1983（新JIS）
+                , new byte[] { 0x1B, 0x24, 0x40 } //JIS X 0208-1978（旧JIS）
+                , new byte[] { 0x1B, 0x28, 0x4A } //JIS X 0201 ローマ字
+                , new byte[] { 0x1B, 0x24, 0x28, 0x44 } //JIS X 0212-1990（補助漢字）
+                , new byte[] { 0x1B, 0x24, 0x28, 0x4F } //JIS X 0213:2000 第1面
+                , new byte[] { 0x1B, 0x24, 0x28, 0x50 } //JIS X 0213:2004 第1面
+                , new byte[] { 0x1B, 0x24, 0x28, 0x51 } //JIS X 0213 第2面
+                , new byte[] { 0x1B, 0x24, 0x41 }   //GB2312（中国語簡体字）
+                , new byte[] { 0x1B, 0x24, 0x28, 0x43 } //KS X 1001（韓国語）
+                , new byte[] { 0x1B, 0x2E, 0x41 } //ISO-8859-1（G2指示）
+                , new byte[] { 0x1B, 0x2E, 0x46 } //ISO-8859-7（ギリシャ文字、G2指示）
+                , new byte[] { 0x1B, 0x28, 0x49 } //JIS X 0201 カタカナ
+            };
+             
+            byte[] backESC = { 0, 0, 0, 0 };    //直近4バイト保存バッファ
 
             // if ISO-2022-JP
 
@@ -242,21 +265,27 @@ namespace rmsmf
                 }
                 else
                 {
+                    //直近4バイト保存
                     backESC[0] = backESC[1];
                     backESC[1] = backESC[2];
-                    backESC[2] = this._buffer[i];
-                    if (esc1 == false && match.IsMatched(backESC, byteESC1))
+                    backESC[2] = backESC[3];
+                    backESC[3] = this._buffer[i];
+
+                    //ESCシーケンス照合
+                    for (int j=0; j< byteESC.Length; j++)
                     {
-                        esc1 = true;
-                    }
-                    if (esc2 == false && match.IsMatched(backESC, byteESC2))
-                    {
-                        esc2 = true;
+                        //ESCシーケンス長さ分だけ比較
+                        if (IsMatched(backESC, byteESC[j]))
+                        {
+                            //ESCシーケンスが存在した
+                            escExist = true;    //ESCシーケンス存在フラグON
+                            break;
+                        }
                     }
                 }
             }
 
-            if (esc1 || esc2)
+            if (escExist)
             {
                 isJIS = true;
             }
