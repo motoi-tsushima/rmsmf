@@ -22,7 +22,7 @@ namespace rmsmf
     /// </summary>
     public class EncodingJudgment
     {
-        public static int bufferSize = 1000;
+        public int bufferSize = 0;
 
         /// <summary>
         /// ファイルバイナリ配列
@@ -32,9 +32,17 @@ namespace rmsmf
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public EncodingJudgment()
+        public EncodingJudgment(int filesize)
         {
-            this._buffer = new byte[EncodingJudgment.bufferSize];
+            if(filesize <= 0)
+            {
+                this.bufferSize = 0;
+                this._buffer = null;
+            }
+            else
+            {
+                this._buffer = new byte[filesize];
+            }
         }
 
         /// <summary>
@@ -44,6 +52,7 @@ namespace rmsmf
         public EncodingJudgment(byte[] buffer)
         {
             this._buffer = buffer;
+            this.bufferSize = buffer.Length;
         }
 
         /// <summary>
@@ -103,16 +112,18 @@ namespace rmsmf
 
             using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             {
-                this._buffer = new byte[EncodingJudgment.bufferSize];
+                this.bufferSize = (int)fs.Length;
+                Console.WriteLine("EncodingJudgment File Size: " + bufferSize.ToString() + " bytes");
+                this._buffer = new byte[this.bufferSize];
                 //ゼロサイズのutf-16LE.BE 対応
                 this._buffer[2] = 0xFF;
                 this._buffer[3] = 0xFF;
 
-                int readCount = fs.Read(this._buffer, 0, EncodingJudgment.bufferSize);
+                int readCount = fs.Read(this._buffer, 0, this.bufferSize);
 
                 encInfo = Judgment();
 
-                //Console.WriteLine("EncodingJudgment : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
+                Console.WriteLine("EncodingJudgment : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
             }
 
             return encInfo;
@@ -222,7 +233,7 @@ namespace rmsmf
 
             // if ISO-2022-JP
 
-            for (int i = 0; i < EncodingJudgment.bufferSize; i++)
+            for (int i = 0; i < this.bufferSize; i++)
             {
                 if (0x80 <= this._buffer[i])
                 {
@@ -269,7 +280,7 @@ namespace rmsmf
             uint[] byteChar = new uint[6];
             int byteCharCount = 0;
 
-            for (int i = 0; i < EncodingJudgment.bufferSize; i++)
+            for (int i = 0; i < this.bufferSize; i++)
             {
                 //２バイト文字以上である
                 if ((uint)0x80 <= (uint)this._buffer[i])
@@ -439,7 +450,7 @@ namespace rmsmf
             BYTECODE beforeCode = BYTECODE.OneByteCode;
             int byteCharCount = 0;
 
-            for (int i = 0; i < EncodingJudgment.bufferSize; i++)
+            for (int i = 0; i < this.bufferSize; i++)
             {
                 // 2バイトコード
                 if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
@@ -514,7 +525,7 @@ namespace rmsmf
 
             outOfSpecification = false;
 
-            for (int i = 0; i < EncodingJudgment.bufferSize; i++)
+            for (int i = 0; i < this.bufferSize; i++)
             {
                 if (this._buffer[i] <= 0x7F)
                 {

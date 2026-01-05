@@ -79,11 +79,14 @@ namespace rmsmf
                                     // エンコーディング指定が無い場合
 
                                     //  読み取りファイルの文字エンコーディングを判定する
-                                    byte[] buffer = new byte[EncodingJudgment.bufferSize];
-                                    int readCount = fs.Read(buffer, 0, EncodingJudgment.bufferSize);
+                                    int fileSize = (int)fs.Length;
+                                    Console.WriteLine("ReplaceStringsInFiles File Size: " + fileSize.ToString() + " bytes");
+                                    byte[] buffer = new byte[fileSize];
+                                    int readCount = fs.Read(buffer, 0, fileSize);
 
                                     EncodingJudgment encJudgment = new EncodingJudgment(buffer);
                                     EncodingInfomation encInfo = encJudgment.Judgment();
+                                    Console.WriteLine("ReplaceStringsInFiles : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
 
                                     fs.Position = 0;
 

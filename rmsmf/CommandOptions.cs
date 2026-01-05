@@ -366,7 +366,7 @@ namespace rmsmf
             if(this.repleaseEncoding == null)
             {
                 //置換単語リストファイルの文字エンコーディングを判定する。
-                EncodingJudgment encJudg = new EncodingJudgment();
+                EncodingJudgment encJudg = new EncodingJudgment(0);
                 EncodingInfomation encInfo = encJudg.Judgment(this._replaceWordsFileName);
 
                 if(encInfo.codePage > 0)
@@ -458,7 +458,7 @@ namespace rmsmf
             if(this.filesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
-                EncodingJudgment encJudg = new EncodingJudgment();
+                EncodingJudgment encJudg = new EncodingJudgment(0);
                 EncodingInfomation encInfo = encJudg.Judgment(this._fileNameListFileName);
 
                 if (encInfo.codePage > 0)
