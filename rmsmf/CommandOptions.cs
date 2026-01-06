@@ -441,9 +441,20 @@ namespace rmsmf
                     {
                         direcrtoryName = ".";
                     }
-                    else if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\')
+                    else if (direcrtoryName.Length == 1)
                     {
-                        direcrtoryName = ".\\" + direcrtoryName;
+                        if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\')
+                        {
+                            direcrtoryName = ".\\" + direcrtoryName;
+                        }
+                    }
+                    else if (direcrtoryName.Length > 1)
+                    {
+                        if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\'
+                            && direcrtoryName[1] != ':')
+                        {
+                            direcrtoryName = ".\\" + direcrtoryName;
+                        }
                     }
                 }
                 else
