@@ -539,7 +539,7 @@ namespace rmsmf
         /// <summary>
         /// Shift-JISバイト種別
         /// </summary>
-        public enum SJIS_BYTECODE : byte { OneByteCode, TwoByteCommon, TwoByteBefore, TwoByteAfter, KanaOneByte }
+        public enum SJIS_BYTECODE : byte { OneByteCode, TwoByteBefore, TwoByteAfter, KanaOneByte, OutOfSpec, Unknown }
 
         /// <summary>
         /// Shift-JIS であるか判定する
@@ -547,53 +547,98 @@ namespace rmsmf
         /// <returns>true=Shift-JISでは無い</returns>
         public bool SJIS_Judgment()
         {
-            bool outOfSpecification;
+            bool outOfSpecification = false; ;
+            SJIS_BYTECODE beforeSjisByte = SJIS_BYTECODE.OneByteCode;
             SJIS_BYTECODE sjisByte = SJIS_BYTECODE.OneByteCode;
 
             // if SJIS
 
-            outOfSpecification = false;
-
             for (int i = 0; i < this.bufferSize; i++)
             {
-                if (this._buffer[i] <= 0x7F)
+                // バイト種別判定
+                if (beforeSjisByte != SJIS_BYTECODE.TwoByteBefore
+                    && this._buffer[i] <= 0x7F )
                 {
                     sjisByte = SJIS_BYTECODE.OneByteCode;
                 }
-                else if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xDF)
+                else if (
+                    (beforeSjisByte != SJIS_BYTECODE.TwoByteBefore)
+                    && (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xDF)
+                    )
                 {
                     sjisByte = SJIS_BYTECODE.KanaOneByte;
                 }
-                else if (0x81 <= this._buffer[i] && this._buffer[i] <= 0x9F)
-                {
-                    sjisByte = SJIS_BYTECODE.TwoByteCommon;
-                }
-                else if (0xE0 <= this._buffer[i] && this._buffer[i] <= 0xEF)
-                {
-                    if (sjisByte == SJIS_BYTECODE.TwoByteBefore)
-                    {
-                        outOfSpecification = true;
-                        break;
-                    }
-                    sjisByte = SJIS_BYTECODE.TwoByteBefore;
-                }
-                else if (
-                    (0x40 <= this._buffer[i] && this._buffer[i] <= 0x7E) ||
-                    (0x80 <= this._buffer[i] && this._buffer[i] <= 0xFC)
+                else if ((beforeSjisByte != SJIS_BYTECODE.TwoByteBefore) 
+                    && (0x81 <= this._buffer[i] && this._buffer[i] <= 0x9F)
                     )
                 {
-                    if (sjisByte == SJIS_BYTECODE.TwoByteAfter)
-                    {
-                        outOfSpecification = true;
-                        break;
-                    }
+                    sjisByte = SJIS_BYTECODE.TwoByteBefore;
+                }
+                else if ((beforeSjisByte != SJIS_BYTECODE.TwoByteBefore)
+                    && (0xE0 <= this._buffer[i] && this._buffer[i] <= 0xFC)
+                    )
+                {
+                    sjisByte = SJIS_BYTECODE.TwoByteBefore;
+                }
+                else if ((beforeSjisByte == SJIS_BYTECODE.TwoByteBefore)
+                        && (0x40 <= this._buffer[i] && this._buffer[i] <= 0x7E)
+                        )
+                {
                     sjisByte = SJIS_BYTECODE.TwoByteAfter;
                 }
+                else if ((beforeSjisByte == SJIS_BYTECODE.TwoByteBefore)
+                        && (0x80 <= this._buffer[i] && this._buffer[i] <= 0xFC)
+                        )
+                {
+                    sjisByte = SJIS_BYTECODE.TwoByteAfter;
+                }
+                else if (this._buffer[i] == 0x80 || this._buffer[i] == 0xA0)
+                {
+                    sjisByte = SJIS_BYTECODE.OutOfSpec;
+                }
+                else if (0xFD <= this._buffer[i]  && this._buffer[i] <= 0xFF)
+                {
+                    sjisByte = SJIS_BYTECODE.OutOfSpec;
+                }
+                else if (this._buffer[i] == 0x7F)
+                {
+                    sjisByte = SJIS_BYTECODE.OutOfSpec;
+                }
                 else
+                {
+                    sjisByte = SJIS_BYTECODE.Unknown;
+                    Console.WriteLine("SJIS Spec Unkown byte found : 0x{0:X2}", this._buffer[i]);
+                }
+
+                // バイト種別規格判定
+                if(sjisByte == SJIS_BYTECODE.OutOfSpec)
                 {
                     outOfSpecification = true;
                     break;
                 }
+
+                if (sjisByte == SJIS_BYTECODE.TwoByteBefore)
+                {
+                    if(i == (this.bufferSize - 1))
+                    {
+                        // 最後のバイトで2バイト文字の前半が来たら規格外
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+                
+                if (beforeSjisByte == SJIS_BYTECODE.TwoByteBefore)
+                {
+                    // 直前が2バイト文字の前半の場合
+                    if (sjisByte != SJIS_BYTECODE.TwoByteAfter)
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+
+                // 一つ前のバイト種別の保存
+                beforeSjisByte = sjisByte;
             }
 
             return outOfSpecification;
