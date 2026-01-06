@@ -11,11 +11,13 @@ namespace rmsmf
     public class Colipex
     {
         public const string NonValue = "NonValueOption";
-        public const char OptionSeparator = ':';
+        public const char OptionSeparatorColon = ':';
+        public const char OptionSeparatorEqual = '=';
 
         public Colipex(string[] args)
         {
             ExecutionState.className = "Colipex.Colipex";
+            char optionSeparator = (char)0;
 
             try
             {
@@ -27,7 +29,19 @@ namespace rmsmf
                     if(parameter[0] == '-' || parameter[0] == '/')
                     {
                         string optionWord = parameter.Substring(1).TrimEnd(new char[] { '\x0a', '\x0d' });
-                        string[] optionValue = optionWord.Split(OptionSeparator);
+                        if(optionWord.Contains(OptionSeparatorColon))
+                        {
+                            optionSeparator = OptionSeparatorColon;
+                        }
+                        else if(optionWord.Contains(OptionSeparatorEqual))
+                        {
+                            optionSeparator = OptionSeparatorEqual;
+                        }
+                        else
+                        {
+                            optionSeparator = OptionSeparatorColon;
+                        }
+                        string[] optionValue = optionWord.Split(optionSeparator);
                         if(optionValue.Length == 1)
                         {
                             this.options.Add(optionWord, NonValue);
