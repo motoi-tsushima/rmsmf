@@ -433,7 +433,24 @@ namespace rmsmf
                 //ファイル名リストファイルが無い場合はコマンドパラメータのファイル名を検索する
 
                 string path = this.Parameters[0].TrimEnd(new char[] { '\x0a', '\x0d' });
+
                 string direcrtoryName = Path.GetDirectoryName(path);
+                if (direcrtoryName != null) 
+                { 
+                    if (direcrtoryName.Length == 0)
+                    {
+                        direcrtoryName = ".";
+                    }
+                    else if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\')
+                    {
+                        direcrtoryName = ".\\" + direcrtoryName;
+                    }
+                }
+                else
+                {
+                    direcrtoryName = ".";
+                }
+
                 string searchWord = Path.GetFileName(path);
 
                 try
