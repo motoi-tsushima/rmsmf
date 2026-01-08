@@ -103,12 +103,18 @@ namespace rmsmf
 
         private bool IsMatched(byte[] data, byte[] bom)
         {
+            if (data == null || data.Length < bom.Length)
+                return false;
+
             bool result = true;
 
             for (int i = 0; i < bom.Length; i++)
             {
                 if (bom[i] != data[i])
+                {
                     result = false;
+                    break;
+                }
             }
 
             return result;

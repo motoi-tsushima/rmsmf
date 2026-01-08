@@ -347,6 +347,21 @@ namespace rmsmf
         }
 
         /// <summary>
+        /// エスケープシーケンス変換
+        /// </summary>
+        /// <param name="input">変換対象文字列</param>
+        /// <returns>変換後文字列</returns>
+        private string ConvertEscapeSequences(string input)
+        {
+            return input
+                .Replace("\\r\\n", "\r\n")
+                .Replace("\\r", "\r")
+                .Replace("\\n", "\n")
+                .Replace("\\t", "\t")
+                .Replace("\\\\", "\\");
+        }
+
+        /// <summary>
         /// 置換単語テーブル初期化
         /// </summary>
         /// <returns>true=正常に初期化した</returns>
@@ -390,6 +405,7 @@ namespace rmsmf
                 while (!reader.EndOfStream)
                 {
                     string line = reader.ReadLine();
+                    line = this.ConvertEscapeSequences(line);
 
                     if (line.Length == 0) continue;
                     if (line.IndexOf(',') < 0) continue;
