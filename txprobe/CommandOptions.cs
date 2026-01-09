@@ -1,21 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Text;
+using System.IO;
+using rmsmf;
 
-namespace rmsmf
+namespace txprobe
 {
+    /// <summary>
+    /// txprobe 用　コマンドオプション解析クラス
+    /// </summary>
     public class CommandOptions : Colipex
     {
         private const string CharacterSetJudgment = "Judgment";
         private const string OptionHelp = "h";
         private const string OptionCharacterSet = "c";
-        private const string OptionWriteCharacterSet = "w";
         private const string OptionFileNameList = "f";
         private const string OptionFileNameListCharacterSet = "fc";
-        private const string OptionReplaceWords = "r";
-        private const string OptionReplaceWordsCharacterSet = "rc";
-        private const string OptionWriteByteOrderMark = "b";
+        private const string OptionSearchWords = "s";
+        private const string OptionSearchWordsCharacterSet = "sc";
+        private const string OptionProbeMode = "p";
         private const string OptionAllDirectories = "d";
 
         private bool searchOptionAllDirectories = false; // AllDirectories オプション
@@ -29,10 +33,8 @@ namespace rmsmf
             ExecutionState.className = "CommandOptions.CommandOptions";
 
             string readCharacterSet;
-            string replaceWordsCharacterSet;
+            string searchWordsCharacterSet;
             string filesCharacterSet;
-            string writeCharacterSet;
-            bool? existByteOrderMark;
 
             string errorEncoding = null;
 
@@ -44,9 +46,9 @@ namespace rmsmf
             }
 
             //パラメータがない場合は終了
-            if (this.IsOption(OptionFileNameList) == false)
+            if(this.IsOption(OptionFileNameList) == false)
             {
-                if (this.Parameters.Count == 0 && this.Options.Count == 0)
+                if(this.Parameters.Count == 0 && this.Options.Count == 0)
                 {
                     ExecutionState.isError = true;
                     ExecutionState.isNormal = !ExecutionState.isError;
@@ -74,31 +76,12 @@ namespace rmsmf
                     readCharacterSet = CharacterSetJudgment;
                 }
 
-                //Setting Write CharacterSet 
-                //書き込み文字エンコーディング名の設定する。
-                if (this.IsOption(OptionWriteCharacterSet) == true)
+                //Setting SearchWords CharacterSet 
+                //検索単語リストの文字エンコーディングの設定する。
+                if (this.IsOption(OptionSearchWordsCharacterSet) == true)
                 {
-                    writeCharacterSet = this.Options[OptionWriteCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (writeCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/w)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/w)");
-                        return;
-                    }
-                    this.Empty_WriteCharacterSet = false;
-                }
-                else
-                {
-                    writeCharacterSet = readCharacterSet;
-                    this.Empty_WriteCharacterSet = true;
-                }
-
-                //Setting ReplaceWords CharacterSet 
-                //置換単語リストの文字エンコーディングの設定する。
-                if (this.IsOption(OptionReplaceWordsCharacterSet) == true)
-                {
-                    replaceWordsCharacterSet = this.Options[OptionReplaceWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (replaceWordsCharacterSet == Colipex.NonValue)
+                    searchWordsCharacterSet = this.Options[OptionSearchWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                    if (searchWordsCharacterSet == Colipex.NonValue)
                     {
                         //Console.WriteLine("Please specify the encoding name. (/rc)");
                         Console.WriteLine("文字エンコーディング名を指定してください。 (/rc)");
@@ -107,7 +90,7 @@ namespace rmsmf
                 }
                 else
                 {
-                    replaceWordsCharacterSet = readCharacterSet;
+                    searchWordsCharacterSet = readCharacterSet;
                 }
 
                 //Setting FileNameList CharacterSet 
@@ -127,23 +110,23 @@ namespace rmsmf
                     filesCharacterSet = readCharacterSet;
                 }
 
-                //Setting ByteOrderMark
-                //BOM を設定する。
-                if (this.IsOption(OptionWriteByteOrderMark) == true)
+                //Probe Mode
+                if (this.IsOption(OptionProbeMode) == true)
                 {
-                    string optionBOM = this.Options[OptionWriteByteOrderMark].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
-
-                    if (optionBOM == "false" || optionBOM == "no" || optionBOM == "n")
-                        existByteOrderMark = false;
-                    else
-                        existByteOrderMark = true;
+                    this._enableProbe = true;
                 }
                 else
                 {
-                    existByteOrderMark = null;
+                    if (this.IsOption(OptionSearchWords) == false)
+                    {
+                        // 検索文字列が無い場合は Probe Mode を有効にする
+                        this._enableProbe = true;
+                    }
+                    else
+                    {
+                        this._enableProbe = false;
+                    }
                 }
-
-                this._enableBOM = existByteOrderMark;
 
                 // AllDirectories を有効にする
                 if (this.IsOption(OptionAllDirectories) == true)
@@ -155,12 +138,12 @@ namespace rmsmf
                     this.searchOptionAllDirectories = false;
                 }
 
+
                 //-----------------------------------------------------------
                 //Setting Encoding and Check error of Encoding
                 //エンコーディングの設定とエンコーディングのエラーの確認をする。
                 //-
                 int codePage;
-                int writeCodePage;
                 int repleaseCodePage;
                 int filesCodePage;
 
@@ -173,23 +156,15 @@ namespace rmsmf
                 else
                     this.encoding = Encoding.GetEncoding(readCharacterSet);
 
-                //Setting Write Encoding
-                errorEncoding = "Write Encoding";
-                if (writeCharacterSet == CharacterSetJudgment)
-                    this.writeEncoding = null;
-                else if (int.TryParse(writeCharacterSet, out writeCodePage))
-                    this.writeEncoding = Encoding.GetEncoding(writeCodePage);
-                else
-                    this.writeEncoding = Encoding.GetEncoding(writeCharacterSet);
 
                 //Setting Replease Encoding
                 errorEncoding = "Replease Encoding";
-                if (replaceWordsCharacterSet == CharacterSetJudgment)
+                if (searchWordsCharacterSet == CharacterSetJudgment)
                     this.repleaseEncoding = null;
-                else if (int.TryParse(replaceWordsCharacterSet, out repleaseCodePage))
+                else if (int.TryParse(searchWordsCharacterSet, out repleaseCodePage))
                     this.repleaseEncoding = Encoding.GetEncoding(repleaseCodePage);
                 else
-                    this.repleaseEncoding = Encoding.GetEncoding(replaceWordsCharacterSet);
+                    this.repleaseEncoding = Encoding.GetEncoding(searchWordsCharacterSet);
 
                 //Setting Files Encoding
                 errorEncoding = "Files Encoding";
@@ -226,7 +201,7 @@ namespace rmsmf
             {
                 ExecutionState.isError = true;
                 ExecutionState.isNormal = !ExecutionState.isError;
-                if (errorEncoding == null)
+                if(errorEncoding == null)
                     ExecutionState.errorMessage = "管理下のエラー:ArgumentException" + errorEncoding;
                 else
                 {
@@ -242,12 +217,12 @@ namespace rmsmf
             }
 
             //------------------------------------------------------------
-            // 置換単語リストファイルオプションの設定
+            // 検索単語リストファイルオプションの設定
             //-
-            //置換単語リストが存在する。
-            if (this.IsOption(OptionReplaceWords) == true)
+            //検索単語リストが存在する。
+            if (this.IsOption(OptionSearchWords) == true)
             {
-                if (this.Options[OptionReplaceWords] == Colipex.NonValue)
+                if (this.Options[OptionSearchWords] == Colipex.NonValue)
                 {
                     ExecutionState.isError = true;
                     ExecutionState.isNormal = !ExecutionState.isError;
@@ -256,15 +231,15 @@ namespace rmsmf
                     throw new Exception(ExecutionState.errorMessage);
                 }
 
-                //置換単語リストファイル名を保存する
-                this._replaceWordsFileName = this.Options[OptionReplaceWords].TrimEnd(new char[] { '\x0a', '\x0d' });
+                //検索単語リストファイル名を保存する
+                this._searchWordsFileName = this.Options[OptionSearchWords].TrimEnd(new char[] { '\x0a', '\x0d' }); 
 
-                //置換単語リストファイル名の存在確認
-                if (!File.Exists(this._replaceWordsFileName))
+                //検索単語リストファイル名の存在確認
+                if (!File.Exists(this._searchWordsFileName))
                 {
                     ExecutionState.isError = true;
                     ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._replaceWordsFileName + " が存在しません。 ";
+                    ExecutionState.errorMessage = this._searchWordsFileName + " が存在しません。 ";
 
                     throw new Exception(ExecutionState.errorMessage);
                 }
@@ -285,7 +260,7 @@ namespace rmsmf
                 }
 
                 //ファイルリストファイル名を保存する
-                this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
+                this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' }); 
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
@@ -300,25 +275,13 @@ namespace rmsmf
             //------------------------------------------------------------
             // オプションの正当性確認
             //-
-            if (this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
+            if(this.IsOption(OptionSearchWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
                 ExecutionState.isError = true;
                 ExecutionState.isNormal = !ExecutionState.isError;
                 ExecutionState.errorMessage = "必須パラメータが入力されていません。";
 
                 throw new Exception(ExecutionState.errorMessage);
-            }
-
-            if (this.IsOption(OptionReplaceWords) == false)
-            {
-                if (this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false && this.IsOption(OptionWriteByteOrderMark) == false)
-                {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "文字エンコーディングの変換をする場合は、/w:により出力先の文字エンコーディングを指定してください。";
-
-                    throw new Exception(ExecutionState.errorMessage);
-                }
             }
 
             if (this.IsOption(OptionFileNameList) == true && this.Parameters.Count > 0)
@@ -330,20 +293,20 @@ namespace rmsmf
                 throw new Exception(ExecutionState.errorMessage);
             }
 
-            if (this.IsOption(OptionReplaceWords) == true && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
+            if (this.IsOption(OptionSearchWords) == true && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
                 ExecutionState.isError = true;
                 ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "置換対象となるファイルを指定してください。";
+                ExecutionState.errorMessage = "対象となるファイルを指定してください。";
 
                 throw new Exception(ExecutionState.errorMessage);
             }
 
-            if (this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionReplaceWordsCharacterSet) == true)
+            if(this.IsOption(OptionSearchWords) == false && this.IsOption(OptionSearchWordsCharacterSet) == true)
             {
                 ExecutionState.isError = true;
                 ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "置換単語ファイルが指定されていないのに、置換単語ファイルのエンコーディングが指定されています。";
+                ExecutionState.errorMessage = "検索単語ファイルが指定されていないのに、検索単語ファイルのエンコーディングが指定されています。";
 
                 throw new Exception(ExecutionState.errorMessage);
             }
@@ -374,29 +337,29 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// 置換単語テーブル初期化
+        /// 検索単語テーブル初期化
         /// </summary>
         /// <returns>true=正常に初期化した</returns>
-        public bool ReadReplaceWords()
+        public bool ReadSearchWords()
         {
             bool normal = true;
 
-            if (string.IsNullOrEmpty(this._replaceWordsFileName))
+            if (string.IsNullOrEmpty(this._searchWordsFileName))
             {
                 normal = false;
                 return normal;
             }
 
-            //置換単語の設定をする。
+            //検索単語の設定をする。
             List<string> wordsList = new List<string>();
 
-            if (this.repleaseEncoding == null)
+            if(this.repleaseEncoding == null)
             {
-                //置換単語リストファイルの文字エンコーディングを判定する。
+                //検索単語リストファイルの文字エンコーディングを判定する。
                 EncodingJudgment encJudg = new EncodingJudgment(0);
-                EncodingInfomation encInfo = encJudg.Judgment(this._replaceWordsFileName);
+                EncodingInfomation encInfo = encJudg.Judgment(this._searchWordsFileName);
 
-                if (encInfo.codePage > 0)
+                if(encInfo.codePage > 0)
                 {
                     this.repleaseEncoding = Encoding.GetEncoding(encInfo.codePage);
                 }
@@ -404,15 +367,15 @@ namespace rmsmf
                 {
                     ExecutionState.isError = true;
                     ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._replaceWordsFileName + "の文字エンコーディングが分かりません。";
+                    ExecutionState.errorMessage = this._searchWordsFileName + "の文字エンコーディングが分かりません。";
 
                     throw new Exception(ExecutionState.errorMessage);
                 }
             }
 
-            //Read replacement word CSV file
-            //置換単語リストCSVを読み取る。
-            using (var reader = new StreamReader(this._replaceWordsFileName, this.repleaseEncoding, true))
+            //Read searchment word CSV file
+            //検索単語リストCSVを読み取る。
+            using (var reader = new StreamReader(this._searchWordsFileName, this.repleaseEncoding, true))
             {
                 while (!reader.EndOfStream)
                 {
@@ -426,23 +389,21 @@ namespace rmsmf
                 }
             }
 
-            if (wordsList.Count == 0)
+            if(wordsList.Count == 0)
             {
                 ExecutionState.isError = true;
                 ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = this._replaceWordsFileName + "の置換単語がゼロ件です。";
+                ExecutionState.errorMessage = this._searchWordsFileName + "の検索単語がゼロ件です。";
 
                 throw new Exception(ExecutionState.errorMessage);
             }
 
-            //置換単語テーブルへ登録する。
-            this._replaceWordsCount = wordsList.Count;
-            this._replaceWords = new string[2, this._replaceWordsCount];
-            for (int i = 0; i < this._replaceWordsCount; i++)
+            //検索単語テーブルへ登録する。
+            this._searchWordsCount = wordsList.Count;
+            this._searchWords = new string[this._searchWordsCount];
+            for (int i = 0; i < this._searchWordsCount; i++)
             {
-                string[] colmuns = wordsList[i].Split(',');
-                this._replaceWords[0, i] = colmuns[0];
-                this._replaceWords[1, i] = colmuns[1];
+                this._searchWords[i] = wordsList[i];
             }
 
             return normal;
@@ -463,8 +424,8 @@ namespace rmsmf
                 string path = this.Parameters[0].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 string direcrtoryName = Path.GetDirectoryName(path);
-                if (direcrtoryName != null)
-                {
+                if (direcrtoryName != null) 
+                { 
                     if (direcrtoryName.Length == 0)
                     {
                         direcrtoryName = ".";
@@ -496,11 +457,13 @@ namespace rmsmf
                 {
                     System.IO.SearchOption searchOption = System.IO.SearchOption.TopDirectoryOnly;
                     if (this.searchOptionAllDirectories == true)
+                    {
                         searchOption = System.IO.SearchOption.AllDirectories;
+                    }
 
                     this._files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, searchOption);
                 }
-                catch (System.ArgumentException ex)
+                catch(System.ArgumentException ex)
                 {
                     ExecutionState.isError = true;
                     ExecutionState.isNormal = !ExecutionState.isError;
@@ -515,7 +478,7 @@ namespace rmsmf
 
             //ファイル名リストファイルが有る場合
 
-            if (this.filesEncoding == null)
+            if(this.filesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
                 EncodingJudgment encJudg = new EncodingJudgment(0);
@@ -570,38 +533,38 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// 置換単語テーブル
+        /// 検索単語テーブル
         /// </summary>
-        private string[,] _replaceWords;
+        private string[] _searchWords;
 
         /// <summary>
-        /// 置換単語テーブルプロパティ
+        /// 検索単語テーブルプロパティ
         /// </summary>
-        public string[,] ReplaceWords
+        public string[] SearchWords
         {
-            get { return this._replaceWords; }
+            get { return this._searchWords; }
         }
 
         /// <summary>
-        /// 置換単語件数
+        /// 検索単語件数
         /// </summary>
-        private int _replaceWordsCount;
+        private int _searchWordsCount;
 
         /// <summary>
-        /// 置換単語件数プロパティ
+        /// 検索単語件数プロパティ
         /// </summary>
-        public int ReplaceWordsCount
+        public int SearchWordsCount
         {
-            get { return this._replaceWordsCount; }
+            get { return this._searchWordsCount; }
         }
 
         /// <summary>
-        /// 置換対象ファイル名一覧
+        /// 検索対象ファイル名一覧
         /// </summary>
         private string[] _files = null;
 
         /// <summary>
-        /// 置換対象ファイル名一覧プロパティ
+        /// 検索対象ファイル名一覧プロパティ
         /// </summary>
         public string[] Files
         {
@@ -610,30 +573,30 @@ namespace rmsmf
 
 
         /// <summary>
-        /// 書き込みBOM指定が有効です
+        /// Probe Mode が有効です
         /// </summary>
-        private bool? _enableBOM = false;
+        private bool _enableProbe = false;
 
         /// <summary>
-        /// 書き込みBOM指定が有効です。プロパティ
+        /// Probe Mode が有効です。プロパティ
         /// </summary>
-        public bool? EnableBOM
+        public bool EnableProbe
         {
-            get { return this._enableBOM; }
+            get { return this._enableProbe; }
         }
 
 
         /// <summary>
-        /// 置換単語リストCSVのファイル名
+        /// 検索単語リストCSVのファイル名
         /// </summary>
-        private string _replaceWordsFileName = null;
+        private string _searchWordsFileName = null;
 
         /// <summary>
-        /// 置換単語リストCSVのファイル名
+        /// 検索単語リストCSVのファイル名
         /// </summary>
-        public string ReplaceWordsFileName
+        public string SearchWordsFileName
         {
-            get { return this._replaceWordsFileName; }
+            get { return this._searchWordsFileName; }
         }
 
         /// <summary>
@@ -665,7 +628,7 @@ namespace rmsmf
         public bool Empty_WriteCharacterSet = false;
 
         /// <summary>
-        /// 置換単語リストCSV文字エンコーディング
+        /// 検索単語リストCSV文字エンコーディング
         /// </summary>
         public Encoding repleaseEncoding = null;
 
