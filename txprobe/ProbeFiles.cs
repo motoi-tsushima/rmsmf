@@ -1,5 +1,4 @@
-﻿using rmsmf;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -120,7 +119,7 @@ namespace txprobe
                             {
                                 //エンコーディングが不明な場合、処理をスキップする。
                                 string dispBOM;
-                                string lineBreakType = "Unknown";
+                                string lineBreakType = "EOL Unknown";
                                 string encodingName = "encoding Unknown";
 
                                 if (bomExist == true)

@@ -43,19 +43,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ByteOrderMarkJudgment.cs" />
+    <Compile Include="Colipex.cs" />
     <Compile Include="CommandOptions.cs" />
+    <Compile Include="EncodingJudgment.cs" />
+    <Compile Include="ExecutionState.cs" />
+    <Compile Include="Help.cs" />
     <Compile Include="ProbeFiles.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\rmsmf\rmsmf.csproj">
-      <Project>{8ff2f5f3-83b8-4561-b51f-aae956075b91}</Project>
-      <Name>rmsmf</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

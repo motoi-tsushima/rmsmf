@@ -1,0 +1,93 @@
+# GitHub Actions ワークフロー
+# タグをプッシュすると自動的にビルド・リリースを作成
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # v1.0.0 のようなタグがプッシュされた時
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+    
+    - name: Restore NuGet packages
+      run: nuget restore rmsmf.sln
+    
+    - name: Build rmsmf (Release)
+      run: msbuild rmsmf/rmsmf.csproj /p:Configuration=Release /p:Platform=AnyCPU
+    
+    - name: Build txprobe (Release)
+      run: msbuild txprobe/txprobe.csproj /p:Configuration=Release /p:Platform=AnyCPU
+    
+    - name: Get version from tag
+      id: get_version
+      run: |
+        $version = "${{ github.ref_name }}" -replace '^v', ''
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+    
+    - name: Create release package
+      run: |
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        $releaseName = "rmsmf-suite-v$version"
+        $releaseDir = $releaseName
+        $binDir = "$releaseDir/bin"
+        
+        # フォルダー作成
+        New-Item -ItemType Directory -Path $releaseDir -Force
+        New-Item -ItemType Directory -Path $binDir -Force
+        
+        # EXEファイルをコピー
+        Copy-Item "rmsmf/bin/Release/rmsmf.exe" -Destination $binDir
+        Copy-Item "txprobe/bin/Release/txprobe.exe" -Destination $binDir
+        
+        # ドキュメントをコピー
+        Copy-Item "README.md" -Destination $releaseDir -ErrorAction SilentlyContinue
+        Copy-Item "LICENSE.txt" -Destination $releaseDir -ErrorAction SilentlyContinue
+        Copy-Item "CHANGELOG.md" -Destination $releaseDir -ErrorAction SilentlyContinue
+        
+        # ZIPファイル作成
+        Compress-Archive -Path $releaseDir -DestinationPath "$releaseName.zip"
+        
+        echo "RELEASE_NAME=$releaseName" >> $env:GITHUB_OUTPUT
+      id: create_package
+      shell: pwsh
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ steps.create_package.outputs.RELEASE_NAME }}.zip
+        body: |
+          # rmsmf Suite ${{ steps.get_version.outputs.VERSION }}
+          
+          ## 含まれるツール
+          
+          - **rmsmf.exe** - テキストファイルの文字エンコーディング変換・置換ツール
+          - **txprobe.exe** - テキストファイル探索ツール
+          
+          ## インストール方法
+          
+          1. ZIPファイルをダウンロードして展開
+          2. `bin` フォルダーを PATH 環境変数に追加
+          
+          詳細は README.md を参照してください。
+          
+          ## 変更内容
+          
+          変更内容の詳細は [CHANGELOG.md](https://github.com/motoi-tsushima/rmsmf/blob/${{ github.ref_name }}/CHANGELOG.md) を参照してください。
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

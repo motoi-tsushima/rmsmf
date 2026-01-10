@@ -139,7 +139,7 @@ namespace rmsmf
                                 {
                                     //読み込みエンコーディングが不明な場合、処理をスキップする。
                                     string dispBOM;
-                                    string lineBreakType = "Unknown";
+                                    string lineBreakType = "EOL Unknown";
                                     string encodingName = "encoding Unknown";
 
                                     if (bomExist == true)
