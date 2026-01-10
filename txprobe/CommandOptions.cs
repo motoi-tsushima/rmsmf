@@ -383,7 +383,7 @@ namespace txprobe
                     line = this.ConvertEscapeSequences(line);
 
                     if (line.Length == 0) continue;
-                    if (line.IndexOf(',') < 0) continue;
+                    //if (line.IndexOf(',') < 0) continue;
 
                     wordsList.Add(line);
                 }

@@ -45,6 +45,8 @@ namespace txprobe
                 {
                     Help help = new Help();
                     help.Show();
+                    Console.WriteLine("\nPress any key to exit...");
+                    Console.ReadKey();
                     return;
                 }
 
@@ -57,6 +59,7 @@ namespace txprobe
                 probe.Probe(commandOptions.encoding);
 
                 //正常に処理を完了した。
+                Console.WriteLine("");
                 Console.WriteLine("Search complete.");
             }
             catch (Exception ex)
@@ -76,9 +79,13 @@ namespace txprobe
                     throw ex;
                 }
 
+                //Console.WriteLine("\nPress any key to exit...");
+                //Console.ReadKey();
                 return;
             }
 
+            //Console.WriteLine("\nPress any key to exit...");
+            //Console.ReadKey();
         }
     }
 }

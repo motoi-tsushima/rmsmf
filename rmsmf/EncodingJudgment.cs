@@ -613,7 +613,7 @@ namespace rmsmf
                 else
                 {
                     sjisByte = SJIS_BYTECODE.Unknown;
-                    Console.WriteLine("SJIS Spec Unkown byte found : 0x{0:X2}", this._buffer[i]);
+                    //Console.WriteLine("SJIS Spec Unkown byte found : 0x{0:X2}", this._buffer[i]);
                 }
 
                 // バイト種別規格判定

@@ -82,16 +82,33 @@ namespace rmsmf
                                     int fileSize = (int)fs.Length;
                                     byte[] buffer = new byte[fileSize];
                                     int readCount = fs.Read(buffer, 0, fileSize);
-
-                                    EncodingJudgment encJudgment = new EncodingJudgment(buffer);
-                                    EncodingInfomation encInfo = encJudgment.Judgment();
-
                                     fs.Position = 0;
 
-                                    bomExist = encInfo.bom;
-                                    codePage = encInfo.codePage;
+                                    ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
 
-                                    inEncoding = Encoding.GetEncoding(encInfo.codePage);
+                                    if (bomJudg.IsBOM(buffer))
+                                    {
+                                        bomExist = true;
+                                        codePage = bomJudg.CodePage;
+                                    }
+                                    else
+                                    {
+                                        bomExist = false;
+
+                                        EncodingJudgment encJudgment = new EncodingJudgment(buffer);
+                                        EncodingInfomation encInfo = encJudgment.Judgment();
+
+                                        codePage = encInfo.codePage;
+                                    }
+
+                                    if (codePage > 0)
+                                    {
+                                        inEncoding = Encoding.GetEncoding(codePage);
+                                    }
+                                    else
+                                    {
+                                        inEncoding = null;
+                                    }
                                 }
                                 else
                                 {
@@ -116,6 +133,27 @@ namespace rmsmf
                                         bomExist = false;
                                         codePage = encoding.CodePage;
                                     }
+                                }
+
+                                if (inEncoding == null)
+                                {
+                                    //読み込みエンコーディングが不明な場合、処理をスキップする。
+                                    string dispBOM;
+                                    string lineBreakType = "Unknown";
+                                    string encodingName = "encoding Unknown";
+
+                                    if (bomExist == true)
+                                    {
+                                        dispBOM = "BOM exists";
+                                    }
+                                    else
+                                    {
+                                        dispBOM = "No BOM";
+                                    }
+
+                                    string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
+                                    Console.WriteLine("{0}", dispLine);
+                                    return;
                                 }
 
                                 //書き込みエンコーディングの有無で分岐

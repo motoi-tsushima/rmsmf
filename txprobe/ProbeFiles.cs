@@ -64,16 +64,33 @@ namespace txprobe
                                 int fileSize = (int)fs.Length;
                                 byte[] buffer = new byte[fileSize];
                                 int readCount = fs.Read(buffer, 0, fileSize);
-
-                                EncodingJudgment encJudgment = new EncodingJudgment(buffer);
-                                EncodingInfomation encInfo = encJudgment.Judgment();
-
                                 fs.Position = 0;
 
-                                bomExist = encInfo.bom;
-                                codePage = encInfo.codePage;
+                                ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
 
-                                inEncoding = Encoding.GetEncoding(encInfo.codePage);
+                                if (bomJudg.IsBOM(buffer))
+                                {
+                                    bomExist = true;
+                                    codePage = bomJudg.CodePage;
+                                }
+                                else
+                                {
+                                    bomExist = false;
+
+                                    EncodingJudgment encJudgment = new EncodingJudgment(buffer);
+                                    EncodingInfomation encInfo = encJudgment.Judgment();
+
+                                    codePage = encInfo.codePage;
+                                }
+
+                                if (codePage > 0)
+                                {
+                                    inEncoding = Encoding.GetEncoding(codePage);
+                                }
+                                else
+                                {
+                                    inEncoding = null;
+                                }
                             }
                             else
                             {
@@ -97,6 +114,27 @@ namespace txprobe
                                     bomExist = false;
                                     codePage = encoding.CodePage;
                                 }
+                            }
+
+                            if(inEncoding == null)
+                            {
+                                //エンコーディングが不明な場合、処理をスキップする。
+                                string dispBOM;
+                                string lineBreakType = "Unknown";
+                                string encodingName = "encoding Unknown";
+
+                                if (bomExist == true)
+                                {
+                                    dispBOM = "BOM exists";
+                                }
+                                else
+                                {
+                                    dispBOM = "No BOM";
+                                }
+
+                                string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
+                                Console.WriteLine("{0}", dispLine);
+                                return;
                             }
 
                             //エンコーディングを指定してテキストストリームを開く
@@ -148,6 +186,26 @@ namespace txprobe
         public bool ReadForSearch(string fileName, StreamReader reader, Encoding encoding, bool bomExist)
         {
             bool rc = true;
+            string dispBOM;
+            string encodingName = "";
+
+            if (bomExist == true)
+            {
+                dispBOM = "BOM exists";
+            }
+            else
+            {
+                dispBOM = "No BOM";
+            }
+
+            if(encoding == null)
+            {
+                encodingName = "encoding Unknown";
+            }
+            else
+            {
+                encodingName = encoding.WebName;
+            }
 
             //Read Readfile.
             //読み取りファイルを全て読み込む。
@@ -159,10 +217,16 @@ namespace txprobe
 
             do
             {
-                indexCRLF = readLine.IndexOf("\r\n", indexCRLF, readLine.Length);
+                if(readLine.Length - indexCRLF < 2)
+                {
+                    break;
+                }
+
+                indexCRLF = readLine.IndexOf("\r\n", indexCRLF, readLine.Length - indexCRLF);
                 if (indexCRLF >= 0)
                 {
                     countCRLF++;
+                    indexCRLF += 2;
                 }
 
             } while (indexCRLF >= 0);
@@ -173,10 +237,16 @@ namespace txprobe
 
             do
             {
-                indexLF = readLine.IndexOf("\n", indexLF, readLine.Length);
+                if (readLine.Length - indexLF < 1)
+                {
+                    break;
+                }
+
+                indexLF = readLine.IndexOf("\n", indexLF, readLine.Length - indexLF);
                 if (indexLF >= 0)
                 {
                     countLF++;
+                    indexLF++;
                 }
 
             } while (indexLF >= 0);
@@ -187,10 +257,16 @@ namespace txprobe
 
             do
             {
-                indexCRLF = readLine.IndexOf("\r", indexCR, readLine.Length);
+                if (readLine.Length - indexCR < 1)
+                {
+                    break;
+                }
+
+                indexCR = readLine.IndexOf("\r", indexCR, readLine.Length - indexCR);
                 if (indexCR >= 0)
                 {
                     countCR++;
+                    indexCR++;
                 }
 
             } while (indexCR >= 0);
@@ -234,7 +310,8 @@ namespace txprobe
             if (this._searchWords != null)
             {
                 //検索を実施します。
-                int searchWordsCount = this._searchWords.GetLength(1);
+                //int searchWordsCount = this._searchWords.GetLength(1);
+                int searchWordsCount = this._searchWords.GetLength(0);
                 bool wordFound = false;
 
                 for (int i = 0; i < searchWordsCount; i++)
@@ -260,14 +337,14 @@ namespace txprobe
 
                 if (this._enableProbe == false && wordFound == true)
                 {
-                    string dispLine = fileName + "," + encoding.WebName + "," + lineBreakType + "," + bomExist;
+                    string dispLine = fileName + "," + encodingName + "," + lineBreakType + "," + dispBOM;
                     Console.WriteLine("{0}", dispLine);
                 }
             }
             else
             {
                 //検索単語が指定されていない場合、ファイル探索結果のみ表示する。
-                string dispLine = fileName + "," + encoding.WebName + "," + lineBreakType + "," + bomExist;
+                string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
                 Console.WriteLine("{0}", dispLine);
             }
 
