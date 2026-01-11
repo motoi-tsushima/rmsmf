@@ -44,8 +44,8 @@ namespace txprobe
                 {
                     Help help = new Help();
                     help.Show();
-                    Console.WriteLine("\nPress any key to exit...");
-                    Console.ReadKey();
+                    //Console.WriteLine("\nPress any key to exit...");
+                    //Console.ReadKey();
                     return;
                 }
 

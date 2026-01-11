@@ -50,6 +50,8 @@ namespace rmsmf
                 {
                     Help help = new Help();
                     help.Show();
+                    //Console.WriteLine("\nPress any key to exit...");
+                    //Console.ReadKey();
                     return;
                 }
 
@@ -81,6 +83,8 @@ namespace rmsmf
                     throw ex;
                 }
 
+                //Console.WriteLine("\nPress any key to exit...");
+                //Console.ReadKey();
                 return;
             }
 
