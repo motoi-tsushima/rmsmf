@@ -61,7 +61,7 @@ namespace rmsmf
                 //ファイルの文字列置換処理の実行
                 ReplaceStringsInFiles replace = new ReplaceStringsInFiles(commandOptions.ReplaceWords, commandOptions.Files, commandOptions.EnableBOM);
 
-                replace.Replace(commandOptions.encoding, commandOptions.writeEncoding);
+                replace.Replace(commandOptions.encoding, commandOptions.writeEncoding, commandOptions.WriteNewLine);
 
                 //正常に処理を完了した。
                 Console.WriteLine("Successful.");
@@ -83,11 +83,13 @@ namespace rmsmf
                     throw ex;
                 }
 
-                //Console.WriteLine("\nPress any key to exit...");
-                //Console.ReadKey();
+                Console.WriteLine("\nPress any key to exit...");
+                Console.ReadKey();
                 return;
             }
 
+            Console.WriteLine("\nPress any key to exit...");
+            Console.ReadKey();
         }
     }
 }

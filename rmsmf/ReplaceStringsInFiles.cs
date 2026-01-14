@@ -42,8 +42,9 @@ namespace rmsmf
         /// </summary>
         /// <param name="encoding">読み取りファイルの文字エンコーディング</param>
         /// <param name="writeEncoding">書き込みファイルの文字エンコーディング</param>
+        /// <param name="writeNewLine">書き込みファイルの改行コード</param>
         /// <returns></returns>
-        public bool Replace(Encoding encoding, Encoding writeEncoding)
+        public bool Replace(Encoding encoding, Encoding writeEncoding, string writeNewLine)
         {
             bool success = false;
             Encoding inEncoding;
@@ -174,7 +175,7 @@ namespace rmsmf
                                 {
                                     //Main processing For Replace
                                     //置換メイン処理
-                                    ReadWriteForReplace(reader, writeFileName, inEncoding, inWriteEncoding);
+                                    ReadWriteForReplace(reader, writeFileName, inEncoding, inWriteEncoding, writeNewLine);
                                 }
                             }
 
@@ -223,8 +224,9 @@ namespace rmsmf
         /// <param name="writeFileName">Write File Name. 書き込みファイルストリーム。</param>
         /// <param name="encoding">Read File Encoding. 読み取りファイルの文字エンコーディング。</param>
         /// <param name="writeEncoding">Write File Encoding. 書き込みファイルの文字エンコーディング。</param>
+        /// <param name="writeNewline">Write File Newline. 書き込みファイルの改行コード。</param>
         /// <returns>正常終了=true</returns>
-        public bool ReadWriteForReplace(StreamReader reader, string writeFileName, Encoding encoding, Encoding writeEncoding)
+        public bool ReadWriteForReplace(StreamReader reader, string writeFileName, Encoding encoding, Encoding writeEncoding, string writeNewline)
         {
             bool rc = true;
 
@@ -245,6 +247,26 @@ namespace rmsmf
                     for (int i = 0; i < replaceWordsCount; i++)
                     {
                         readLine = readLine.Replace(this._replaceWords[0, i], this._replaceWords[1, i]);
+                    }
+                }
+
+                if(writeNewline != null)
+                {
+                    if(writeNewline == "CRLF")
+                    {
+                        readLine = readLine.Replace("\r\n", "\n");
+                        readLine = readLine.Replace("\r", "\n");
+                        readLine = readLine.Replace("\n", "\r\n");
+                    }
+                    else if(writeNewline == "LF")
+                    {
+                        readLine = readLine.Replace("\r\n", "\n");
+                        readLine = readLine.Replace("\r", "\n");
+                    }
+                    else if(writeNewline == "CR")
+                    {
+                        readLine = readLine.Replace("\r\n", "\r");
+                        readLine = readLine.Replace("\n", "\r");
                     }
                 }
 

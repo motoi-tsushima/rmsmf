@@ -17,6 +17,11 @@ namespace rmsmf
         private const string OptionReplaceWordsCharacterSet = "rc";
         private const string OptionWriteByteOrderMark = "b";
         private const string OptionAllDirectories = "d";
+        private const string OptionNewLine = "nl";
+
+        public const string NewLineCRLF = "CRLF";
+        public const string NewLineLF = "LF";
+        public const string NewLineCR = "CR";
 
         private bool searchOptionAllDirectories = false; // AllDirectories オプション
 
@@ -33,6 +38,7 @@ namespace rmsmf
             string filesCharacterSet;
             string writeCharacterSet;
             bool? existByteOrderMark;
+            string writeNewLine;
 
             string errorEncoding = null;
 
@@ -154,6 +160,32 @@ namespace rmsmf
                 {
                     this.searchOptionAllDirectories = false;
                 }
+
+                //Setting New Line
+                //改行コード を設定する。
+                if (this.IsOption(OptionNewLine) == true)
+                {
+                    string optionNewLine = this.Options[OptionNewLine].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
+
+                    if (optionNewLine == "win" || optionNewLine == "windows" || optionNewLine == "w" || optionNewLine == "crlf")
+                        writeNewLine = NewLineCRLF;
+                    else if (optionNewLine == "unix" || optionNewLine == "u" 
+                        || optionNewLine == "linux" || optionNewLine == "l" 
+                        || optionNewLine == "mac" || optionNewLine == "m"
+                        || optionNewLine == "lf")
+                        writeNewLine = NewLineLF;
+                    else if (optionNewLine == "oldmac" || optionNewLine == "cr" || optionNewLine == "old")
+                        writeNewLine = NewLineCR;
+                    else
+                        writeNewLine = NewLineCRLF;
+                }
+                else
+                {
+                    writeNewLine = null;
+                }
+
+                this._writeNewLine = writeNewLine;
+
 
                 //-----------------------------------------------------------
                 //Setting Encoding and Check error of Encoding
@@ -311,7 +343,9 @@ namespace rmsmf
 
             if (this.IsOption(OptionReplaceWords) == false)
             {
-                if (this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false && this.IsOption(OptionWriteByteOrderMark) == false)
+                if (this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false 
+                    && this.IsOption(OptionWriteByteOrderMark) == false
+                    && this.IsOption(OptionNewLine) == false)
                 {
                     ExecutionState.isError = true;
                     ExecutionState.isNormal = !ExecutionState.isError;
@@ -622,6 +656,18 @@ namespace rmsmf
             get { return this._enableBOM; }
         }
 
+        /// <summary>
+        /// 書き込み用改行コード
+        /// </summary>
+        private string _writeNewLine = null;
+
+        /// <summary>
+        /// 書き込み用改行コード
+        /// </summary>
+        public string WriteNewLine
+        {
+            get { return this._writeNewLine; }
+        }
 
         /// <summary>
         /// 置換単語リストCSVのファイル名
