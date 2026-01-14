@@ -24,11 +24,17 @@ namespace txprobe
         /// </summary>
         private bool _enableProbe = false;
 
-        public ProbeFiles(string[] searchWords, string[] files, bool enableProbe) 
+        /// <summary>
+        /// 出力ファイルリストのファイル名
+        /// </summary>
+        private string _output_filelist_filename = null;
+
+        public ProbeFiles(string[] searchWords, string[] files, bool enableProbe, string outputFileListName) 
         { 
             _searchWords = searchWords;
             _files = files;
             _enableProbe = enableProbe;
+            _output_filelist_filename = outputFileListName;
         }
 
         /// <summary>
@@ -43,7 +49,8 @@ namespace txprobe
             try
             {
                 //ファイル単位のマルチスレッド作成
-                Parallel.ForEach(this._files, (fileName) =>
+                //Parallel.ForEach(this._files, (fileName) =>
+                foreach (var fileName in this._files)
                 {
                     if (File.Exists(fileName))
                     {
@@ -133,7 +140,7 @@ namespace txprobe
 
                                 string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
                                 Console.WriteLine("{0}", dispLine);
-                                return;
+                                continue;
                             }
 
                             //エンコーディングを指定してテキストストリームを開く
@@ -145,7 +152,7 @@ namespace txprobe
                         }
                     }
                 }
-                );
+                //);
             }
             catch (UnauthorizedAccessException uae)
             {
@@ -338,6 +345,14 @@ namespace txprobe
                 {
                     string dispLine = fileName + "," + encodingName + "," + lineBreakType + "," + dispBOM;
                     Console.WriteLine("{0}", dispLine);
+
+                    if(this._output_filelist_filename != null)
+                    {
+                        using(var ofs = new StreamWriter(this._output_filelist_filename, true))
+                        {
+                            ofs.WriteLine(dispLine); 
+                        }
+                    }
                 }
             }
             else
@@ -345,6 +360,14 @@ namespace txprobe
                 //検索単語が指定されていない場合、ファイル探索結果のみ表示する。
                 string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
                 Console.WriteLine("{0}", dispLine);
+
+                if (this._output_filelist_filename != null)
+                {
+                    using (var ofs = new StreamWriter(this._output_filelist_filename, true))
+                    {
+                        ofs.WriteLine(dispLine);
+                    }
+                }
             }
 
             return rc;

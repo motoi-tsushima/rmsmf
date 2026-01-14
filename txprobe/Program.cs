@@ -53,7 +53,9 @@ namespace txprobe
                 commandOptions.ReadFileNameList();
 
                 //ファイルのプローブ実行
-                ProbeFiles probe = new ProbeFiles(commandOptions.SearchWords, commandOptions.Files, commandOptions.EnableProbe);
+                ProbeFiles probe = new ProbeFiles(
+                    commandOptions.SearchWords, commandOptions.Files, 
+                    commandOptions.EnableProbe, commandOptions.OutputFileNameListFileName);
 
                 probe.Probe(commandOptions.encoding);
 
@@ -78,13 +80,13 @@ namespace txprobe
                     throw ex;
                 }
 
-                //Console.WriteLine("\nPress any key to exit...");
-                //Console.ReadKey();
+                Console.WriteLine("\nPress any key to exit...");
+                Console.ReadKey();
                 return;
             }
 
-            //Console.WriteLine("\nPress any key to exit...");
-            //Console.ReadKey();
+            Console.WriteLine("\nPress any key to exit...");
+            Console.ReadKey();
         }
     }
 }

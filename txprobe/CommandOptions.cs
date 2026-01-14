@@ -20,6 +20,7 @@ namespace txprobe
         private const string OptionSearchWordsCharacterSet = "sc";
         private const string OptionProbeMode = "p";
         private const string OptionAllDirectories = "d";
+        private const string OptionOutputFileNamelist = "o";
 
         private bool searchOptionAllDirectories = false; // AllDirectories オプション
 
@@ -137,6 +138,18 @@ namespace txprobe
                     this.searchOptionAllDirectories = false;
                 }
 
+                // 出力ファイルリスト・オプションを設定する
+                if(this.IsOption(OptionOutputFileNamelist) == true)
+                {
+                    if (this.Options[OptionOutputFileNamelist] == Colipex.NonValue)
+                    {
+                        this._outputFileNameListFileName = "output_filelist.txt";
+                    }
+                    else 
+                    {                         //出力ファイルリストのファイル名を保存する
+                        this._outputFileNameListFileName = this.Options[OptionOutputFileNamelist].TrimEnd(new char[] { '\x0a', '\x0d' });
+                    }
+                }
 
                 //-----------------------------------------------------------
                 //Setting Encoding and Check error of Encoding
@@ -609,6 +622,19 @@ namespace txprobe
         public string FileNameListFileName
         {
             get { return this._fileNameListFileName; }
+        }
+
+        /// <summary>
+        /// 出力ファイルリストのファイル名
+        /// </summary>
+        private string _outputFileNameListFileName = null;
+
+        /// <summary>
+        /// 出力ファイルリストのファイル名
+        /// </summary>
+        public string OutputFileNameListFileName
+        {
+            get { return this._outputFileNameListFileName; }
         }
 
         /// <summary>
