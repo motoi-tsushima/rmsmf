@@ -575,7 +575,14 @@ namespace rmsmf
             {
                 while (!reader.EndOfStream)
                 {
-                    string getFileName = reader.ReadLine();
+                    string getLine = reader.ReadLine();
+                    string getFileName = getLine.Trim();
+                    if (getLine.Contains(","))
+                    {
+                        //カンマ区切りの場合は、最初の項目をファイル名とする
+                        string[] columns = getLine.Split(',');
+                        getFileName = columns[0].Trim();
+                    }
                     if (!File.Exists(getFileName))
                     {
                         continue;

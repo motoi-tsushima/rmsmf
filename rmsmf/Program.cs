@@ -83,13 +83,13 @@ namespace rmsmf
                     throw ex;
                 }
 
-                Console.WriteLine("\nPress any key to exit...");
-                Console.ReadKey();
+                //Console.WriteLine("\nPress any key to exit...");
+                //Console.ReadKey();
                 return;
             }
 
-            Console.WriteLine("\nPress any key to exit...");
-            Console.ReadKey();
+            //Console.WriteLine("\nPress any key to exit...");
+            //Console.ReadKey();
         }
     }
 }
