@@ -43,11 +43,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ByteOrderMarkJudgment.cs" />
-    <Compile Include="Colipex.cs" />
+    <Compile Include="..\rmsmf\ByteOrderMarkJudgment.cs">
+      <Link>ByteOrderMarkJudgment.cs</Link>
+    </Compile>
+    <Compile Include="..\rmsmf\Colipex.cs">
+      <Link>Colipex.cs</Link>
+    </Compile>
+    <Compile Include="..\rmsmf\EncodingJudgment.cs">
+      <Link>EncodingJudgment.cs</Link>
+    </Compile>
+    <Compile Include="..\rmsmf\ExecutionState.cs">
+      <Link>ExecutionState.cs</Link>
+    </Compile>
     <Compile Include="CommandOptions.cs" />
-    <Compile Include="EncodingJudgment.cs" />
-    <Compile Include="ExecutionState.cs" />
     <Compile Include="Help.cs" />
     <Compile Include="ProbeFiles.cs" />
     <Compile Include="Program.cs" />
