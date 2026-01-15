@@ -19,9 +19,9 @@ namespace rmsmf
         private const string OptionAllDirectories = "d";
         private const string OptionNewLine = "nl";
 
-        public const string NewLineCRLF = "CRLF";
-        public const string NewLineLF = "LF";
-        public const string NewLineCR = "CR";
+        public static readonly string NewLineCRLF = "CRLF";
+        public static readonly string NewLineLF = "LF";
+        public static readonly string NewLineCR = "CR";
 
         private bool searchOptionAllDirectories = false; // AllDirectories オプション
 

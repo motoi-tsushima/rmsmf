@@ -44,8 +44,10 @@ namespace txprobe
                 {
                     Help help = new Help();
                     help.Show();
-                    //Console.WriteLine("\nPress any key to exit...");
-                    //Console.ReadKey();
+#if DEBUG
+                    Console.WriteLine("\nPress any key to exit...");
+                    Console.ReadKey();
+#endif
                     return;
                 }
 
@@ -80,13 +82,17 @@ namespace txprobe
                     throw ex;
                 }
 
-                //Console.WriteLine("\nPress any key to exit...");
-                //Console.ReadKey();
+#if DEBUG
+                Console.WriteLine("\nPress any key to exit...");
+                Console.ReadKey();
+#endif
                 return;
             }
 
-            //Console.WriteLine("\nPress any key to exit...");
-            //Console.ReadKey();
+#if DEBUG
+            Console.WriteLine("\nPress any key to exit...");
+            Console.ReadKey();
+#endif
         }
     }
 }

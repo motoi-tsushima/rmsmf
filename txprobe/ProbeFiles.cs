@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -29,6 +30,11 @@ namespace txprobe
         /// </summary>
         private string _output_filelist_filename = null;
 
+        /// <summary>
+        /// 出力データキュー（マルチスレッド対応）
+        /// </summary>
+        private BlockingCollection<string> _outputQueue = null;
+
         public ProbeFiles(string[] searchWords, string[] files, bool enableProbe, string outputFileListName) 
         { 
             _searchWords = searchWords;
@@ -48,9 +54,26 @@ namespace txprobe
 
             try
             {
+                // 出力キューの初期化
+                _outputQueue = new BlockingCollection<string>();
+
+                // 専用の書き込みスレッドを開始
+                Task writerTask = null;
+                if (this._output_filelist_filename != null)
+                {
+                   // 出力ファイルのフルパスを取得
+                   string outputFullPath = Path.GetFullPath(this._output_filelist_filename);
+                   
+                   // 入力ファイルリストから出力ファイルを除外
+                   this._files = this._files.Where(f => 
+                       !string.Equals(Path.GetFullPath(f), outputFullPath, StringComparison.OrdinalIgnoreCase))
+                       .ToArray();
+                   
+                    writerTask = Task.Run(() => FileWriterThread());
+                }
+
                 //ファイル単位のマルチスレッド作成
-                //Parallel.ForEach(this._files, (fileName) =>
-                foreach (var fileName in this._files)
+                Parallel.ForEach(this._files, (fileName) =>
                 {
                     if (File.Exists(fileName))
                     {
@@ -140,7 +163,7 @@ namespace txprobe
 
                                 string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
                                 Console.WriteLine("{0}", dispLine);
-                                continue;
+                                return; // Parallel.ForEachではcontinueの代わりにreturn
                             }
 
                             //エンコーディングを指定してテキストストリームを開く
@@ -151,8 +174,16 @@ namespace txprobe
                             }
                         }
                     }
+                });
+
+                // キューへの追加完了を通知
+                _outputQueue.CompleteAdding();
+
+                // 書き込みスレッドの完了を待機
+                if (writerTask != null)
+                {
+                    writerTask.Wait();
                 }
-                //);
             }
             catch (UnauthorizedAccessException uae)
             {
@@ -176,8 +207,135 @@ namespace txprobe
 
                 throw ae;
             }
+            finally
+            {
+                // リソース解放
+                if (_outputQueue != null)
+                {
+                    _outputQueue.Dispose();
+                    _outputQueue = null;
+                }
+            }
 
             return true;
+        }
+
+        /// <summary>
+        /// 専用の書き込みスレッド（Producer-Consumerパターンの消費者）
+        /// </summary>
+        private void FileWriterThread()
+        {
+            try
+            {
+                using (var ofs = new StreamWriter(this._output_filelist_filename, false, Encoding.UTF8))
+                {
+                    // キューからデータを取得して書き込み
+                    // GetConsumingEnumerable()はキューが空の場合は待機し、
+                    // CompleteAdding()後にキューが空になるとループを抜ける
+                    foreach (var line in _outputQueue.GetConsumingEnumerable())
+                    {
+                        ofs.WriteLine(line);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ファイル書き込みエラー: " + ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// キューにデータを追加（Producer-Consumerパターンの生産者）
+        /// </summary>
+        /// <param name="line">追加する行</param>
+        private void EnqueueOutput(string line)
+        {
+            if (_outputQueue != null)
+            {
+                try
+                {
+                    _outputQueue.Add(line);
+                }
+                catch (InvalidOperationException)
+                {
+                    // CompleteAdding()後の追加は無視
+                }
+            }
+        }
+
+        /// <summary>
+        /// 文字列内の指定された部分文字列の出現回数をカウントする
+        /// </summary>
+        /// <param name="text">検索対象の文字列</param>
+        /// <param name="searchString">検索する部分文字列</param>
+        /// <returns>出現回数</returns>
+        private int CountSubstring(string text, string searchString)
+        {
+            int count = 0;
+            int index = 0;
+            int searchLength = searchString.Length;
+
+            do
+            {
+                if (text.Length - index < searchLength)
+                {
+                    break;
+                }
+
+                index = text.IndexOf(searchString, index, text.Length - index);
+                if (index >= 0)
+                {
+                    count++;
+                    index += searchLength;
+                }
+
+            } while (index >= 0);
+
+            return count;
+        }
+
+        /// <summary>
+        /// 改行コードの種類を判定する
+        /// </summary>
+        /// <param name="countCRLF">CR-LFの出現回数</param>
+        /// <param name="countLF">LFの出現回数</param>
+        /// <param name="countCR">CRの出現回数</param>
+        /// <returns>改行コードの種類を示す文字列</returns>
+        private string DetermineLineBreakType(int countCRLF, int countLF, int countCR)
+        {
+            if (countLF == 0 && countCR == 0 && countCRLF == 0)
+            {
+                return "No";
+            }
+            else if (countCRLF == countLF && countCRLF == countCR)
+            {
+                return "CR-LF";
+            }
+            else if (countLF > 0 && countCR == 0 && countCRLF == 0)
+            {
+                return "LF";
+            }
+            else if (countCR > 0 && countLF == 0 && countCRLF == 0)
+            {
+                return "CR";
+            }
+            else if (countLF > 0 && countCRLF > 0 && countLF != countCRLF && countCR == 0)
+            {
+                return "LF & CR-LF";
+            }
+            else if (countCR > 0 && countCRLF > 0 && countCR != countCRLF && countLF == 0)
+            {
+                return "CR & CR-LF";
+            }
+            else if (countCRLF == 0 && countCR > 0 && countLF > 0)
+            {
+                return "LF & CR";
+            }
+            else
+            {
+                return "LF & CR & CR-LF";
+            }
         }
 
         /// <summary>
@@ -217,101 +375,13 @@ namespace txprobe
             //読み取りファイルを全て読み込む。
             string readLine = reader.ReadToEnd();
 
-            // CR-LF 探索
-            int countCRLF = 0;
-            int indexCRLF = 0;
+            // 改行コードのカウント
+            int countCRLF = CountSubstring(readLine, "\r\n");
+            int countLF = CountSubstring(readLine, "\n");
+            int countCR = CountSubstring(readLine, "\r");
 
-            do
-            {
-                if(readLine.Length - indexCRLF < 2)
-                {
-                    break;
-                }
-
-                indexCRLF = readLine.IndexOf("\r\n", indexCRLF, readLine.Length - indexCRLF);
-                if (indexCRLF >= 0)
-                {
-                    countCRLF++;
-                    indexCRLF += 2;
-                }
-
-            } while (indexCRLF >= 0);
-
-            // LF 探索
-            int countLF = 0;
-            int indexLF = 0;
-
-            do
-            {
-                if (readLine.Length - indexLF < 1)
-                {
-                    break;
-                }
-
-                indexLF = readLine.IndexOf("\n", indexLF, readLine.Length - indexLF);
-                if (indexLF >= 0)
-                {
-                    countLF++;
-                    indexLF++;
-                }
-
-            } while (indexLF >= 0);
-
-            // CR 探索
-            int countCR = 0;
-            int indexCR = 0;
-
-            do
-            {
-                if (readLine.Length - indexCR < 1)
-                {
-                    break;
-                }
-
-                indexCR = readLine.IndexOf("\r", indexCR, readLine.Length - indexCR);
-                if (indexCR >= 0)
-                {
-                    countCR++;
-                    indexCR++;
-                }
-
-            } while (indexCR >= 0);
-
-            // 判定結果
-            string lineBreakType;
-
-            if (countLF == 0 && countCR == 0 && countCRLF == 0)
-            {
-                lineBreakType = "No";
-            }
-            else if (countCRLF == countLF && countCRLF == countCR)
-            {
-                lineBreakType = "CR-LF";
-            }
-            else if (countLF > 0 && countCR == 0 && countCRLF == 0)
-            {
-                lineBreakType = "LF";
-            }
-            else if (countCR > 0 && countLF == 0 && countCRLF == 0)
-            {
-                lineBreakType = "CR";
-            }
-            else if (countLF > 0 && countCRLF > 0 && countLF != countCRLF && countCR == 0)
-            {
-                lineBreakType = "LF & CR-LF";
-            }
-            else if (countCR > 0 && countCRLF > 0 && countCR != countCRLF && countLF == 0)
-            {
-                lineBreakType = "CR & CR-LF";
-            }
-            else if (countCRLF == 0 && countCR > 0 && countLF > 0 )
-            {
-                lineBreakType = "LF & CR";
-            }
-            else
-            {
-                lineBreakType = "LF & CR & CR-LF";
-            }
+            // 改行コードの種類を判定
+            string lineBreakType = DetermineLineBreakType(countCRLF, countLF, countCR);
 
             if (this._searchWords != null)
             {
@@ -346,13 +416,8 @@ namespace txprobe
                     string dispLine = fileName + "," + encodingName + "," + lineBreakType + "," + dispBOM;
                     Console.WriteLine("{0}", dispLine);
 
-                    if(this._output_filelist_filename != null)
-                    {
-                        using(var ofs = new StreamWriter(this._output_filelist_filename, true))
-                        {
-                            ofs.WriteLine(dispLine); 
-                        }
-                    }
+                    // スレッドセーフなキューへの追加
+                    EnqueueOutput(dispLine);
                 }
             }
             else
@@ -361,13 +426,8 @@ namespace txprobe
                 string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
                 Console.WriteLine("{0}", dispLine);
 
-                if (this._output_filelist_filename != null)
-                {
-                    using (var ofs = new StreamWriter(this._output_filelist_filename, true))
-                    {
-                        ofs.WriteLine(dispLine);
-                    }
-                }
+                // スレッドセーフなキューへの追加
+                EnqueueOutput(dispLine);
             }
 
             return rc;

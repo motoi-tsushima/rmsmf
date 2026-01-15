@@ -252,18 +252,18 @@ namespace rmsmf
 
                 if(writeNewline != null)
                 {
-                    if(writeNewline == "CRLF")
+                    if(writeNewline == CommandOptions.NewLineCRLF)
                     {
                         readLine = readLine.Replace("\r\n", "\n");
                         readLine = readLine.Replace("\r", "\n");
                         readLine = readLine.Replace("\n", "\r\n");
                     }
-                    else if(writeNewline == "LF")
+                    else if(writeNewline == CommandOptions.NewLineLF)
                     {
                         readLine = readLine.Replace("\r\n", "\n");
                         readLine = readLine.Replace("\r", "\n");
                     }
-                    else if(writeNewline == "CR")
+                    else if(writeNewline == CommandOptions.NewLineCR)
                     {
                         readLine = readLine.Replace("\r\n", "\r");
                         readLine = readLine.Replace("\n", "\r");
