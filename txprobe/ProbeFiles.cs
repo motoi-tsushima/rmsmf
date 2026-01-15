@@ -188,10 +188,7 @@ namespace txprobe
             }
             catch (UnauthorizedAccessException uae)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = uae.Message;
-                throw uae;
+                throw new RmsmfException(uae.Message, uae);
             }
             catch (AggregateException ae)
             {
@@ -202,11 +199,7 @@ namespace txprobe
                     Console.WriteLine(ie.Message);
                 }
 
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = errorCount + "件のエラーが発生しました。他のファイルは正常に処理しました。";
-
-                throw ae;
+                throw new RmsmfException(errorCount + "件のエラーが発生しました。他のファイルは正常に処理しました。", ae);
             }
             finally
             {

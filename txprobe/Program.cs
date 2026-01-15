@@ -19,9 +19,6 @@ namespace txprobe
     {
         static void Main(string[] args)
         {
-            ExecutionState.className = "Program.Main";
-            ExecutionState.stepNumber = 1;
-
             //Show version
             Assembly thisAssem = typeof(Program).Assembly;
             AssemblyName thisAssemName = thisAssem.GetName();
@@ -66,23 +63,19 @@ namespace txprobe
                 Console.WriteLine("");
                 Console.WriteLine("Search complete.");
             }
+            catch (RmsmfException ex)
+            {
+                Console.WriteLine(ex.Message);
+#if DEBUG
+                Console.WriteLine("\nPress any key to exit...");
+                Console.ReadKey();
+#endif
+                return;
+            }
             catch (Exception ex)
             {
-                if (ExecutionState.isError)
-                {
-                    Console.WriteLine(ExecutionState.errorMessage);
-                    //Console.WriteLine("className = " + ExecutionState.className);
-                    //Console.WriteLine("stepNumber = " + ExecutionState.stepNumber);
-                }
-                else
-                {
-                    Console.WriteLine(ExecutionState.errorMessage);
-                    Console.WriteLine("className = " + ExecutionState.className);
-                    Console.WriteLine("stepNumber = " + ExecutionState.stepNumber);
-                    Console.WriteLine("管理されていないエラーが発生しました。" + ex.ToString());
-                    throw ex;
-                }
-
+                Console.WriteLine("予期しないエラーが発生しました: " + ex.Message);
+                Console.WriteLine(ex.ToString());
 #if DEBUG
                 Console.WriteLine("\nPress any key to exit...");
                 Console.ReadKey();

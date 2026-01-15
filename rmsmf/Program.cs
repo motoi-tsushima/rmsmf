@@ -24,9 +24,6 @@ namespace rmsmf
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            ExecutionState.className = "Program.Main";
-            ExecutionState.stepNumber = 1;
-
             //Show version
             Assembly thisAssem = typeof(Program).Assembly;
             AssemblyName thisAssemName = thisAssem.GetName();
@@ -50,8 +47,6 @@ namespace rmsmf
                 {
                     Help help = new Help();
                     help.Show();
-                    //Console.WriteLine("\nPress any key to exit...");
-                    //Console.ReadKey();
                     return;
                 }
 
@@ -66,30 +61,17 @@ namespace rmsmf
                 //正常に処理を完了した。
                 Console.WriteLine("Successful.");
             }
-            catch (Exception ex)
+            catch (RmsmfException ex)
             {
-                if (ExecutionState.isError)
-                {
-                    Console.WriteLine(ExecutionState.errorMessage);
-                    //Console.WriteLine("className = " + ExecutionState.className);
-                    //Console.WriteLine("stepNumber = " + ExecutionState.stepNumber);
-                }
-                else
-                {
-                    Console.WriteLine(ExecutionState.errorMessage);
-                    Console.WriteLine("className = " + ExecutionState.className);
-                    Console.WriteLine("stepNumber = " + ExecutionState.stepNumber);
-                    Console.WriteLine("管理されていないエラーが発生しました。" + ex.ToString());
-                    throw ex;
-                }
-
-                //Console.WriteLine("\nPress any key to exit...");
-                //Console.ReadKey();
+                Console.WriteLine(ex.Message);
                 return;
             }
-
-            //Console.WriteLine("\nPress any key to exit...");
-            //Console.ReadKey();
+            catch (Exception ex)
+            {
+                Console.WriteLine("予期しないエラーが発生しました: " + ex.Message);
+                Console.WriteLine(ex.ToString());
+                return;
+            }
         }
     }
 }

@@ -16,7 +16,6 @@ namespace rmsmf
 
         public Colipex(string[] args)
         {
-            ExecutionState.className = "Colipex.Colipex";
             char optionSeparator = (char)0;
 
             try
@@ -61,12 +60,7 @@ namespace rmsmf
             }
             catch(ArgumentException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "同じオプションが複数回入力されています。";
-                //Console.WriteLine("Colipex.Colipex : The same option has been entered more than once.");
-                //Console.WriteLine("Colipex.Colipex : 同じオプションが複数回入力されています。");
-                throw ex;
+                throw new RmsmfException("同じオプションが複数回入力されています。", ex);
             }
         }
 

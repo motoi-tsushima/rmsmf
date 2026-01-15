@@ -31,7 +31,6 @@ namespace txprobe
         /// <param name="args"></param>
         public CommandOptions(string[] args) : base(args)
         {
-            ExecutionState.className = "CommandOptions.CommandOptions";
 
             string readCharacterSet;
             string searchWordsCharacterSet;
@@ -51,10 +50,7 @@ namespace txprobe
             {
                 if(this.Parameters.Count == 0 && this.Options.Count == 0)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "目的のファイル名を指定してください。(/h ヘルプ表示)";
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException("目的のファイル名を指定してください。(/h ヘルプ表示)");
                 }
             }
 
@@ -191,42 +187,28 @@ namespace txprobe
             }
             catch (DirectoryNotFoundException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "指定のパスが存在しません。";
-                throw ex;
+                throw new RmsmfException("指定のパスが存在しません。", ex);
             }
             catch (NotSupportedException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "管理下のエラー:NotSupportedException" + errorEncoding;
-                throw ex;
+                throw new RmsmfException("管理下のエラー:NotSupportedException" + errorEncoding, ex);
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "管理下のエラー:ArgumentOutOfRangeException" + errorEncoding;
-                throw ex;
+                throw new RmsmfException("管理下のエラー:ArgumentOutOfRangeException" + errorEncoding, ex);
             }
             catch (ArgumentException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
                 if(errorEncoding == null)
-                    ExecutionState.errorMessage = "管理下のエラー:ArgumentException" + errorEncoding;
+                    throw new RmsmfException("管理下のエラー:ArgumentException" + errorEncoding, ex);
                 else
                 {
-                    ExecutionState.errorMessage = errorEncoding + " のエンコーディング名が不正です。";
+                    throw new RmsmfException(errorEncoding + " のエンコーディング名が不正です。", ex);
                 }
-
-                throw ex;
             }
             catch (Exception ex)
             {
-                ExecutionState.isNormal = false;
-                throw ex;
+                throw;
             }
 
             //------------------------------------------------------------
@@ -237,11 +219,7 @@ namespace txprobe
             {
                 if (this.Options[OptionSearchWords] == Colipex.NonValue)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "/r オプションのファイル名を指定してください。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException("/r オプションのファイル名を指定してください。");
                 }
 
                 //検索単語リストファイル名を保存する
@@ -250,11 +228,7 @@ namespace txprobe
                 //検索単語リストファイル名の存在確認
                 if (!File.Exists(this._searchWordsFileName))
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._searchWordsFileName + " が存在しません。 ";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._searchWordsFileName + " が存在しません。 ");
                 }
             }
 
@@ -265,11 +239,7 @@ namespace txprobe
             {
                 if (this.Options[OptionFileNameList] == Colipex.NonValue)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "/f オプションのファイル名を指定してください。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException("/f オプションのファイル名を指定してください。");
                 }
 
                 //ファイルリストファイル名を保存する
@@ -277,11 +247,7 @@ namespace txprobe
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._fileNameListFileName + " が存在しません。 ";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._fileNameListFileName + " が存在しません。 ");
                 }
             }
 
@@ -290,29 +256,17 @@ namespace txprobe
             //-
             if(this.IsOption(OptionSearchWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "必須パラメータが入力されていません。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("必須パラメータが入力されていません。");
             }
 
             if (this.IsOption(OptionFileNameList) == true && this.Parameters.Count > 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。");
             }
 
             if (this.IsOption(OptionSearchWords) == true && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "対象となるファイルを指定してください。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("対象となるファイルを指定してください。");
             }
 
             if(this.IsOption(OptionSearchWords) == false && this.IsOption(OptionSearchWordsCharacterSet) == true)
@@ -326,11 +280,7 @@ namespace txprobe
 
             if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet) == true)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。");
             }
         }
 
@@ -378,11 +328,7 @@ namespace txprobe
                 }
                 else
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._searchWordsFileName + "の文字エンコーディングが分かりません。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._searchWordsFileName + "の文字エンコーディングが分かりません。");
                 }
             }
 
@@ -404,11 +350,7 @@ namespace txprobe
 
             if(wordsList.Count == 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = this._searchWordsFileName + "の検索単語がゼロ件です。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException(this._searchWordsFileName + "の検索単語がゼロ件です。");
             }
 
             //検索単語テーブルへ登録する。
@@ -478,11 +420,7 @@ namespace txprobe
                 }
                 catch(System.ArgumentException ex)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = path + " が存在しないか、検索キーワードとして無効です。";
-                    ExecutionState.className = "CommandOptions.ReadFileNameList";
-                    throw ex;
+                    throw new RmsmfException(path + " が存在しないか、検索キーワードとして無効です。", ex);
                 }
 
                 normal = true;
@@ -503,11 +441,7 @@ namespace txprobe
                 }
                 else
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._fileNameListFileName + "の文字エンコーディングが分かりません。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._fileNameListFileName + "の文字エンコーディングが分かりません。");
                 }
             }
 

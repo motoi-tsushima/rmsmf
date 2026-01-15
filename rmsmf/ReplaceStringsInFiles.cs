@@ -61,7 +61,7 @@ namespace rmsmf
 
                             //Delete the write file if it already exists
                             //書き込み対象ファイルがすでに存在する場合は削除します。
-                            if (!File.Exists(writeFileName))
+                            if (File.Exists(writeFileName))
                             {
                                 File.Delete(writeFileName);
                             }
@@ -192,10 +192,7 @@ namespace rmsmf
             }
             catch (UnauthorizedAccessException uae)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = uae.Message;
-                throw uae;
+                throw new RmsmfException(uae.Message, uae);
             }
             catch (AggregateException ae)
             {
@@ -206,11 +203,7 @@ namespace rmsmf
                     Console.WriteLine(ie.Message);
                 }
 
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = errorCount + "件のエラーが発生しました。他のファイルは正常に処理しました。";
-
-                throw ae;
+                throw new RmsmfException(errorCount + "件のエラーが発生しました。他のファイルは正常に処理しました。", ae);
             }
 
             return success;
@@ -252,22 +245,20 @@ namespace rmsmf
 
                 if(writeNewline != null)
                 {
+                    // まず全ての改行コードをLFに正規化
+                    readLine = readLine.Replace("\r\n", "\n");
+                    readLine = readLine.Replace("\r", "\n");
+
+                    // 目的の改行コードに変換
                     if(writeNewline == CommandOptions.NewLineCRLF)
                     {
-                        readLine = readLine.Replace("\r\n", "\n");
-                        readLine = readLine.Replace("\r", "\n");
                         readLine = readLine.Replace("\n", "\r\n");
-                    }
-                    else if(writeNewline == CommandOptions.NewLineLF)
-                    {
-                        readLine = readLine.Replace("\r\n", "\n");
-                        readLine = readLine.Replace("\r", "\n");
                     }
                     else if(writeNewline == CommandOptions.NewLineCR)
                     {
-                        readLine = readLine.Replace("\r\n", "\r");
                         readLine = readLine.Replace("\n", "\r");
                     }
+                    // NewLineLFの場合は既にLFなので何もしない
                 }
 
                 //Writefile Overwrite .

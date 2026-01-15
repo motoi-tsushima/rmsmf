@@ -31,7 +31,6 @@ namespace rmsmf
         /// <param name="args"></param>
         public CommandOptions(string[] args) : base(args)
         {
-            ExecutionState.className = "CommandOptions.CommandOptions";
 
             string readCharacterSet;
             string replaceWordsCharacterSet;
@@ -54,10 +53,7 @@ namespace rmsmf
             {
                 if (this.Parameters.Count == 0 && this.Options.Count == 0)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "目的のファイル名を指定してください。(/h ヘルプ表示)";
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException("目的のファイル名を指定してください。(/h ヘルプ表示)");
                 }
             }
 
@@ -235,42 +231,28 @@ namespace rmsmf
             }
             catch (DirectoryNotFoundException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "指定のパスが存在しません。";
-                throw ex;
+                throw new RmsmfException("指定のパスが存在しません。", ex);
             }
             catch (NotSupportedException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "管理下のエラー:NotSupportedException" + errorEncoding;
-                throw ex;
+                throw new RmsmfException("管理下のエラー:NotSupportedException" + errorEncoding, ex);
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "管理下のエラー:ArgumentOutOfRangeException" + errorEncoding;
-                throw ex;
+                throw new RmsmfException("管理下のエラー:ArgumentOutOfRangeException" + errorEncoding, ex);
             }
             catch (ArgumentException ex)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
                 if (errorEncoding == null)
-                    ExecutionState.errorMessage = "管理下のエラー:ArgumentException" + errorEncoding;
+                    throw new RmsmfException("管理下のエラー:ArgumentException" + errorEncoding, ex);
                 else
                 {
-                    ExecutionState.errorMessage = errorEncoding + " のエンコーディング名が不正です。";
+                    throw new RmsmfException(errorEncoding + " のエンコーディング名が不正です。", ex);
                 }
-
-                throw ex;
             }
             catch (Exception ex)
             {
-                ExecutionState.isNormal = false;
-                throw ex;
+                throw;
             }
 
             //------------------------------------------------------------
@@ -309,11 +291,7 @@ namespace rmsmf
             {
                 if (this.Options[OptionFileNameList] == Colipex.NonValue)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "/f オプションのファイル名を指定してください。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException("/f オプションのファイル名を指定してください。");
                 }
 
                 //ファイルリストファイル名を保存する
@@ -321,11 +299,7 @@ namespace rmsmf
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._fileNameListFileName + " が存在しません。 ";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._fileNameListFileName + " が存在しません。 ");
                 }
             }
 
@@ -334,11 +308,7 @@ namespace rmsmf
             //-
             if (this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "必須パラメータが入力されていません。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("必須パラメータが入力されていません。");
             }
 
             if (this.IsOption(OptionReplaceWords) == false)
@@ -347,48 +317,28 @@ namespace rmsmf
                     && this.IsOption(OptionWriteByteOrderMark) == false
                     && this.IsOption(OptionNewLine) == false)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "文字エンコーディングの変換をする場合は、/w:により出力先の文字エンコーディングを指定してください。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException("文字エンコーディングの変換をする場合は、/w:により出力先の文字エンコーディングを指定してください。");
                 }
             }
 
             if (this.IsOption(OptionFileNameList) == true && this.Parameters.Count > 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。");
             }
 
             if (this.IsOption(OptionReplaceWords) == true && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "置換対象となるファイルを指定してください。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("置換対象となるファイルを指定してください。");
             }
 
             if (this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionReplaceWordsCharacterSet) == true)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "置換単語ファイルが指定されていないのに、置換単語ファイルのエンコーディングが指定されています。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("置換単語ファイルが指定されていないのに、置換単語ファイルのエンコーディングが指定されています。");
             }
 
             if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet) == true)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。");
             }
         }
 
@@ -436,11 +386,7 @@ namespace rmsmf
                 }
                 else
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._replaceWordsFileName + "の文字エンコーディングが分かりません。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._replaceWordsFileName + "の文字エンコーディングが分かりません。");
                 }
             }
 
@@ -462,11 +408,7 @@ namespace rmsmf
 
             if (wordsList.Count == 0)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = this._replaceWordsFileName + "の置換単語がゼロ件です。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException(this._replaceWordsFileName + "の置換单語がゼロ件です。");
             }
 
             //置換単語テーブルへ登録する。
@@ -536,11 +478,7 @@ namespace rmsmf
                 }
                 catch (System.ArgumentException ex)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = path + " が存在しないか、検索キーワードとして無効です。";
-                    ExecutionState.className = "CommandOptions.ReadFileNameList";
-                    throw ex;
+                    throw new RmsmfException(path + " が存在しないか、検索キーワードとして無効です。", ex);
                 }
 
                 normal = true;
@@ -561,11 +499,7 @@ namespace rmsmf
                 }
                 else
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._fileNameListFileName + "の文字エンコーディングが分かりません。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._fileNameListFileName + "の文字エンコーディングが分かりません。");
                 }
             }
 
