@@ -258,59 +258,59 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// Main processing For Replace
         /// 置換メイン処理
         /// </summary>
-        /// <param name="reader">Read File Stream. 読み取りファイルストリーム。</param>
-        /// <param name="writeFileName">Write File Name. 書き込みファイルストリーム。</param>
-        /// <param name="encoding">Read File Encoding. 読み取りファイルの文字エンコーディング。</param>
-        /// <param name="writeEncoding">Write File Encoding. 書き込みファイルの文字エンコーディング。</param>
-        /// <param name="writeNewline">Write File Newline. 書き込みファイルの改行コード。</param>
+        /// <param name="reader">読み取りファイルストリーム</param>
+        /// <param name="writeFileName">書き込みファイル名</param>
+        /// <param name="encoding">読み取りファイルの文字エンコーディング</param>
+        /// <param name="writeEncoding">書き込みファイルの文字エンコーディング</param>
+        /// <param name="writeNewline">書き込みファイルの改行コード</param>
         /// <returns>正常終了=true</returns>
         public bool ReadWriteForReplace(StreamReader reader, string writeFileName, Encoding encoding, Encoding writeEncoding, string writeNewline)
         {
             bool rc = true;
 
-            //Open Write File.
-            //書き込みファイルを開く。
+            // 書き込みファイルを開く
             using (var writer = new StreamWriter(writeFileName, true, writeEncoding))
             {
-                //Read Readfile.
-                //読み取りファイルを全て読み込む。
-                string readLine = reader.ReadToEnd();
+                // 読み取りファイルを全て読み込む
+                string content = reader.ReadToEnd();
+                
+                // StringBuilderを使用して効率的に置換処理を行う
+                StringBuilder sb = new StringBuilder(content);
 
                 if(this._replaceWords != null)
                 {
-                    //Replace Performs a line-by-line replacement in the word list.
-                    //置換単語リストの行単位に置換を実施します。
+                    // 置換単語リストの行単位に置換を実施する
                     int replaceWordsCount = this._replaceWords.GetLength(1);
 
                     for (int i = 0; i < replaceWordsCount; i++)
                     {
-                        readLine = readLine.Replace(this._replaceWords[0, i], this._replaceWords[1, i]);
+                        // StringBuilderのReplaceメソッドを使用（効率的）
+                        sb.Replace(this._replaceWords[0, i], this._replaceWords[1, i]);
                     }
                 }
 
                 if(writeNewline != null)
                 {
                     // まず全ての改行コードをLFに正規化
-                    readLine = readLine.Replace("\r\n", "\n");
-                    readLine = readLine.Replace("\r", "\n");
+                    sb.Replace("\r\n", "\n");
+                    sb.Replace("\r", "\n");
 
                     // 目的の改行コードに変換
                     if(writeNewline == CommandOptions.NewLineCRLF)
                     {
-                        readLine = readLine.Replace("\n", "\r\n");
+                        sb.Replace("\n", "\r\n");
                     }
                     else if(writeNewline == CommandOptions.NewLineCR)
                     {
-                        readLine = readLine.Replace("\n", "\r");
+                        sb.Replace("\n", "\r");
                     }
                     // NewLineLFの場合は既にLFなので何もしない
                 }
 
                 // 書き込みファイルへ上書きする
-                writer.Write(readLine);
+                writer.Write(sb.ToString());
             }
 
             return rc;
