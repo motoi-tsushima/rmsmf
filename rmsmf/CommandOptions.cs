@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -411,14 +411,21 @@ namespace rmsmf
                 throw new RmsmfException(this._replaceWordsFileName + "の置換单語がゼロ件です。");
             }
 
-            //置換単語テーブルへ登録する。
+            // 置換単語テーブルへ登録する
             this._replaceWordsCount = wordsList.Count;
             this._replaceWords = new string[2, this._replaceWordsCount];
             for (int i = 0; i < this._replaceWordsCount; i++)
             {
-                string[] colmuns = wordsList[i].Split(',');
-                this._replaceWords[0, i] = colmuns[0];
-                this._replaceWords[1, i] = colmuns[1];
+                string[] columns = wordsList[i].Split(',');
+                
+                // 入力検証: カンマ区切りで2つの要素が必要
+                if (columns.Length < 2)
+                {
+                    throw new RmsmfException($"置換単語ファイルの{i + 1}行目が不正です。カンマ区切りで「検索文字列,置換文字列」の形式で指定してください。");
+                }
+                
+                this._replaceWords[0, i] = columns[0];
+                this._replaceWords[1, i] = columns[1];
             }
 
             return normal;
@@ -438,32 +445,32 @@ namespace rmsmf
 
                 string path = this.Parameters[0].TrimEnd(new char[] { '\x0a', '\x0d' });
 
-                string direcrtoryName = Path.GetDirectoryName(path);
-                if (direcrtoryName != null)
+                string directoryName = Path.GetDirectoryName(path);
+                if (directoryName != null)
                 {
-                    if (direcrtoryName.Length == 0)
+                    if (directoryName.Length == 0)
                     {
-                        direcrtoryName = ".";
+                        directoryName = ".";
                     }
-                    else if (direcrtoryName.Length == 1)
+                    else if (directoryName.Length == 1)
                     {
-                        if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\')
+                        if (directoryName[0] != '.' && directoryName[0] != '\\')
                         {
-                            direcrtoryName = ".\\" + direcrtoryName;
+                            directoryName = ".\\" + directoryName;
                         }
                     }
-                    else if (direcrtoryName.Length > 1)
+                    else if (directoryName.Length > 1)
                     {
-                        if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\'
-                            && direcrtoryName[1] != ':')
+                        if (directoryName[0] != '.' && directoryName[0] != '\\'
+                            && directoryName[1] != ':')
                         {
-                            direcrtoryName = ".\\" + direcrtoryName;
+                            directoryName = ".\\" + directoryName;
                         }
                     }
                 }
                 else
                 {
-                    direcrtoryName = ".";
+                    directoryName = ".";
                 }
 
                 string searchWord = Path.GetFileName(path);
@@ -474,7 +481,7 @@ namespace rmsmf
                     if (this.searchOptionAllDirectories == true)
                         searchOption = System.IO.SearchOption.AllDirectories;
 
-                    this._files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, searchOption);
+                    this._files = Directory.GetFileSystemEntries(directoryName, searchWord, searchOption);
                 }
                 catch (System.ArgumentException ex)
                 {
@@ -510,13 +517,30 @@ namespace rmsmf
                 while (!reader.EndOfStream)
                 {
                     string getLine = reader.ReadLine();
+                    
+                    // 空行やnullをスキップ
+                    if (string.IsNullOrWhiteSpace(getLine))
+                    {
+                        continue;
+                    }
+                    
                     string getFileName = getLine.Trim();
                     if (getLine.Contains(","))
                     {
-                        //カンマ区切りの場合は、最初の項目をファイル名とする
+                        // カンマ区切りの場合は、最初の項目をファイル名とする
                         string[] columns = getLine.Split(',');
-                        getFileName = columns[0].Trim();
+                        
+                        // 入力検証: 配列が空でないことを確認
+                        if (columns.Length > 0 && !string.IsNullOrWhiteSpace(columns[0]))
+                        {
+                            getFileName = columns[0].Trim();
+                        }
+                        else
+                        {
+                            continue;
+                        }
                     }
+                    
                     if (!File.Exists(getFileName))
                     {
                         continue;

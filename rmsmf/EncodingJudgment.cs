@@ -175,7 +175,15 @@ namespace rmsmf
 
             using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             {
-                this.BufferSize = (int)fs.Length;
+                long fileLength = fs.Length;
+                
+                // ファイルサイズ検証：2GB以上のファイルはエラー
+                if (fileLength > int.MaxValue)
+                {
+                    throw new RmsmfException($"ファイル {fileName} が大きすぎます（最大 2GB）。");
+                }
+                
+                this.BufferSize = (int)fileLength;
                 this._buffer = new byte[this.BufferSize];
                 
                 // ゼロサイズのUTF-16 LE/BE 対応

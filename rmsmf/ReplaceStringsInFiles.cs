@@ -78,9 +78,19 @@ namespace rmsmf
                                     // エンコーディング指定が無い場合
 
                                     // 読み取りファイルの文字エンコーディングを判定する
-                                    int fileSize = (int)fs.Length;
+                                    long fileLength = fs.Length;
+                                    
+                                    // ファイルサイズ検証：2GB以上のファイルはエラー
+                                    if (fileLength > int.MaxValue)
+                                    {
+                                        throw new RmsmfException($"ファイル {fileName} が大きすぎます（最大 2GB）。");
+                                    }
+                                    
+                                    int fileSize = (int)fileLength;
                                     byte[] buffer = new byte[fileSize];
                                     int readCount = fs.Read(buffer, 0, fileSize);
+                                    
+                                    // ファイルポジションを先頭に戻す（StreamReaderが正しく読めるようにする）
                                     fs.Position = 0;
 
                                     ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
@@ -176,11 +186,54 @@ namespace rmsmf
                                 }
                             }
 
-                            // 読み取りファイルを削除する
-                            File.Delete(fileName);
-
-                            // 書き込み対象ファイルを読み取りファイル名に変更
-                            File.Move(writeFileName, fileName);
+                            // ファイル操作の原子性を確保
+                            string backupFileName = fileName + ".BACKUP$";
+                            bool backupCreated = false;
+                            
+                            try
+                            {
+                                // バックアップファイルを作成
+                                File.Copy(fileName, backupFileName, true);
+                                backupCreated = true;
+                                
+                                // 元のファイルを削除
+                                File.Delete(fileName);
+                                
+                                // 新しいファイルを元のファイル名に変更
+                                File.Move(writeFileName, fileName);
+                                
+                                // 成功したらバックアップを削除
+                                if (File.Exists(backupFileName))
+                                {
+                                    File.Delete(backupFileName);
+                                }
+                            }
+                            catch
+                            {
+                                // エラー時にバックアップから復元を試みる
+                                if (backupCreated && File.Exists(backupFileName))
+                                {
+                                    try
+                                    {
+                                        // 元のファイルが削除されていたら復元
+                                        if (!File.Exists(fileName))
+                                        {
+                                            File.Move(backupFileName, fileName);
+                                        }
+                                        
+                                        // 一時ファイルがあれば削除
+                                        if (File.Exists(writeFileName))
+                                        {
+                                            File.Delete(writeFileName);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // 復元に失敗した場合もエラーを再スロー
+                                    }
+                                }
+                                throw;
+                            }
                         }
                     }
                 );

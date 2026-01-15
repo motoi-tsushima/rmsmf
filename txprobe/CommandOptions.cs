@@ -452,6 +452,15 @@ namespace txprobe
                 while (!reader.EndOfStream)
                 {
                     string getFileName = reader.ReadLine();
+                    
+                    // 入力検証: 空行やnullをスキップ
+                    if (string.IsNullOrWhiteSpace(getFileName))
+                    {
+                        continue;
+                    }
+                    
+                    getFileName = getFileName.Trim();
+                    
                     if (!File.Exists(getFileName))
                     {
                         continue;

@@ -90,9 +90,19 @@ namespace txprobe
                                 // エンコーディング指定が無い場合
 
                                 // 読み取りファイルの文字エンコーディングを判定する
-                                int fileSize = (int)fs.Length;
+                                long fileLength = fs.Length;
+                                
+                                // ファイルサイズ検証：2GB以上のファイルはエラー
+                                if (fileLength > int.MaxValue)
+                                {
+                                    throw new RmsmfException($"ファイル {fileName} が大きすぎます（最大 2GB）。");
+                                }
+                                
+                                int fileSize = (int)fileLength;
                                 byte[] buffer = new byte[fileSize];
                                 int readCount = fs.Read(buffer, 0, fileSize);
+                                
+                                // ファイルポジションを先頭に戻す（StreamReaderが正しく読めるようにする）
                                 fs.Position = 0;
 
                                 ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
