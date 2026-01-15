@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,10 +11,17 @@ namespace rmsmf
     /// </summary>
     public class EncodingInfomation
     {
-        public int codePage = 0;
-        public string encodingName = null;
-        public bool bom = false;
-        public Encoding encoding = null;
+        /// <summary>コードページ</summary>
+        public int CodePage { get; set; }
+        
+        /// <summary>エンコーディング名</summary>
+        public string EncodingName { get; set; }
+        
+        /// <summary>BOMの有無</summary>
+        public bool Bom { get; set; }
+        
+        /// <summary>エンコーディング</summary>
+        public Encoding Encoding { get; set; }
     }
 
     /// <summary>
@@ -22,7 +29,44 @@ namespace rmsmf
     /// </summary>
     public class EncodingJudgment
     {
-        public int bufferSize = 0;
+        /// <summary>コードページ：US-ASCII</summary>
+        private const int CodePageAscii = 20127;
+        
+        /// <summary>コードページ：ISO-2022-JP (JIS)</summary>
+        private const int CodePageJis = 50220;
+        
+        /// <summary>コードページ：UTF-8</summary>
+        private const int CodePageUtf8 = 65001;
+        
+        /// <summary>コードページ：UTF-16 Little Endian</summary>
+        private const int CodePageUtf16Le = 1200;
+        
+        /// <summary>コードページ：UTF-16 Big Endian</summary>
+        private const int CodePageUtf16Be = 1201;
+        
+        /// <summary>コードページ：UTF-32 Little Endian</summary>
+        private const int CodePageUtf32Le = 12000;
+        
+        /// <summary>コードページ：UTF-32 Big Endian</summary>
+        private const int CodePageUtf32Be = 12001;
+        
+        /// <summary>コードページ：EUC-JP</summary>
+        private const int CodePageEucJp = 20932;
+        
+        /// <summary>コードページ：Shift_JIS</summary>
+        private const int CodePageShiftJis = 932;
+        
+        /// <summary>マジックナンバー：バッファインデックス2</summary>
+        private const int BufferIndex2 = 2;
+        
+        /// <summary>マジックナンバー：バッファインデックス3</summary>
+        private const int BufferIndex3 = 3;
+        
+        /// <summary>マジックナンバー：0xFF</summary>
+        private const byte DefaultBufferValue = 0xFF;
+
+        /// <summary>バッファサイズ</summary>
+        public int BufferSize { get; private set; }
 
         /// <summary>
         /// ファイルバイナリ配列
@@ -36,7 +80,7 @@ namespace rmsmf
         {
             if(filesize <= 0)
             {
-                this.bufferSize = 0;
+                this.BufferSize = 0;
                 this._buffer = null;
             }
             else
@@ -52,7 +96,7 @@ namespace rmsmf
         public EncodingJudgment(byte[] buffer)
         {
             this._buffer = buffer;
-            this.bufferSize = buffer.Length;
+            this.BufferSize = buffer.Length;
         }
 
         /// <summary>
@@ -131,13 +175,14 @@ namespace rmsmf
 
             using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             {
-                this.bufferSize = (int)fs.Length;
-                this._buffer = new byte[this.bufferSize];
-                //ゼロサイズのutf-16LE.BE 対応
-                this._buffer[2] = 0xFF;
-                this._buffer[3] = 0xFF;
+                this.BufferSize = (int)fs.Length;
+                this._buffer = new byte[this.BufferSize];
+                
+                // ゼロサイズのUTF-16 LE/BE 対応
+                this._buffer[BufferIndex2] = DefaultBufferValue;
+                this._buffer[BufferIndex3] = DefaultBufferValue;
 
-                int readCount = fs.Read(this._buffer, 0, this.bufferSize);
+                int readCount = fs.Read(this._buffer, 0, this.BufferSize);
 
                 encInfo = Judgment();
 
@@ -157,21 +202,21 @@ namespace rmsmf
             EncodingInfomation encInfo = new EncodingInfomation();
             ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
 
-            // Check BOM
+            // BOMチェック
             if (bomJudg.IsBOM(this._buffer))
             {
-                encInfo.codePage = bomJudg.CodePage;
-                encInfo.encodingName = this.EncodingName(encInfo.codePage);
-                encInfo.bom = true;
+                encInfo.CodePage = bomJudg.CodePage;
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                encInfo.Bom = true;
                 return encInfo;
             }
             else
             {
-                encInfo.codePage = -1;
-                encInfo.bom = false;
+                encInfo.CodePage = -1;
+                encInfo.Bom = false;
             }
 
-            // if ISO-2022-JP or ASCII
+            // ISO-2022-JP または ASCII 判定
             bool isJIS;
             outOfSpecification = JIS_Judgment(out isJIS);
 
@@ -179,56 +224,56 @@ namespace rmsmf
             {
                 if (isJIS == true)
                 {
-                    encInfo.codePage = 50220; //iso-2022-jp : Japanese (JIS)
-                    encInfo.bom = false;
+                    encInfo.CodePage = CodePageJis;
+                    encInfo.Bom = false;
                 }
                 else
                 {
-                    encInfo.codePage = 20127; //us-ascii : US-ASCII
-                    encInfo.bom = false;
+                    encInfo.CodePage = CodePageAscii;
+                    encInfo.Bom = false;
                 }
 
-                encInfo.encodingName = this.EncodingName(encInfo.codePage);
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
 
                 return encInfo;
             }
 
-            // else if UTF-8
+            // UTF-8 判定
             outOfSpecification = Utf8_Judgment();
 
             if (outOfSpecification == false)
             {
-                encInfo.codePage = 65001; //utf-8 : Unicode (UTF-8)
-                encInfo.encodingName = this.EncodingName(encInfo.codePage);
-                encInfo.bom = false;
+                encInfo.CodePage = CodePageUtf8;
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                encInfo.Bom = false;
 
                 return encInfo;
             }
 
-            // else if EUC-JP
+            // EUC-JP 判定
             outOfSpecification = EUCJP_Judgment();
 
             if (outOfSpecification == false)
             {
-                encInfo.codePage = 20932; //EUC-JP : Japanese (JIS 0208-1990 and 0212-1990)	
-                encInfo.encodingName = this.EncodingName(encInfo.codePage);
-                encInfo.bom = false;
+                encInfo.CodePage = CodePageEucJp;
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                encInfo.Bom = false;
 
                 return encInfo;
             }
 
-            // else if Shift_JIS
+            // Shift_JIS 判定
             outOfSpecification = SJIS_Judgment();
 
             if (outOfSpecification == false)
             {
-                encInfo.codePage = 932; //shift_jis : Japanese (Shift-JIS)
-                encInfo.encodingName = this.EncodingName(encInfo.codePage);
-                encInfo.bom = false;
+                encInfo.CodePage = CodePageShiftJis;
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                encInfo.Bom = false;
                 return encInfo;
             }
 
-            // I do not know.
+            // 不明
             return encInfo;
         }
 
@@ -262,7 +307,7 @@ namespace rmsmf
 
             // if ISO-2022-JP
 
-            for (int i = 0; i < this.bufferSize; i++)
+            for (int i = 0; i < this.BufferSize; i++)
             {
                 if (0x80 <= this._buffer[i])
                 {
@@ -315,7 +360,7 @@ namespace rmsmf
             uint[] byteChar = new uint[6];
             int byteCharCount = 0;
 
-            for (int i = 0; i < this.bufferSize; i++)
+            for (int i = 0; i < this.BufferSize; i++)
             {
                 //２バイト文字以上である
                 if ((uint)0x80 <= (uint)this._buffer[i])
@@ -485,7 +530,7 @@ namespace rmsmf
             BYTECODE beforeCode = BYTECODE.OneByteCode;
             int byteCharCount = 0;
 
-            for (int i = 0; i < this.bufferSize; i++)
+            for (int i = 0; i < this.BufferSize; i++)
             {
                 // 2バイトコード
                 if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
@@ -559,7 +604,7 @@ namespace rmsmf
 
             // if SJIS
 
-            for (int i = 0; i < this.bufferSize; i++)
+            for (int i = 0; i < this.BufferSize; i++)
             {
                 // バイト種別判定
                 if (beforeSjisByte != SJIS_BYTECODE.TwoByteBefore
@@ -625,7 +670,7 @@ namespace rmsmf
 
                 if (sjisByte == SJIS_BYTECODE.TwoByteBefore)
                 {
-                    if(i == (this.bufferSize - 1))
+                    if(i == (this.BufferSize - 1))
                     {
                         // 最後のバイトで2バイト文字の前半が来たら規格外
                         outOfSpecification = true;

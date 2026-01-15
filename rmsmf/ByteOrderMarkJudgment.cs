@@ -5,37 +5,72 @@ using System.Text;
 
 namespace rmsmf
 {
+    /// <summary>
+    /// BOM（Byte Order Mark）の判定を行うクラス
+    /// </summary>
     public class ByteOrderMarkJudgment
     {
-        private static byte[] bomUTF8 = { 0xEF, 0xBB, 0xBF };
-        private static byte[] bomUTF16Little = { 0xFF, 0xFE };
-        private static byte[] bomUTF16Big = { 0xFE, 0xFF };
-        private static byte[] bomUTF32Little = { 0xFF, 0xFE, 0x00, 0x00 };
-        private static byte[] bomUTF32Big = { 0x00, 0x00, 0xFE, 0xFF };
+        /// <summary>UTF-8のBOM</summary>
+        private static readonly byte[] _bomUtf8 = { 0xEF, 0xBB, 0xBF };
+        
+        /// <summary>UTF-16 Little Endianのbom</summary>
+        private static readonly byte[] _bomUtf16Little = { 0xFF, 0xFE };
+        
+        /// <summary>UTF-16 Big EndianのBOM</summary>
+        private static readonly byte[] _bomUtf16Big = { 0xFE, 0xFF };
+        
+        /// <summary>UTF-32 Little EndianのBOM</summary>
+        private static readonly byte[] _bomUtf32Little = { 0xFF, 0xFE, 0x00, 0x00 };
+        
+        /// <summary>UTF-32 Big EndianのBOM</summary>
+        private static readonly byte[] _bomUtf32Big = { 0x00, 0x00, 0xFE, 0xFF };
 
-        public static byte[] BOM_UTF8
+        /// <summary>コードページ：UTF-8</summary>
+        private const int CodePageUtf8 = 65001;
+        
+        /// <summary>コードページ：UTF-16 Little Endian</summary>
+        private const int CodePageUtf16Le = 1200;
+        
+        /// <summary>コードページ：UTF-16 Big Endian</summary>
+        private const int CodePageUtf16Be = 1201;
+        
+        /// <summary>コードページ：UTF-32 Little Endian</summary>
+        private const int CodePageUtf32Le = 12000;
+        
+        /// <summary>コードページ：UTF-32 Big Endian</summary>
+        private const int CodePageUtf32Be = 12001;
+        
+        /// <summary>コードページ：Shift_JIS（デフォルト）</summary>
+        private const int CodePageShiftJis = 932;
+
+        /// <summary>UTF-8のBOMを取得</summary>
+        public static byte[] BomUtf8
         {
-            get { return ByteOrderMarkJudgment.bomUTF8; }
+            get { return _bomUtf8; }
         }
 
-        public static byte[] BOM_UTF16Little
+        /// <summary>UTF-16 Little EndianのBOMを取得</summary>
+        public static byte[] BomUtf16Little
         {
-            get { return ByteOrderMarkJudgment.bomUTF16Little; }
+            get { return _bomUtf16Little; }
         }
 
-        public static byte[] BOM_UTF16Big
+        /// <summary>UTF-16 Big EndianのBOMを取得</summary>
+        public static byte[] BomUtf16Big
         {
-            get { return ByteOrderMarkJudgment.BOM_UTF16Big; }
+            get { return _bomUtf16Big; }
         }
 
-        public static byte[] BOM_UTF32Little
+        /// <summary>UTF-32 Little EndianのBOMを取得</summary>
+        public static byte[] BomUtf32Little
         {
-            get { return ByteOrderMarkJudgment.BOM_UTF32Little; }
+            get { return _bomUtf32Little; }
         }
 
-        public static byte[] BOM_UTF32Big
+        /// <summary>UTF-32 Big EndianのBOMを取得</summary>
+        public static byte[] BomUtf32Big
         {
-            get { return ByteOrderMarkJudgment.BOM_UTF32Big; }
+            get { return _bomUtf32Big; }
         }
 
         /// <summary>
@@ -63,65 +98,65 @@ namespace rmsmf
         /// BOM判定
         /// </summary>
         /// <param name="bomByte">判定対象バイト配列</param>
-        /// <returns>True=BOM有り。False=BOMなし。</returns>
+        /// <returns>true=BOM有り、false=BOMなし</returns>
         public bool IsBOM(byte[] bomByte)
         {
             bool result;
 
-            if (IsMatched(bomByte, bomUTF8))
+            if (IsMatched(bomByte, _bomUtf8))
             {
                 result = true;
-                this._codePage = 65001; //utf-8,Unicode (UTF-8)
+                this._codePage = CodePageUtf8;
             }
-
-            else if (IsMatched(bomByte, bomUTF32Little))
+            else if (IsMatched(bomByte, _bomUtf32Little))
             {
                 result = true;
-                this._codePage = 12000; //utf-32,Unicode (UTF-32)
+                this._codePage = CodePageUtf32Le;
             }
-
-            else if (IsMatched(bomByte, bomUTF32Big))
+            else if (IsMatched(bomByte, _bomUtf32Big))
             {
                 result = true;
-                this._codePage = 12001; //utf-32BE,Unicode (UTF-32 Big-Endian) 
+                this._codePage = CodePageUtf32Be;
             }
-
-            else if (IsMatched(bomByte, bomUTF16Little))
+            else if (IsMatched(bomByte, _bomUtf16Little))
             {
                 result = true;
-                this._codePage = 1200; //utf-16,Unicode
+                this._codePage = CodePageUtf16Le;
             }
-
-            else if (IsMatched(bomByte, bomUTF16Big))
+            else if (IsMatched(bomByte, _bomUtf16Big))
             {
                 result = true;
-                this._codePage = 1201; //utf-16BE,Unicode (Big-Endian) 
+                this._codePage = CodePageUtf16Be;
             }
-
             else
             {
                 result = false;
-                //codepage = 0; //non BOM !
-                this._codePage = 932; //shift_jis,Japanese (Shift-JIS)
+                this._codePage = CodePageShiftJis;
             }
 
             return result;
         }
 
-        public bool IsMatched(byte[] data, byte[] bom)
+        /// <summary>
+        /// バイト配列が指定されたBOMと一致するか判定
+        /// </summary>
+        /// <param name="data">判定対象データ</param>
+        /// <param name="bom">BOMバイト配列</param>
+        /// <returns>true=一致、false=不一致</returns>
+        private bool IsMatched(byte[] data, byte[] bom)
         {
             if (data == null || data.Length < bom.Length)
                 return false;
 
-            bool result = true;
-
             for (int i = 0; i < bom.Length; i++)
             {
                 if (bom[i] != data[i])
-                    result = false;
+                {
+                    return false;
+                }
             }
 
-            return result;
+            return true;
         }
 
     }

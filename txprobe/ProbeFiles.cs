@@ -78,19 +78,18 @@ namespace txprobe
                 {
                     if (File.Exists(fileName))
                     {
-                        //Open read file
-                        //読み取りファイルを開く。
+                        // 読み取りファイルを開く
                         using (FileStream fs = new FileStream(fileName, FileMode.Open))
                         {
                             bool bomExist = false;
                             int codePage;
 
-                            //読み込みエンコーディングの有無で分岐
+                            // 読み込みエンコーディングの有無で分岐
                             if (encoding == null)
                             {
                                 // エンコーディング指定が無い場合
 
-                                //  読み取りファイルの文字エンコーディングを判定する
+                                // 読み取りファイルの文字エンコーディングを判定する
                                 int fileSize = (int)fs.Length;
                                 byte[] buffer = new byte[fileSize];
                                 int readCount = fs.Read(buffer, 0, fileSize);
@@ -110,7 +109,7 @@ namespace txprobe
                                     EncodingJudgment encJudgment = new EncodingJudgment(buffer);
                                     EncodingInfomation encInfo = encJudgment.Judgment();
 
-                                    codePage = encInfo.codePage;
+                                    codePage = encInfo.CodePage;
                                 }
 
                                 if (codePage > 0)
@@ -148,7 +147,7 @@ namespace txprobe
 
                             if(inEncoding == null)
                             {
-                                //エンコーディングが不明な場合、処理をスキップする。
+                                // エンコーディングが不明な場合、処理をスキップする
                                 string dispBOM;
                                 string lineBreakType = "EOL Unknown";
                                 string encodingName = "encoding Unknown";
@@ -167,10 +166,10 @@ namespace txprobe
                                 return; // Parallel.ForEachではcontinueの代わりにreturn
                             }
 
-                            //エンコーディングを指定してテキストストリームを開く
+                            // エンコーディングを指定してテキストストリームを開く
                             using (var reader = new StreamReader(fs, inEncoding, true))
                             {
-                                //検索メイン処理
+                                // 検索メイン処理
                                 ReadForSearch(fileName, reader, inEncoding, bomExist);
                             }
                         }
@@ -365,8 +364,7 @@ namespace txprobe
                 encodingName = encoding.WebName;
             }
 
-            //Read Readfile.
-            //読み取りファイルを全て読み込む。
+            // 読み取りファイルを全て読み込む
             string readLine = reader.ReadToEnd();
 
             // 改行コードのカウント

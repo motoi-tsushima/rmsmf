@@ -380,9 +380,9 @@ namespace rmsmf
                 EncodingJudgment encJudg = new EncodingJudgment(0);
                 EncodingInfomation encInfo = encJudg.Judgment(this._replaceWordsFileName);
 
-                if (encInfo.codePage > 0)
+                if (encInfo.CodePage > 0)
                 {
-                    this.repleaseEncoding = Encoding.GetEncoding(encInfo.codePage);
+                    this.repleaseEncoding = Encoding.GetEncoding(encInfo.CodePage);
                 }
                 else
                 {
@@ -493,9 +493,9 @@ namespace rmsmf
                 EncodingJudgment encJudg = new EncodingJudgment(0);
                 EncodingInfomation encInfo = encJudg.Judgment(this._fileNameListFileName);
 
-                if (encInfo.codePage > 0)
+                if (encInfo.CodePage > 0)
                 {
-                    this.filesEncoding = Encoding.GetEncoding(encInfo.codePage);
+                    this.filesEncoding = Encoding.GetEncoding(encInfo.CodePage);
                 }
                 else
                 {

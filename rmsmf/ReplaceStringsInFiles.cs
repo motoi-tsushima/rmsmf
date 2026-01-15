@@ -59,27 +59,25 @@ namespace rmsmf
                         {
                             string writeFileName = fileName + ".RP$";
 
-                            //Delete the write file if it already exists
-                            //書き込み対象ファイルがすでに存在する場合は削除します。
+                            // 書き込み対象ファイルがすでに存在する場合は削除する
                             if (File.Exists(writeFileName))
                             {
                                 File.Delete(writeFileName);
                             }
 
-                            //Open read file
-                            //読み取りファイルを開く。
+                            // 読み取りファイルを開く
                             using (FileStream fs = new FileStream(fileName, FileMode.Open))
                             {
                                 bool bomExist = false;
                                 int codePage;
                                 int writeCodePage;
 
-                                //読み込みエンコーディングの有無で分岐
+                                // 読み込みエンコーディングの有無で分岐
                                 if (encoding == null)
                                 {
                                     // エンコーディング指定が無い場合
 
-                                    //  読み取りファイルの文字エンコーディングを判定する
+                                    // 読み取りファイルの文字エンコーディングを判定する
                                     int fileSize = (int)fs.Length;
                                     byte[] buffer = new byte[fileSize];
                                     int readCount = fs.Read(buffer, 0, fileSize);
@@ -99,7 +97,7 @@ namespace rmsmf
                                         EncodingJudgment encJudgment = new EncodingJudgment(buffer);
                                         EncodingInfomation encInfo = encJudgment.Judgment();
 
-                                        codePage = encInfo.codePage;
+                                        codePage = encInfo.CodePage;
                                     }
 
                                     if (codePage > 0)
@@ -167,24 +165,21 @@ namespace rmsmf
                                     writeCodePage = writeEncoding.CodePage;
                                 }
 
-                                //書き込みエンコーディングの再作成
+                                // 書き込みエンコーディングの再作成
                                 inWriteEncoding = GetWriteEncoding(writeCodePage, bomExist, this._enableBOM);
 
-                                //エンコーディングを指定してテキストストリームを開く
+                                // エンコーディングを指定してテキストストリームを開く
                                 using (var reader = new StreamReader(fs, inEncoding, true))
                                 {
-                                    //Main processing For Replace
-                                    //置換メイン処理
+                                    // 置換メイン処理
                                     ReadWriteForReplace(reader, writeFileName, inEncoding, inWriteEncoding, writeNewLine);
                                 }
                             }
 
-                            //Delete read file
-                            //読み取りファイルを削除する。
+                            // 読み取りファイルを削除する
                             File.Delete(fileName);
 
-                            //Read write file and rename to read file name
-                            //書き込み対象ファイルを読み取りファイル名に変更。
+                            // 書き込み対象ファイルを読み取りファイル名に変更
                             File.Move(writeFileName, fileName);
                         }
                     }
@@ -261,8 +256,7 @@ namespace rmsmf
                     // NewLineLFの場合は既にLFなので何もしない
                 }
 
-                //Writefile Overwrite .
-                //書き込みファイルへ上書きします。
+                // 書き込みファイルへ上書きする
                 writer.Write(readLine);
             }
 
