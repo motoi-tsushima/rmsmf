@@ -1,262 +1,262 @@
-# rmsmf - Replace Multiple Strings in Multiple Files
+ï»¿# rmsmf - Replace Multiple Strings in Multiple Files
 
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-33%20passing-brightgreen.svg)](rmsmf.Tests)
 
-•¡”‚Ìƒtƒ@ƒCƒ‹“à‚Ì•¡”‚Ì•¶Žš—ñ‚ðˆêŠ‡’uŠ·‚·‚éƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ƒc[ƒ‹‚Å‚·B•¶ŽšƒGƒ“ƒR[ƒfƒBƒ“ƒO‚Ì•ÏŠ·‚âBOMiByte Order Markj‚Ì§Œä‚à‰Â”\‚Å‚·B
+è¤‡æ•°ã®ãƒ•ã‚¡ã‚¤ãƒ«å†…ã®è¤‡æ•°ã®æ–‡å­—åˆ—ã‚’ä¸€æ‹¬ç½®æ›ã™ã‚‹ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ãƒ„ãƒ¼ãƒ«ã§ã™ã€‚æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã®å¤‰æ›ã‚„BOMï¼ˆByte Order Markï¼‰ã®åˆ¶å¾¡ã‚‚å¯èƒ½ã§ã™ã€‚
 
-## ?? –ÚŽŸ
+## ðŸ“‘ ç›®æ¬¡
 
-- [ƒvƒƒWƒFƒNƒg\¬](#-ƒvƒƒWƒFƒNƒg\¬)
-- [‹@”\](#-‹@”\)
-- [ƒCƒ“ƒXƒg[ƒ‹](#-ƒCƒ“ƒXƒg[ƒ‹)
-- [Žg—p•û–@](#-Žg—p•û–@)
-  - [rmsmf - •¶Žš—ñ’uŠ·ƒc[ƒ‹](#rmsmf---•¶Žš—ñ’uŠ·ƒc[ƒ‹)
-  - [txprobe - ƒeƒLƒXƒgƒtƒ@ƒCƒ‹ŒŸõƒc[ƒ‹](#txprobe---ƒeƒLƒXƒgƒtƒ@ƒCƒ‹ŒŸõƒc[ƒ‹)
-- [ƒA[ƒLƒeƒNƒ`ƒƒ](#-ƒA[ƒLƒeƒNƒ`ƒƒ)
-- [ƒŠƒtƒ@ƒNƒ^ƒŠƒ“ƒO“à—e](#-ƒŠƒtƒ@ƒNƒ^ƒŠƒ“ƒO“à—e)
-- [ƒrƒ‹ƒh•û–@](#-ƒrƒ‹ƒh•û–@)
-- [ƒeƒXƒg](#-ƒeƒXƒg)
-- [ŠJ”­ŠÂ‹«](#-ŠJ”­ŠÂ‹«)
-- [ƒ‰ƒCƒZƒ“ƒX](#-ƒ‰ƒCƒZƒ“ƒX)
+- [ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆæ§‹æˆ](#ðŸ“¦-ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆæ§‹æˆ)
+- [æ©Ÿèƒ½](#âœ¨-æ©Ÿèƒ½)
+- [ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«](#ðŸš€-ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«)
+- [ä½¿ç”¨æ–¹æ³•](#ðŸ“–-ä½¿ç”¨æ–¹æ³•)
+  - [rmsmf - æ–‡å­—åˆ—ç½®æ›ãƒ„ãƒ¼ãƒ«](#rmsmf---æ–‡å­—åˆ—ç½®æ›ãƒ„ãƒ¼ãƒ«)
+  - [txprobe - ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«æ¤œç´¢ãƒ„ãƒ¼ãƒ«](#txprobe---ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«æ¤œç´¢ãƒ„ãƒ¼ãƒ«)
+- [ã‚¢ãƒ¼ã‚­ãƒ†ã‚¯ãƒãƒ£](#ðŸ—ï¸-ã‚¢ãƒ¼ã‚­ãƒ†ã‚¯ãƒãƒ£)
+- [ãƒªãƒ•ã‚¡ã‚¯ã‚¿ãƒªãƒ³ã‚°å†…å®¹](#ðŸ”„-ãƒªãƒ•ã‚¡ã‚¯ã‚¿ãƒªãƒ³ã‚°å†…å®¹)
+- [ãƒ“ãƒ«ãƒ‰æ–¹æ³•](#ðŸ”¨-ãƒ“ãƒ«ãƒ‰æ–¹æ³•)
+- [ãƒ†ã‚¹ãƒˆ](#ðŸ§ª-ãƒ†ã‚¹ãƒˆ)
+- [é–‹ç™ºç’°å¢ƒ](#ðŸ’»-é–‹ç™ºç’°å¢ƒ)
+- [ãƒ©ã‚¤ã‚»ãƒ³ã‚¹](#ðŸ“-ãƒ©ã‚¤ã‚»ãƒ³ã‚¹)
 
 ---
 
-## ?? ƒvƒƒWƒFƒNƒg\¬
+## ðŸ“¦ ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆæ§‹æˆ
 
-‚±‚ÌƒŠƒ|ƒWƒgƒŠ‚É‚ÍˆÈ‰º‚Ì3‚Â‚ÌƒvƒƒWƒFƒNƒg‚ªŠÜ‚Ü‚ê‚Ä‚¢‚Ü‚·F
+ã“ã®ãƒªãƒã‚¸ãƒˆãƒªã«ã¯ä»¥ä¸‹ã®3ã¤ã®ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆãŒå«ã¾ã‚Œã¦ã„ã¾ã™ï¼š
 
 ```
 rmsmf/
-„¥„Ÿ„Ÿ rmsmf/              # •¶Žš—ñ’uŠ·ƒc[ƒ‹iƒƒCƒ“ƒvƒƒWƒFƒNƒgj
-„¥„Ÿ„Ÿ txprobe/            # ƒeƒLƒXƒgƒtƒ@ƒCƒ‹ŒŸõƒc[ƒ‹
-„¤„Ÿ„Ÿ rmsmf.Tests/        # ’P‘ÌƒeƒXƒgƒvƒƒWƒFƒNƒg
+â”œâ”€â”€ rmsmf/              # æ–‡å­—åˆ—ç½®æ›ãƒ„ãƒ¼ãƒ«ï¼ˆãƒ¡ã‚¤ãƒ³ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆï¼‰
+â”œâ”€â”€ txprobe/            # ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«æ¤œç´¢ãƒ„ãƒ¼ãƒ«
+â””â”€â”€ rmsmf.Tests/        # å˜ä½“ãƒ†ã‚¹ãƒˆãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆ
 ```
 
-### ƒvƒƒWƒFƒNƒgÚ×
+### ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆè©³ç´°
 
-| ƒvƒƒWƒFƒNƒg | à–¾ | o—Íƒ^ƒCƒv |
+| ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆ | èª¬æ˜Ž | å‡ºåŠ›ã‚¿ã‚¤ãƒ— |
 |-------------|------|-----------|
-| **rmsmf** | •¡”ƒtƒ@ƒCƒ‹‚Ì•¶Žš—ñˆêŠ‡’uŠ· | ƒRƒ“ƒ\[ƒ‹ƒAƒvƒŠ (.exe) |
-| **txprobe** | ƒeƒLƒXƒgƒtƒ@ƒCƒ‹“à—e‚ÌŒŸõE‰ðÍ | ƒRƒ“ƒ\[ƒ‹ƒAƒvƒŠ (.exe) |
-| **rmsmf.Tests** | ’P‘ÌƒeƒXƒg (33ƒeƒXƒg) | ƒ‰ƒCƒuƒ‰ƒŠ (.dll) |
+| **rmsmf** | è¤‡æ•°ãƒ•ã‚¡ã‚¤ãƒ«ã®æ–‡å­—åˆ—ä¸€æ‹¬ç½®æ› | ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã‚¢ãƒ—ãƒª (.exe) |
+| **txprobe** | ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«å†…å®¹ã®æ¤œç´¢ãƒ»è§£æž | ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã‚¢ãƒ—ãƒª (.exe) |
+| **rmsmf.Tests** | å˜ä½“ãƒ†ã‚¹ãƒˆ (33ãƒ†ã‚¹ãƒˆ) | ãƒ©ã‚¤ãƒ–ãƒ©ãƒª (.dll) |
 
 ---
 
-## ? ‹@”\
+## âœ¨ æ©Ÿèƒ½
 
-### rmsmf ‚Ì‹@”\
+### rmsmf ã®æ©Ÿèƒ½
 
-- ? **•¡”•¶Žš—ñ‚ÌˆêŠ‡’uŠ·**: CSVƒtƒ@ƒCƒ‹‚ÅŽw’è‚µ‚½•¡”‚ÌŒŸõE’uŠ·ƒyƒA‚ðˆê“x‚Éˆ—
-- ? **ƒƒCƒ‹ƒhƒJ[ƒh‘Î‰ž**: `*.txt` ‚È‚Ç‚Ìƒpƒ^[ƒ“‚Åƒtƒ@ƒCƒ‹‚ðŽw’è‰Â”\
-- ? **ƒTƒuƒfƒBƒŒƒNƒgƒŠŒŸõ**: `/d` ƒIƒvƒVƒ‡ƒ“‚ÅƒTƒuƒfƒBƒŒƒNƒgƒŠ‚àˆ—‘ÎÛ‚É
-- ? **•¶ŽšƒGƒ“ƒR[ƒfƒBƒ“ƒO•ÏŠ·**: Shift_JIS Ì UTF-8 ‚È‚Ç‚Ì‘ŠŒÝ•ÏŠ·
-- ? **BOM§Œä**: BOM‚Ì’Ç‰ÁEíœ‚ð§Œä‰Â”\
-- ? **‰üsƒR[ƒh•ÏŠ·**: CRLF / LF / CR ‚Ì‘ŠŒÝ•ÏŠ·
-- ? **ƒtƒ@ƒCƒ‹ƒŠƒXƒg‘Î‰ž**: ƒeƒLƒXƒgƒtƒ@ƒCƒ‹‚Åˆ—‘ÎÛƒtƒ@ƒCƒ‹‚ðŽw’è‰Â”\
-- ? **ƒGƒXƒP[ƒvƒV[ƒPƒ“ƒX‘Î‰ž**: `\r\n`, `\t` ‚È‚Ç‚ðCSV“à‚ÅŽg—p‰Â”\
+- âœ… **è¤‡æ•°æ–‡å­—åˆ—ã®ä¸€æ‹¬ç½®æ›**: CSVãƒ•ã‚¡ã‚¤ãƒ«ã§æŒ‡å®šã—ãŸè¤‡æ•°ã®æ¤œç´¢ãƒ»ç½®æ›ãƒšã‚¢ã‚’ä¸€åº¦ã«å‡¦ç†
+- âœ… **ãƒ¯ã‚¤ãƒ«ãƒ‰ã‚«ãƒ¼ãƒ‰å¯¾å¿œ**: `*.txt` ãªã©ã®ãƒ‘ã‚¿ãƒ¼ãƒ³ã§ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŒ‡å®šå¯èƒ½
+- âœ… **ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªæ¤œç´¢**: `/d` ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã§ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚‚å‡¦ç†å¯¾è±¡ã«
+- âœ… **æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°å¤‰æ›**: Shift_JIS â‡” UTF-8 ãªã©ã®ç›¸äº’å¤‰æ›
+- âœ… **BOMåˆ¶å¾¡**: BOMã®è¿½åŠ ãƒ»å‰Šé™¤ã‚’åˆ¶å¾¡å¯èƒ½
+- âœ… **æ”¹è¡Œã‚³ãƒ¼ãƒ‰å¤‰æ›**: CRLF / LF / CR ã®ç›¸äº’å¤‰æ›
+- âœ… **ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆå¯¾å¿œ**: ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã§å‡¦ç†å¯¾è±¡ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŒ‡å®šå¯èƒ½
+- âœ… **ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚·ãƒ¼ã‚±ãƒ³ã‚¹å¯¾å¿œ**: `\r\n`, `\t` ãªã©ã‚’CSVå†…ã§ä½¿ç”¨å¯èƒ½
 
-### txprobe ‚Ì‹@”\
+### txprobe ã®æ©Ÿèƒ½
 
-- ? **ƒeƒLƒXƒgƒtƒ@ƒCƒ‹ŒŸõ**: Žw’è‚µ‚½’PŒê‚ðŠÜ‚Þƒtƒ@ƒCƒ‹‚ðŒŸõ
-- ? **ƒGƒ“ƒR[ƒfƒBƒ“ƒO”»’è**: ƒtƒ@ƒCƒ‹‚Ì•¶ŽšƒGƒ“ƒR[ƒfƒBƒ“ƒO‚ðŽ©“®”»’èE•\Ž¦
-- ? **‰üsƒR[ƒh”»’è**: CRLF / LF / CR ‚ð”»’èE•\Ž¦
-- ? **BOMŒŸo**: BOM‚Ì—L–³‚ðŒŸoE•\Ž¦
-- ? **ƒvƒ[ƒuƒ‚[ƒh**: ŒŸõ’PŒê‚ðŠÜ‚Þƒtƒ@ƒCƒ‹‚Ì‚Ý•\Ž¦
+- âœ… **ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«æ¤œç´¢**: æŒ‡å®šã—ãŸå˜èªžã‚’å«ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ¤œç´¢
+- âœ… **ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°åˆ¤å®š**: ãƒ•ã‚¡ã‚¤ãƒ«ã®æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚’è‡ªå‹•åˆ¤å®šãƒ»è¡¨ç¤º
+- âœ… **æ”¹è¡Œã‚³ãƒ¼ãƒ‰åˆ¤å®š**: CRLF / LF / CR ã‚’åˆ¤å®šãƒ»è¡¨ç¤º
+- âœ… **BOMæ¤œå‡º**: BOMã®æœ‰ç„¡ã‚’æ¤œå‡ºãƒ»è¡¨ç¤º
+- âœ… **ãƒ—ãƒ­ãƒ¼ãƒ–ãƒ¢ãƒ¼ãƒ‰**: æ¤œç´¢å˜èªžã‚’å«ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã®ã¿è¡¨ç¤º
 
 ---
 
-## ?? ƒCƒ“ƒXƒg[ƒ‹
+## ðŸš€ ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«
 
-### •K—vŠÂ‹«
+### å¿…è¦ç’°å¢ƒ
 
-- **.NET Framework 4.8** ˆÈã
+- **.NET Framework 4.8** ä»¥ä¸Š
 - Windows OS
 
-### ƒrƒ‹ƒhÏ‚ÝƒoƒCƒiƒŠ
+### ãƒ“ãƒ«ãƒ‰æ¸ˆã¿ãƒã‚¤ãƒŠãƒª
 
-ƒŠƒŠ[ƒXƒy[ƒW‚©‚çÅV”Å‚ðƒ_ƒEƒ“ƒ[ƒh‚µ‚Ä‚­‚¾‚³‚¢B
+ãƒªãƒªãƒ¼ã‚¹ãƒšãƒ¼ã‚¸ã‹ã‚‰æœ€æ–°ç‰ˆã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¦ãã ã•ã„ã€‚
 
-### ƒ\[ƒX‚©‚çƒrƒ‹ƒh
+### ã‚½ãƒ¼ã‚¹ã‹ã‚‰ãƒ“ãƒ«ãƒ‰
 
 ```powershell
-# ƒŠƒ|ƒWƒgƒŠ‚ðƒNƒ[ƒ“
+# ãƒªãƒã‚¸ãƒˆãƒªã‚’ã‚¯ãƒ­ãƒ¼ãƒ³
 git clone https://github.com/motoi-tsushima/rmsmf.git
 cd rmsmf
 
-# Visual Studio‚Åƒ\ƒŠƒ…[ƒVƒ‡ƒ“‚ðŠJ‚­
+# Visual Studioã§ã‚½ãƒªãƒ¥ãƒ¼ã‚·ãƒ§ãƒ³ã‚’é–‹ã
 start rmsmf.sln
 
-# ‚Ü‚½‚ÍAMSBuild‚Åƒrƒ‹ƒh
+# ã¾ãŸã¯ã€MSBuildã§ãƒ“ãƒ«ãƒ‰
 msbuild rmsmf.sln /p:Configuration=Release
 ```
 
 ---
 
-## ?? Žg—p•û–@
+## ðŸ“– ä½¿ç”¨æ–¹æ³•
 
-### rmsmf - •¶Žš—ñ’uŠ·ƒc[ƒ‹
+### rmsmf - æ–‡å­—åˆ—ç½®æ›ãƒ„ãƒ¼ãƒ«
 
-#### Šî–{\•¶
+#### åŸºæœ¬æ§‹æ–‡
 
 ```
-rmsmf <ƒIƒvƒVƒ‡ƒ“> <‘ÎÛƒtƒ@ƒCƒ‹–¼>
+rmsmf <ã‚ªãƒ—ã‚·ãƒ§ãƒ³> <å¯¾è±¡ãƒ•ã‚¡ã‚¤ãƒ«å>
 ```
 
-#### ƒIƒvƒVƒ‡ƒ“ˆê——
+#### ã‚ªãƒ—ã‚·ãƒ§ãƒ³ä¸€è¦§
 
-| ƒIƒvƒVƒ‡ƒ“ | à–¾ | —á |
+| ã‚ªãƒ—ã‚·ãƒ§ãƒ³ | èª¬æ˜Ž | ä¾‹ |
 |----------|------|-----|
-| `/r:<CSVƒtƒ@ƒCƒ‹>` | ’uŠ·’PŒêƒŠƒXƒgCSV‚ÌƒpƒX | `/r:words.csv` |
-| `/c:<ƒGƒ“ƒR[ƒfƒBƒ“ƒO>` | “Ç‚Ýž‚Ýƒtƒ@ƒCƒ‹‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO | `/c:shift_jis` |
-| `/w:<ƒGƒ“ƒR[ƒfƒBƒ“ƒO>` | ‘‚«ž‚Ýƒtƒ@ƒCƒ‹‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO | `/w:UTF-8` |
-| `/b:<true\|false>` | BOM‚Ì—L–³ | `/b:true` |
-| `/d` | ƒTƒuƒfƒBƒŒƒNƒgƒŠ‚àŒŸõ‘ÎÛ | `/d` |
-| `/f:<ƒtƒ@ƒCƒ‹ƒŠƒXƒg>` | ˆ—‘ÎÛƒtƒ@ƒCƒ‹ƒŠƒXƒg | `/f:files.txt` |
-| `/rc:<ƒGƒ“ƒR[ƒfƒBƒ“ƒO>` | ’uŠ·’PŒêCSV‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO | `/rc:UTF-8` |
-| `/fc:<ƒGƒ“ƒR[ƒfƒBƒ“ƒO>` | ƒtƒ@ƒCƒ‹ƒŠƒXƒg‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO | `/fc:UTF-8` |
-| `/nl:<‰üsƒR[ƒh>` | ‰üsƒR[ƒh (crlf/lf/cr) | `/nl:lf` |
-| `/h` | ƒwƒ‹ƒv•\Ž¦ | `/h` |
+| `/r:<CSVãƒ•ã‚¡ã‚¤ãƒ«>` | ç½®æ›å˜èªžãƒªã‚¹ãƒˆCSVã®ãƒ‘ã‚¹ | `/r:words.csv` |
+| `/c:<ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°>` | èª­ã¿è¾¼ã¿ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚° | `/c:shift_jis` |
+| `/w:<ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°>` | æ›¸ãè¾¼ã¿ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚° | `/w:UTF-8` |
+| `/b:<true\|false>` | BOMã®æœ‰ç„¡ | `/b:true` |
+| `/d` | ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚‚æ¤œç´¢å¯¾è±¡ | `/d` |
+| `/f:<ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆ>` | å‡¦ç†å¯¾è±¡ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆ | `/f:files.txt` |
+| `/rc:<ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°>` | ç½®æ›å˜èªžCSVã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚° | `/rc:UTF-8` |
+| `/fc:<ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°>` | ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚° | `/fc:UTF-8` |
+| `/nl:<æ”¹è¡Œã‚³ãƒ¼ãƒ‰>` | æ”¹è¡Œã‚³ãƒ¼ãƒ‰ (crlf/lf/cr) | `/nl:lf` |
+| `/h` | ãƒ˜ãƒ«ãƒ—è¡¨ç¤º | `/h` |
 
-#### ’uŠ·’PŒêƒŠƒXƒgCSV‚Ì‘Ž®
+#### ç½®æ›å˜èªžãƒªã‚¹ãƒˆCSVã®æ›¸å¼
 
 ```csv
-ŒŸõƒ[ƒh1,’uŠ·ƒ[ƒh1
-ŒŸõƒ[ƒh2,’uŠ·ƒ[ƒh2
-ŒŸõƒ[ƒh3,’uŠ·ƒ[ƒh3
+æ¤œç´¢ãƒ¯ãƒ¼ãƒ‰1,ç½®æ›ãƒ¯ãƒ¼ãƒ‰1
+æ¤œç´¢ãƒ¯ãƒ¼ãƒ‰2,ç½®æ›ãƒ¯ãƒ¼ãƒ‰2
+æ¤œç´¢ãƒ¯ãƒ¼ãƒ‰3,ç½®æ›ãƒ¯ãƒ¼ãƒ‰3
 ```
 
-**ƒGƒXƒP[ƒvƒV[ƒPƒ“ƒX‘Î‰ž:**
-- `\r\n` - CRLFi‰üsj
-- `\n` - LFi‰üsj
-- `\r` - CRi‰üsj
-- `\t` - ƒ^ƒu
-- `\\` - ƒoƒbƒNƒXƒ‰ƒbƒVƒ…
+**ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚·ãƒ¼ã‚±ãƒ³ã‚¹å¯¾å¿œ:**
+- `\r\n` - CRLFï¼ˆæ”¹è¡Œï¼‰
+- `\n` - LFï¼ˆæ”¹è¡Œï¼‰
+- `\r` - CRï¼ˆæ”¹è¡Œï¼‰
+- `\t` - ã‚¿ãƒ–
+- `\\` - ãƒãƒƒã‚¯ã‚¹ãƒ©ãƒƒã‚·ãƒ¥
 
-#### Žg—p—á
+#### ä½¿ç”¨ä¾‹
 
-**1. Šî–{“I‚È•¶Žš—ñ’uŠ·**
+**1. åŸºæœ¬çš„ãªæ–‡å­—åˆ—ç½®æ›**
 
 ```powershell
 rmsmf /r:words.csv *.txt
 ```
 
-**2. ƒGƒ“ƒR[ƒfƒBƒ“ƒO•ÏŠ· + •¶Žš—ñ’uŠ·**
+**2. ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°å¤‰æ› + æ–‡å­—åˆ—ç½®æ›**
 
 ```powershell
-# Shift_JIS ¨ UTF-8 (BOM•t‚«)
+# Shift_JIS â†’ UTF-8 (BOMä»˜ã)
 rmsmf /r:words.csv *.txt /c:shift_jis /w:UTF-8 /b:true
 
-# UTF-8 ¨ Shift_JIS
+# UTF-8 â†’ Shift_JIS
 rmsmf /r:words.csv *.txt /c:UTF-8 /w:shift_jis
 ```
 
-**3. ƒGƒ“ƒR[ƒfƒBƒ“ƒO•ÏŠ·‚Ì‚Ýi’uŠ·‚È‚µj**
+**3. ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°å¤‰æ›ã®ã¿ï¼ˆç½®æ›ãªã—ï¼‰**
 
 ```powershell
-# Shift_JIS ¨ UTF-8 (BOM•t‚«)
+# Shift_JIS â†’ UTF-8 (BOMä»˜ã)
 rmsmf *.txt /c:shift_jis /w:UTF-8 /b:true
 
-# UTF-8 ¨ UTF-8 (BOMíœ)
+# UTF-8 â†’ UTF-8 (BOMå‰Šé™¤)
 rmsmf *.txt /c:UTF-8 /w:UTF-8 /b:false
 ```
 
-**4. ƒTƒuƒfƒBƒŒƒNƒgƒŠ‚àŠÜ‚ß‚Äˆ—**
+**4. ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚‚å«ã‚ã¦å‡¦ç†**
 
 ```powershell
 rmsmf /r:words.csv /d *.txt
 ```
 
-**5. ƒtƒ@ƒCƒ‹ƒŠƒXƒg‚Å‘ÎÛ‚ðŽw’è**
+**5. ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã§å¯¾è±¡ã‚’æŒ‡å®š**
 
 ```powershell
 rmsmf /r:words.csv /f:filelist.txt
 ```
 
-**filelist.txt ‚Ì—á:**
+**filelist.txt ã®ä¾‹:**
 ```
 C:\Projects\file1.txt
 C:\Projects\file2.txt
 C:\Projects\docs\readme.txt
 ```
 
-**6. ‰üsƒR[ƒh•ÏŠ·**
+**6. æ”¹è¡Œã‚³ãƒ¼ãƒ‰å¤‰æ›**
 
 ```powershell
-# CRLF ¨ LF
+# CRLF â†’ LF
 rmsmf *.txt /c:UTF-8 /w:UTF-8 /nl:lf
 
-# LF ¨ CRLF
+# LF â†’ CRLF
 rmsmf *.txt /c:UTF-8 /w:UTF-8 /nl:crlf
 ```
 
 ---
 
-### txprobe - ƒeƒLƒXƒgƒtƒ@ƒCƒ‹ŒŸõƒc[ƒ‹
+### txprobe - ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«æ¤œç´¢ãƒ„ãƒ¼ãƒ«
 
-#### Šî–{\•¶
+#### åŸºæœ¬æ§‹æ–‡
 
 ```
-txprobe <ƒIƒvƒVƒ‡ƒ“> <‘ÎÛƒtƒ@ƒCƒ‹–¼>
+txprobe <ã‚ªãƒ—ã‚·ãƒ§ãƒ³> <å¯¾è±¡ãƒ•ã‚¡ã‚¤ãƒ«å>
 ```
 
-#### ƒIƒvƒVƒ‡ƒ“ˆê——
+#### ã‚ªãƒ—ã‚·ãƒ§ãƒ³ä¸€è¦§
 
-| ƒIƒvƒVƒ‡ƒ“ | à–¾ | —á |
+| ã‚ªãƒ—ã‚·ãƒ§ãƒ³ | èª¬æ˜Ž | ä¾‹ |
 |----------|------|-----|
-| `/s:<ŒŸõ’PŒêƒtƒ@ƒCƒ‹>` | ŒŸõ’PŒêƒŠƒXƒg‚ÌƒpƒX | `/s:search.txt` |
-| `/c:<ƒGƒ“ƒR[ƒfƒBƒ“ƒO>` | “Ç‚Ýž‚Ýƒtƒ@ƒCƒ‹‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO | `/c:UTF-8` |
-| `/d` | ƒTƒuƒfƒBƒŒƒNƒgƒŠ‚àŒŸõ‘ÎÛ | `/d` |
-| `/f:<ƒtƒ@ƒCƒ‹ƒŠƒXƒg>` | ŒŸõ‘ÎÛƒtƒ@ƒCƒ‹ƒŠƒXƒg | `/f:files.txt` |
-| `/sc:<ƒGƒ“ƒR[ƒfƒBƒ“ƒO>` | ŒŸõ’PŒêƒtƒ@ƒCƒ‹‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO | `/sc:UTF-8` |
-| `/fc:<ƒGƒ“ƒR[ƒfƒBƒ“ƒO>` | ƒtƒ@ƒCƒ‹ƒŠƒXƒg‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO | `/fc:UTF-8` |
-| `/p` | ƒvƒ[ƒuƒ‚[ƒhiŒŸõ’PŒê‚ðŠÜ‚Þƒtƒ@ƒCƒ‹‚Ì‚Ý•\Ž¦j | `/p` |
-| `/h` | ƒwƒ‹ƒv•\Ž¦ | `/h` |
+| `/s:<æ¤œç´¢å˜èªžãƒ•ã‚¡ã‚¤ãƒ«>` | æ¤œç´¢å˜èªžãƒªã‚¹ãƒˆã®ãƒ‘ã‚¹ | `/s:search.txt` |
+| `/c:<ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°>` | èª­ã¿è¾¼ã¿ãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚° | `/c:UTF-8` |
+| `/d` | ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚‚æ¤œç´¢å¯¾è±¡ | `/d` |
+| `/f:<ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆ>` | æ¤œç´¢å¯¾è±¡ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆ | `/f:files.txt` |
+| `/sc:<ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°>` | æ¤œç´¢å˜èªžãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚° | `/sc:UTF-8` |
+| `/fc:<ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°>` | ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚° | `/fc:UTF-8` |
+| `/p` | ãƒ—ãƒ­ãƒ¼ãƒ–ãƒ¢ãƒ¼ãƒ‰ï¼ˆæ¤œç´¢å˜èªžã‚’å«ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã®ã¿è¡¨ç¤ºï¼‰ | `/p` |
+| `/h` | ãƒ˜ãƒ«ãƒ—è¡¨ç¤º | `/h` |
 
-#### ŒŸõ’PŒêƒŠƒXƒg‚Ì‘Ž®
+#### æ¤œç´¢å˜èªžãƒªã‚¹ãƒˆã®æ›¸å¼
 
 ```
-ŒŸõƒ[ƒh1
-ŒŸõƒ[ƒh2
-ŒŸõƒ[ƒh3
+æ¤œç´¢ãƒ¯ãƒ¼ãƒ‰1
+æ¤œç´¢ãƒ¯ãƒ¼ãƒ‰2
+æ¤œç´¢ãƒ¯ãƒ¼ãƒ‰3
 ```
 
-#### Žg—p—á
+#### ä½¿ç”¨ä¾‹
 
-**1. Šî–{“I‚ÈŒŸõ**
+**1. åŸºæœ¬çš„ãªæ¤œç´¢**
 
 ```powershell
-# ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚Ì‘Stxtƒtƒ@ƒCƒ‹‚ð‰ðÍ
+# ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®å…¨txtãƒ•ã‚¡ã‚¤ãƒ«ã‚’è§£æž
 txprobe *.txt
 ```
 
-**o—Í—á:**
+**å‡ºåŠ›ä¾‹:**
 ```
-ƒtƒ@ƒCƒ‹–¼: sample.txt
-  ƒGƒ“ƒR[ƒfƒBƒ“ƒO: UTF-8 (BOM•t‚«)
-  ‰üsƒR[ƒh: CRLF
+ãƒ•ã‚¡ã‚¤ãƒ«å: sample.txt
+  ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°: UTF-8 (BOMä»˜ã)
+  æ”¹è¡Œã‚³ãƒ¼ãƒ‰: CRLF
 ```
 
-**2. ŒŸõ’PŒê‚ðŠÜ‚Þƒtƒ@ƒCƒ‹‚ðŒŸõ**
+**2. æ¤œç´¢å˜èªžã‚’å«ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ¤œç´¢**
 
 ```powershell
 txprobe /s:search.txt *.txt
 ```
 
-**3. ƒvƒ[ƒuƒ‚[ƒhi’PŒê‚ðŠÜ‚Þƒtƒ@ƒCƒ‹‚Ì‚Ý•\Ž¦j**
+**3. ãƒ—ãƒ­ãƒ¼ãƒ–ãƒ¢ãƒ¼ãƒ‰ï¼ˆå˜èªžã‚’å«ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã®ã¿è¡¨ç¤ºï¼‰**
 
 ```powershell
 txprobe /s:search.txt /p *.txt
 ```
 
-**4. ƒTƒuƒfƒBƒŒƒNƒgƒŠ‚àŠÜ‚ß‚ÄŒŸõ**
+**4. ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚‚å«ã‚ã¦æ¤œç´¢**
 
 ```powershell
 txprobe /d *.txt
 ```
 
-**5. ƒGƒ“ƒR[ƒfƒBƒ“ƒOŽw’è**
+**5. ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°æŒ‡å®š**
 
 ```powershell
 txprobe /c:UTF-8 *.txt
@@ -264,187 +264,187 @@ txprobe /c:UTF-8 *.txt
 
 ---
 
-## ??? ƒA[ƒLƒeƒNƒ`ƒƒ
+## ðŸ—ï¸ ã‚¢ãƒ¼ã‚­ãƒ†ã‚¯ãƒãƒ£
 
-### ƒNƒ‰ƒX\¬}
+### ã‚¯ãƒ©ã‚¹æ§‹æˆå›³
 
 ```
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„                     Colipex                          „ 
-„   (ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“‰ðÍŠî’êƒNƒ‰ƒX)                        „ 
-„                                                      „ 
-„   + Options: Dictionary<string, string>              „ 
-„   + Parameters: List<string>                         „ 
-„   + IsOption(name): bool                             „ 
-„   # ConvertEscapeSequences(input): string            „ 
-„   # ResolveEncoding(name): Encoding                  „ 
-„   # EnsureEncodingInitialized(...)                   „ 
-„   # LoadLinesFromFile(...): List<string>             „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
-                        £
-                        „ 
-        „¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¨„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-        „                                „ 
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¨„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢            „¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¨„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„  CommandOptions „             „  CommandOptions   „ 
-„     (rmsmf)     „             „    (txprobe)      „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£            „¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    Colipex                          â”‚
+â”‚  (ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³è§£æžåŸºåº•ã‚¯ãƒ©ã‚¹)                        â”‚
+â”‚                                                     â”‚
+â”‚  + Options: Dictionary<string, string>              â”‚
+â”‚  + Parameters: List<string>                         â”‚
+â”‚  + IsOption(name): bool                             â”‚
+â”‚  # ConvertEscapeSequences(input): string            â”‚
+â”‚  # ResolveEncoding(name): Encoding                  â”‚
+â”‚  # EnsureEncodingInitialized(...)                   â”‚
+â”‚  # LoadLinesFromFile(...): List<string>             â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                        â–²
+                        â”‚
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚                               â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ CommandOptions â”‚            â”‚ CommandOptions   â”‚
+â”‚    (rmsmf)     â”‚            â”‚   (txprobe)      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-### Žå—vƒNƒ‰ƒX
+### ä¸»è¦ã‚¯ãƒ©ã‚¹
 
-#### **Colipex (Šî’êƒNƒ‰ƒX)**
+#### **Colipex (åŸºåº•ã‚¯ãƒ©ã‚¹)**
 
-ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“‰ðÍ‚ÌŠî’ê‹@”\‚ð’ñ‹Ÿ‚µ‚Ü‚·B
+ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³è§£æžã®åŸºåº•æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 
-**Ó–±:**
-- ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ˆø”‚Ì‰ðÍ
-- ƒIƒvƒVƒ‡ƒ“‚Æƒpƒ‰ƒ[ƒ^‚ÌŠÇ—
-- ‹¤’Êƒ†[ƒeƒBƒŠƒeƒBƒƒ\ƒbƒhiƒGƒXƒP[ƒvƒV[ƒPƒ“ƒX•ÏŠ·AƒGƒ“ƒR[ƒfƒBƒ“ƒO‰ðŒˆj
+**è²¬å‹™:**
+- ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³å¼•æ•°ã®è§£æž
+- ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã¨ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®ç®¡ç†
+- å…±é€šãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£ãƒ¡ã‚½ãƒƒãƒ‰ï¼ˆã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚·ãƒ¼ã‚±ãƒ³ã‚¹å¤‰æ›ã€ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°è§£æ±ºï¼‰
 
-**Žå—vƒƒ\ƒbƒh:**
-- `ConvertEscapeSequences(string)` - `\r\n`, `\t` ‚È‚Ç‚Ì•ÏŠ·
-- `ResolveEncoding(string)` - ƒGƒ“ƒR[ƒfƒBƒ“ƒO–¼‚Ü‚½‚ÍƒR[ƒhƒy[ƒW‚©‚çEncodingƒIƒuƒWƒFƒNƒg‚ðŽæ“¾
-- `EnsureEncodingInitialized(...)` - ƒGƒ“ƒR[ƒfƒBƒ“ƒOŽ©“®”»’è‚ÆÝ’è
-- `LoadLinesFromFile(...)` - ƒtƒ@ƒCƒ‹“Ç‚Ýž‚Ý‚ÆƒGƒXƒP[ƒvƒV[ƒPƒ“ƒX•ÏŠ·
+**ä¸»è¦ãƒ¡ã‚½ãƒƒãƒ‰:**
+- `ConvertEscapeSequences(string)` - `\r\n`, `\t` ãªã©ã®å¤‰æ›
+- `ResolveEncoding(string)` - ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°åã¾ãŸã¯ã‚³ãƒ¼ãƒ‰ãƒšãƒ¼ã‚¸ã‹ã‚‰Encodingã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å–å¾—
+- `EnsureEncodingInitialized(...)` - ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°è‡ªå‹•åˆ¤å®šã¨è¨­å®š
+- `LoadLinesFromFile(...)` - ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿ã¨ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚·ãƒ¼ã‚±ãƒ³ã‚¹å¤‰æ›
 
 ---
 
-#### **OptionValidator (ƒ†[ƒeƒBƒŠƒeƒBƒNƒ‰ƒX)**
+#### **OptionValidator (ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£ã‚¯ãƒ©ã‚¹)**
 
-ƒRƒ}ƒ“ƒhƒIƒvƒVƒ‡ƒ“‚ÌŒŸØƒƒWƒbƒN‚ð’ñ‹Ÿ‚µ‚Ü‚·B
+ã‚³ãƒžãƒ³ãƒ‰ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®æ¤œè¨¼ãƒ­ã‚¸ãƒƒã‚¯ã‚’æä¾›ã—ã¾ã™ã€‚
 
-**Ó–±:**
-- ƒIƒvƒVƒ‡ƒ“‚Ì‘g‚Ý‡‚í‚¹ŒŸØ
-- ˆË‘¶ŠÖŒW‚Ìƒ`ƒFƒbƒN
-- ‹¤’ÊŒŸØƒƒWƒbƒN‚Ì’ñ‹Ÿ
+**è²¬å‹™:**
+- ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®çµ„ã¿åˆã‚ã›æ¤œè¨¼
+- ä¾å­˜é–¢ä¿‚ã®ãƒã‚§ãƒƒã‚¯
+- å…±é€šæ¤œè¨¼ãƒ­ã‚¸ãƒƒã‚¯ã®æä¾›
 
-**Žå—vƒƒ\ƒbƒh:**
-- `ValidateFileSpecificationNotConflicting(...)` - ƒtƒ@ƒCƒ‹Žw’è•û–@‚Ì‹£‡ƒ`ƒFƒbƒN
-- `ValidateEncodingOptionDependency(...)` - ƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“‚ÌˆË‘¶ŠÖŒWƒ`ƒFƒbƒN
-- `ValidateAtLeastOneCondition(...)` - •K{ƒpƒ‰ƒ[ƒ^‚Ìƒ`ƒFƒbƒN
+**ä¸»è¦ãƒ¡ã‚½ãƒƒãƒ‰:**
+- `ValidateFileSpecificationNotConflicting(...)` - ãƒ•ã‚¡ã‚¤ãƒ«æŒ‡å®šæ–¹æ³•ã®ç«¶åˆãƒã‚§ãƒƒã‚¯
+- `ValidateEncodingOptionDependency(...)` - ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®ä¾å­˜é–¢ä¿‚ãƒã‚§ãƒƒã‚¯
+- `ValidateAtLeastOneCondition(...)` - å¿…é ˆãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®ãƒã‚§ãƒƒã‚¯
 
 ---
 
-#### **ValidationMessages (’è”ƒNƒ‰ƒX)**
+#### **ValidationMessages (å®šæ•°ã‚¯ãƒ©ã‚¹)**
 
-‚·‚×‚Ä‚ÌƒGƒ‰[ƒƒbƒZ[ƒW‚ðˆêŒ³ŠÇ—‚µ‚Ü‚·B
+ã™ã¹ã¦ã®ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’ä¸€å…ƒç®¡ç†ã—ã¾ã™ã€‚
 
-**ƒƒŠƒbƒg:**
-- ƒƒbƒZ[ƒW‚ÌˆêŠÑ«
-- •ÏX‚ª—eˆÕ
-- ‘½Œ¾Œê‘Î‰ž‚Ì€”õ
+**ãƒ¡ãƒªãƒƒãƒˆ:**
+- ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®ä¸€è²«æ€§
+- å¤‰æ›´ãŒå®¹æ˜“
+- å¤šè¨€èªžå¯¾å¿œã®æº–å‚™
 
-**’è”—á:**
+**å®šæ•°ä¾‹:**
 ```csharp
-public const string MissingRequiredParameters = "•K{ƒpƒ‰ƒ[ƒ^‚ª“ü—Í‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB";
+public const string MissingRequiredParameters = "å¿…é ˆãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãŒå…¥åŠ›ã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚";
 public const string ConflictingFileSpecificationMethods = "...";
-public const string InvalidEncodingName = "ƒGƒ“ƒR[ƒfƒBƒ“ƒO–¼‚ª•s³‚Å‚·B";
+public const string InvalidEncodingName = "ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°åãŒä¸æ­£ã§ã™ã€‚";
 ```
 
 ---
 
 #### **CommandOptions (rmsmf / txprobe)**
 
-Šeƒc[ƒ‹ŒÅ—L‚ÌƒRƒ}ƒ“ƒhƒIƒvƒVƒ‡ƒ“ˆ—‚ð’S“–‚µ‚Ü‚·B
+å„ãƒ„ãƒ¼ãƒ«å›ºæœ‰ã®ã‚³ãƒžãƒ³ãƒ‰ã‚ªãƒ—ã‚·ãƒ§ãƒ³å‡¦ç†ã‚’æ‹…å½“ã—ã¾ã™ã€‚
 
-**rmsmf ‚ÌŽå—vƒƒ\ƒbƒh:**
-- `ReadReplaceWords()` - ’uŠ·’PŒêCSV‚Ì“Ç‚Ýž‚Ý
-- `ReadFileNameList()` - ƒtƒ@ƒCƒ‹ƒŠƒXƒg‚Ì“Ç‚Ýž‚Ý
-- `ParseEncodingOptions(...)` - ƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“‚Ì‰ðÍ
-- `ValidateOptionConsistency()` - ƒIƒvƒVƒ‡ƒ“®‡«‚ÌŒŸØ
+**rmsmf ã®ä¸»è¦ãƒ¡ã‚½ãƒƒãƒ‰:**
+- `ReadReplaceWords()` - ç½®æ›å˜èªžCSVã®èª­ã¿è¾¼ã¿
+- `ReadFileNameList()` - ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã®èª­ã¿è¾¼ã¿
+- `ParseEncodingOptions(...)` - ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®è§£æž
+- `ValidateOptionConsistency()` - ã‚ªãƒ—ã‚·ãƒ§ãƒ³æ•´åˆæ€§ã®æ¤œè¨¼
 
-**txprobe ‚ÌŽå—vƒƒ\ƒbƒh:**
-- `ReadSearchWords()` - ŒŸõ’PŒêƒŠƒXƒg‚Ì“Ç‚Ýž‚Ý
-- `ReadFileNameList()` - ƒtƒ@ƒCƒ‹ƒŠƒXƒg‚Ì“Ç‚Ýž‚Ý
-- `ParseEncodingOptions(...)` - ƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“‚Ì‰ðÍ
-- `ValidateOptionConsistency()` - ƒIƒvƒVƒ‡ƒ“®‡«‚ÌŒŸØ
-
----
-
-### ƒf[ƒ^ƒtƒ[
-
-#### rmsmf ‚Ìˆ—ƒtƒ[
-
-```
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„  ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ˆø” „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¦„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
-         „ 
-         ¥
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„  Program.Main()      „ 
-„  - ƒwƒ‹ƒvƒ`ƒFƒbƒN     „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¦„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
-         „ 
-         ¥
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„  CommandOptions()      „ 
-„  - ˆø”‰ðÍ            „ 
-„  - ƒGƒ“ƒR[ƒfƒBƒ“ƒOÝ’è „ 
-„  - ŒŸØ                „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¦„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
-         „ 
-         ¥
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„  ReadReplaceWords()    „ 
-„  - CSV“Ç‚Ýž‚Ý         „ 
-„  - ƒp[ƒX              „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¦„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
-         „ 
-         ¥
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„  ReadFileNameList()    „ 
-„  - ƒtƒ@ƒCƒ‹ƒŠƒXƒgŽæ“¾   „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¦„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
-         „ 
-         ¥
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„  ReplaceStringsInFiles „ 
-„  - ƒtƒ@ƒCƒ‹’uŠ·ˆ—     „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
-```
+**txprobe ã®ä¸»è¦ãƒ¡ã‚½ãƒƒãƒ‰:**
+- `ReadSearchWords()` - æ¤œç´¢å˜èªžãƒªã‚¹ãƒˆã®èª­ã¿è¾¼ã¿
+- `ReadFileNameList()` - ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã®èª­ã¿è¾¼ã¿
+- `ParseEncodingOptions(...)` - ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®è§£æž
+- `ValidateOptionConsistency()` - ã‚ªãƒ—ã‚·ãƒ§ãƒ³æ•´åˆæ€§ã®æ¤œè¨¼
 
 ---
 
-## ?? ƒŠƒtƒ@ƒNƒ^ƒŠƒ“ƒO“à—e
+### ãƒ‡ãƒ¼ã‚¿ãƒ•ãƒ­ãƒ¼
 
-‚±‚ÌƒvƒƒWƒFƒNƒg‚ÍA2026”N1ŒŽ‚É‘å‹K–Í‚ÈƒŠƒtƒ@ƒNƒ^ƒŠƒ“ƒO‚ðŽÀŽ{‚µ‚Ü‚µ‚½B
+#### rmsmf ã®å‡¦ç†ãƒ•ãƒ­ãƒ¼
 
-### ŽÀŽ{‚µ‚½‰ü‘P
+```
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³å¼•æ•° â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚
+         â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Program.Main()      â”‚
+â”‚ - ãƒ˜ãƒ«ãƒ—ãƒã‚§ãƒƒã‚¯     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚
+         â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ CommandOptions()      â”‚
+â”‚ - å¼•æ•°è§£æž            â”‚
+â”‚ - ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°è¨­å®š â”‚
+â”‚ - æ¤œè¨¼                â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚
+         â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ ReadReplaceWords()    â”‚
+â”‚ - CSVèª­ã¿è¾¼ã¿         â”‚
+â”‚ - ãƒ‘ãƒ¼ã‚¹              â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚
+         â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ ReadFileNameList()    â”‚
+â”‚ - ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆå–å¾—   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚
+         â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ ReplaceStringsInFiles â”‚
+â”‚ - ãƒ•ã‚¡ã‚¤ãƒ«ç½®æ›å‡¦ç†     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+```
 
-| # | ‰ü‘P€–Ú | Ú× | Œø‰Ê |
+---
+
+## ðŸ”„ ãƒªãƒ•ã‚¡ã‚¯ã‚¿ãƒªãƒ³ã‚°å†…å®¹
+
+ã“ã®ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã¯ã€2026å¹´1æœˆã«å¤§è¦æ¨¡ãªãƒªãƒ•ã‚¡ã‚¯ã‚¿ãƒªãƒ³ã‚°ã‚’å®Ÿæ–½ã—ã¾ã—ãŸã€‚
+
+### å®Ÿæ–½ã—ãŸæ”¹å–„
+
+| # | æ”¹å–„é …ç›® | è©³ç´° | åŠ¹æžœ |
 |---|---------|------|------|
-| 1 | ƒXƒyƒ‹ƒ~ƒXC³ | `repleaseEncoding` ¨ `ReplaceEncoding` | ‰Â“Ç«Œüã |
-| 2 | ƒtƒB[ƒ‹ƒh‚ÌƒvƒƒpƒeƒB‰» | public ƒtƒB[ƒ‹ƒh ¨ ƒvƒƒpƒeƒB | ƒJƒvƒZƒ‹‰» |
-| 3 | ƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒO“ˆê | `ExecutionState` ¨ `RmsmfException` | ˆêŠÑ« |
-| 4 | ‹¤’Êƒƒ\ƒbƒh’Šo | d•¡ƒR[ƒhíœ | DRYŒ´‘¥ |
-| 5 | ƒRƒ“ƒXƒgƒ‰ƒNƒ^•ªŠ„ | 200s ¨ 25s (10ƒƒ\ƒbƒh) | ‰Â“Ç« |
-| 6 | ƒwƒ‹ƒvƒ`ƒFƒbƒNŠO•”‰» | ‘Šúreturníœ | ÝŒv‰ü‘P |
-| 7 | ŒŸØƒƒWƒbƒN®— | 5ŒÂ‚Ìƒƒ\ƒbƒh‚É•ª—£ | ’PˆêÓ”C |
-| 8 | ƒGƒ‰[ƒƒbƒZ[ƒW’è”‰» | `ValidationMessages` ƒNƒ‰ƒX | •ÛŽç« |
-| 9 | ŒŸØƒ†[ƒeƒBƒŠƒeƒB | `OptionValidator` ƒNƒ‰ƒX | Ä—˜—p« |
-| 10 | Šî’êƒNƒ‰ƒX®— | `ConvertEscapeSequences` “‡ | DRYŒ´‘¥ |
-| 11 | ƒƒ\ƒbƒh•ªŠ„ | `ReadReplaceWords` ‚È‚Ç | ‰Â“Ç« |
-| 12 | **’P‘ÌƒeƒXƒg’Ç‰Á** | **33ƒeƒXƒg (‘S‡Ši)** | **•iŽ¿•ÛØ** |
+| 1 | ã‚¹ãƒšãƒ«ãƒŸã‚¹ä¿®æ­£ | `repleaseEncoding` â†’ `ReplaceEncoding` | å¯èª­æ€§å‘ä¸Š |
+| 2 | ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã®ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£åŒ– | public ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ â†’ ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ | ã‚«ãƒ—ã‚»ãƒ«åŒ– |
+| 3 | ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°çµ±ä¸€ | `ExecutionState` â†’ `RmsmfException` | ä¸€è²«æ€§ |
+| 4 | å…±é€šãƒ¡ã‚½ãƒƒãƒ‰æŠ½å‡º | é‡è¤‡ã‚³ãƒ¼ãƒ‰å‰Šé™¤ | DRYåŽŸå‰‡ |
+| 5 | ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿åˆ†å‰² | 200è¡Œ â†’ 25è¡Œ (10ãƒ¡ã‚½ãƒƒãƒ‰) | å¯èª­æ€§ |
+| 6 | ãƒ˜ãƒ«ãƒ—ãƒã‚§ãƒƒã‚¯å¤–éƒ¨åŒ– | æ—©æœŸreturnå‰Šé™¤ | è¨­è¨ˆæ”¹å–„ |
+| 7 | æ¤œè¨¼ãƒ­ã‚¸ãƒƒã‚¯æ•´ç† | 5å€‹ã®ãƒ¡ã‚½ãƒƒãƒ‰ã«åˆ†é›¢ | å˜ä¸€è²¬ä»» |
+| 8 | ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å®šæ•°åŒ– | `ValidationMessages` ã‚¯ãƒ©ã‚¹ | ä¿å®ˆæ€§ |
+| 9 | æ¤œè¨¼ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£ | `OptionValidator` ã‚¯ãƒ©ã‚¹ | å†åˆ©ç”¨æ€§ |
+| 10 | åŸºåº•ã‚¯ãƒ©ã‚¹æ•´ç† | `ConvertEscapeSequences` çµ±åˆ | DRYåŽŸå‰‡ |
+| 11 | ãƒ¡ã‚½ãƒƒãƒ‰åˆ†å‰² | `ReadReplaceWords` ãªã© | å¯èª­æ€§ |
+| 12 | **å˜ä½“ãƒ†ã‚¹ãƒˆè¿½åŠ ** | **33ãƒ†ã‚¹ãƒˆ (å…¨åˆæ ¼)** | **å“è³ªä¿è¨¼** |
 
 ### Before / After
 
-#### Before: ’·‘å‚ÈƒRƒ“ƒXƒgƒ‰ƒNƒ^i200sj
+#### Before: é•·å¤§ãªã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ï¼ˆ200è¡Œï¼‰
 
 ```csharp
 public CommandOptions(string[] args) : base(args)
 {
-    // 200sˆÈã‚ÌƒR[ƒh
-    // - ŒŸØ
-    // - ƒGƒ“ƒR[ƒfƒBƒ“ƒOÝ’è
-    // - ƒIƒvƒVƒ‡ƒ“‰ðÍ
-    // - ƒtƒ@ƒCƒ‹‘¶ÝŠm”F
-    // ‚·‚×‚Ä‚ª1‚Â‚Ìƒƒ\ƒbƒh‚É...
+    // 200è¡Œä»¥ä¸Šã®ã‚³ãƒ¼ãƒ‰
+    // - æ¤œè¨¼
+    // - ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°è¨­å®š
+    // - ã‚ªãƒ—ã‚·ãƒ§ãƒ³è§£æž
+    // - ãƒ•ã‚¡ã‚¤ãƒ«å­˜åœ¨ç¢ºèª
+    // ã™ã¹ã¦ãŒ1ã¤ã®ãƒ¡ã‚½ãƒƒãƒ‰ã«...
 }
 ```
 
-#### After: •ªŠ„‚³‚ê‚½ƒRƒ“ƒXƒgƒ‰ƒNƒ^i25sj
+#### After: åˆ†å‰²ã•ã‚ŒãŸã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ï¼ˆ25è¡Œï¼‰
 
 ```csharp
 public CommandOptions(string[] args) : base(args)
@@ -472,31 +472,31 @@ public CommandOptions(string[] args) : base(args)
 }
 ```
 
-### ’è—Ê“I‚È‰ü‘P
+### å®šé‡çš„ãªæ”¹å–„
 
-- **ƒR[ƒhíŒ¸**: –ñ150sˆÈã‚Ìd•¡ƒR[ƒhíœ
-- **ƒƒ\ƒbƒh•½‹Ïs”**: 100s’´ ¨ 20sˆÈ‰º
-- **zŠÂ“I•¡ŽG“x**: ‘å•‚É’áŒ¸
-- **ƒeƒXƒgƒJƒoƒŒƒbƒW**: 0% ¨ Žå—vƒNƒ‰ƒX‚ƒJƒoƒŒƒbƒW
+- **ã‚³ãƒ¼ãƒ‰å‰Šæ¸›**: ç´„150è¡Œä»¥ä¸Šã®é‡è¤‡ã‚³ãƒ¼ãƒ‰å‰Šé™¤
+- **ãƒ¡ã‚½ãƒƒãƒ‰å¹³å‡è¡Œæ•°**: 100è¡Œè¶… â†’ 20è¡Œä»¥ä¸‹
+- **å¾ªç’°çš„è¤‡é›‘åº¦**: å¤§å¹…ã«ä½Žæ¸›
+- **ãƒ†ã‚¹ãƒˆã‚«ãƒãƒ¬ãƒƒã‚¸**: 0% â†’ ä¸»è¦ã‚¯ãƒ©ã‚¹é«˜ã‚«ãƒãƒ¬ãƒƒã‚¸
 
 ---
 
-## ?? ƒrƒ‹ƒh•û–@
+## ðŸ”¨ ãƒ“ãƒ«ãƒ‰æ–¹æ³•
 
-### Visual Studio ‚Åƒrƒ‹ƒh
+### Visual Studio ã§ãƒ“ãƒ«ãƒ‰
 
-1. `rmsmf.sln` ‚ð Visual Studio 2019/2022 ‚ÅŠJ‚­
-2. ƒ\ƒŠƒ…[ƒVƒ‡ƒ“\¬‚ðuReleasev‚É•ÏX
-3. ƒƒjƒ…[ ¨ uƒrƒ‹ƒhv¨uƒ\ƒŠƒ…[ƒVƒ‡ƒ“‚Ìƒrƒ‹ƒhv
+1. `rmsmf.sln` ã‚’ Visual Studio 2019/2022 ã§é–‹ã
+2. ã‚½ãƒªãƒ¥ãƒ¼ã‚·ãƒ§ãƒ³æ§‹æˆã‚’ã€ŒReleaseã€ã«å¤‰æ›´
+3. ãƒ¡ãƒ‹ãƒ¥ãƒ¼ â†’ ã€Œãƒ“ãƒ«ãƒ‰ã€â†’ã€Œã‚½ãƒªãƒ¥ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒ“ãƒ«ãƒ‰ã€
 
-### MSBuild ‚Åƒrƒ‹ƒh
+### MSBuild ã§ãƒ“ãƒ«ãƒ‰
 
 ```powershell
-# Developer Command Prompt‚ÅŽÀs
+# Developer Command Promptã§å®Ÿè¡Œ
 msbuild rmsmf.sln /p:Configuration=Release /p:Platform="Any CPU"
 ```
 
-### o—Íæ
+### å‡ºåŠ›å…ˆ
 
 ```
 rmsmf/bin/Release/rmsmf.exe
@@ -505,148 +505,148 @@ txprobe/bin/Release/txprobe.exe
 
 ---
 
-## ?? ƒeƒXƒg
+## ðŸ§ª ãƒ†ã‚¹ãƒˆ
 
-### ƒeƒXƒgƒvƒƒWƒFƒNƒg\¬
+### ãƒ†ã‚¹ãƒˆãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆæ§‹æˆ
 
 ```
 rmsmf.Tests/
-„¥„Ÿ„Ÿ ColipexTests.cs          # 11ƒeƒXƒg
-„¥„Ÿ„Ÿ OptionValidatorTests.cs  # 10ƒeƒXƒg
-„¤„Ÿ„Ÿ CommandOptionsTests.cs   # 12ƒeƒXƒg
+â”œâ”€â”€ ColipexTests.cs          # 11ãƒ†ã‚¹ãƒˆ
+â”œâ”€â”€ OptionValidatorTests.cs  # 10ãƒ†ã‚¹ãƒˆ
+â””â”€â”€ CommandOptionsTests.cs   # 12ãƒ†ã‚¹ãƒˆ
 ```
 
-**‡Œv: 33ƒeƒXƒgA‘S‡Ši ?**
+**åˆè¨ˆ: 33ãƒ†ã‚¹ãƒˆã€å…¨åˆæ ¼ ?**
 
-### ƒeƒXƒgŽÀs•û–@
+### ãƒ†ã‚¹ãƒˆå®Ÿè¡Œæ–¹æ³•
 
-#### Visual Studio ‚ÌƒeƒXƒgƒGƒNƒXƒvƒ[ƒ‰[
+#### Visual Studio ã®ãƒ†ã‚¹ãƒˆã‚¨ã‚¯ã‚¹ãƒ—ãƒ­ãƒ¼ãƒ©ãƒ¼
 
-1. ƒƒjƒ…[ ¨ uƒeƒXƒgv¨uƒeƒXƒg ƒGƒNƒXƒvƒ[ƒ‰[v
-2. u‚·‚×‚ÄŽÀsv‚ðƒNƒŠƒbƒN
+1. ãƒ¡ãƒ‹ãƒ¥ãƒ¼ â†’ ã€Œãƒ†ã‚¹ãƒˆã€â†’ã€Œãƒ†ã‚¹ãƒˆ ã‚¨ã‚¯ã‚¹ãƒ—ãƒ­ãƒ¼ãƒ©ãƒ¼ã€
+2. ã€Œã™ã¹ã¦å®Ÿè¡Œã€ã‚’ã‚¯ãƒªãƒƒã‚¯
 
-#### ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“‚©‚ç
+#### ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ã‹ã‚‰
 
 ```powershell
-# MSTest‚ðŽg—p
+# MSTestã‚’ä½¿ç”¨
 vstest.console.exe rmsmf.Tests\bin\Debug\rmsmf.Tests.dll
 ```
 
-### ƒeƒXƒg“à—e
+### ãƒ†ã‚¹ãƒˆå†…å®¹
 
-#### ColipexTests (11ƒeƒXƒg)
+#### ColipexTests (11ãƒ†ã‚¹ãƒˆ)
 
-- ? ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ˆø”‚Ì‰ðÍ
-- ? ƒIƒvƒVƒ‡ƒ“‚Æƒpƒ‰ƒ[ƒ^‚Ì•ª—£
-- ? ƒRƒƒ“E“™†ƒZƒpƒŒ[ƒ^‚ÌƒTƒ|[ƒg
-- ? d•¡ƒIƒvƒVƒ‡ƒ“‚ÌŒŸo
-- ? ‹ó‚Ìˆø”‚Ìˆ—
+- ? ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³å¼•æ•°ã®è§£æž
+- ? ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã¨ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®åˆ†é›¢
+- ? ã‚³ãƒ­ãƒ³ãƒ»ç­‰å·ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿ã®ã‚µãƒãƒ¼ãƒˆ
+- ? é‡è¤‡ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®æ¤œå‡º
+- ? ç©ºã®å¼•æ•°ã®å‡¦ç†
 
-#### OptionValidatorTests (10ƒeƒXƒg)
+#### OptionValidatorTests (10ãƒ†ã‚¹ãƒˆ)
 
-- ? ƒtƒ@ƒCƒ‹Žw’è•û–@‚Ì‹£‡ŒŸØ
-- ? ƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“‚ÌˆË‘¶ŠÖŒWŒŸØ
-- ? •K{ƒpƒ‰ƒ[ƒ^‚ÌŒŸØ
-- ? ƒGƒ‰[ƒƒbƒZ[ƒW‚Ì³Šm«
+- ? ãƒ•ã‚¡ã‚¤ãƒ«æŒ‡å®šæ–¹æ³•ã®ç«¶åˆæ¤œè¨¼
+- ? ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®ä¾å­˜é–¢ä¿‚æ¤œè¨¼
+- ? å¿…é ˆãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®æ¤œè¨¼
+- ? ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®æ­£ç¢ºæ€§
 
-#### CommandOptionsTests (12ƒeƒXƒg)
+#### CommandOptionsTests (12ãƒ†ã‚¹ãƒˆ)
 
-- ? ƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“‚ÌÝ’è
-- ? BOMƒIƒvƒVƒ‡ƒ“‚ÌÝ’è
-- ? ‰üsƒR[ƒhƒIƒvƒVƒ‡ƒ“‚ÌÝ’è
-- ? —áŠO‚Ì“KØ‚ÈƒXƒ[
+- ? ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®è¨­å®š
+- ? BOMã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®è¨­å®š
+- ? æ”¹è¡Œã‚³ãƒ¼ãƒ‰ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®è¨­å®š
+- ? ä¾‹å¤–ã®é©åˆ‡ãªã‚¹ãƒ­ãƒ¼
 
 ---
 
-## ?? ŠJ”­ŠÂ‹«
+## ðŸ’» é–‹ç™ºç’°å¢ƒ
 
-### •K{ŠÂ‹«
+### å¿…é ˆç’°å¢ƒ
 
 - **OS**: Windows 10/11
 - **IDE**: Visual Studio 2019/2022
-- **.NET Framework**: 4.8 ˆÈã
+- **.NET Framework**: 4.8 ä»¥ä¸Š
 - **C#**: 7.3
 
-### „§ƒc[ƒ‹
+### æŽ¨å¥¨ãƒ„ãƒ¼ãƒ«
 
-- **Git**: ƒo[ƒWƒ‡ƒ“ŠÇ—
-- **Visual Studio Code**: Œy—ÊƒGƒfƒBƒ^‚Æ‚µ‚Ä
-- **PowerShell**: ƒRƒ}ƒ“ƒhŽÀs
+- **Git**: ãƒãƒ¼ã‚¸ãƒ§ãƒ³ç®¡ç†
+- **Visual Studio Code**: è»½é‡ã‚¨ãƒ‡ã‚£ã‚¿ã¨ã—ã¦
+- **PowerShell**: ã‚³ãƒžãƒ³ãƒ‰å®Ÿè¡Œ
 
-### NuGet ƒpƒbƒP[ƒW
+### NuGet ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸
 
-ƒeƒXƒgƒvƒƒWƒFƒNƒg‚Ì‚ÝˆÈ‰º‚ðŽg—pF
+ãƒ†ã‚¹ãƒˆãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ã¿ä»¥ä¸‹ã‚’ä½¿ç”¨ï¼š
 
 - `MSTest.TestFramework` 2.2.10
 - `MSTest.TestAdapter` 2.2.10
 
 ---
 
-## ?? ƒ‰ƒCƒZƒ“ƒX
+## ðŸ“ ãƒ©ã‚¤ã‚»ãƒ³ã‚¹
 
-‚±‚ÌƒvƒƒWƒFƒNƒg‚Ìƒ‰ƒCƒZƒ“ƒX‚É‚Â‚¢‚Ä‚ÍA[LICENSE](LICENSE) ƒtƒ@ƒCƒ‹‚ðŽQÆ‚µ‚Ä‚­‚¾‚³‚¢B
-
----
-
-## ?? ƒRƒ“ƒgƒŠƒrƒ…[ƒVƒ‡ƒ“
-
-ƒvƒ‹ƒŠƒNƒGƒXƒg‚ðŠ½Œ}‚µ‚Ü‚·IˆÈ‰º‚Ì“_‚É‚²‹¦—Í‚­‚¾‚³‚¢F
-
-1. **ƒtƒH[ƒN**‚µ‚Äƒuƒ‰ƒ“ƒ`‚ðì¬
-2. **ƒeƒXƒg**‚ð’Ç‰ÁiV‹@”\‚Ìê‡j
-3. **ƒRƒ~ƒbƒgƒƒbƒZ[ƒW**‚Í–¾Šm‚É
-4. **ƒvƒ‹ƒŠƒNƒGƒXƒg**‚ðì¬
-
-### ƒR[ƒfƒBƒ“ƒO‹K–ñ
-
-- ƒCƒ“ƒfƒ“ƒg: 4ƒXƒy[ƒX
-- –½–¼‹K‘¥: Microsoft‚Ì C# ƒR[ƒfƒBƒ“ƒO‹K–ñ‚É€‹’
-- ƒRƒƒ“ƒg: “ú–{Œê‰Â
+ã“ã®ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ©ã‚¤ã‚»ãƒ³ã‚¹ã«ã¤ã„ã¦ã¯ã€[LICENSE](LICENSE) ãƒ•ã‚¡ã‚¤ãƒ«ã‚’å‚ç…§ã—ã¦ãã ã•ã„ã€‚
 
 ---
 
-## ?? ŽQlŽ‘—¿
+## ðŸ¤ ã‚³ãƒ³ãƒˆãƒªãƒ“ãƒ¥ãƒ¼ã‚·ãƒ§ãƒ³
 
-### ŠÖ˜AƒvƒƒWƒFƒNƒg
+ãƒ—ãƒ«ãƒªã‚¯ã‚¨ã‚¹ãƒˆã‚’æ­“è¿Žã—ã¾ã™ï¼ä»¥ä¸‹ã®ç‚¹ã«ã”å”åŠ›ãã ã•ã„ï¼š
 
-- [iconv](https://www.gnu.org/software/libiconv/) - •¶ŽšƒGƒ“ƒR[ƒfƒBƒ“ƒO•ÏŠ·ƒc[ƒ‹
+1. **ãƒ•ã‚©ãƒ¼ã‚¯**ã—ã¦ãƒ–ãƒ©ãƒ³ãƒã‚’ä½œæˆ
+2. **ãƒ†ã‚¹ãƒˆ**ã‚’è¿½åŠ ï¼ˆæ–°æ©Ÿèƒ½ã®å ´åˆï¼‰
+3. **ã‚³ãƒŸãƒƒãƒˆãƒ¡ãƒƒã‚»ãƒ¼ã‚¸**ã¯æ˜Žç¢ºã«
+4. **ãƒ—ãƒ«ãƒªã‚¯ã‚¨ã‚¹ãƒˆ**ã‚’ä½œæˆ
+
+### ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°è¦ç´„
+
+- ã‚¤ãƒ³ãƒ‡ãƒ³ãƒˆ: 4ã‚¹ãƒšãƒ¼ã‚¹
+- å‘½åè¦å‰‡: Microsoftã® C# ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°è¦ç´„ã«æº–æ‹ 
+- ã‚³ãƒ¡ãƒ³ãƒˆ: æ—¥æœ¬èªžå¯
+
+---
+
+## å‚è€ƒè³‡æ–™
+
+### é–¢é€£ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆ
+
+- [iconv](https://www.gnu.org/software/libiconv/) - æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°å¤‰æ›ãƒ„ãƒ¼ãƒ«
 - [nkf](https://osdn.net/projects/nkf/) - Network Kanji Filter
 
-### ƒhƒLƒ…ƒƒ“ƒg
+### ãƒ‰ã‚­ãƒ¥ãƒ¡ãƒ³ãƒˆ
 
-- [.NET Framework ƒhƒLƒ…ƒƒ“ƒg](https://docs.microsoft.com/ja-jp/dotnet/framework/)
-- [•¶ŽšƒGƒ“ƒR[ƒfƒBƒ“ƒOˆê——](https://docs.microsoft.com/ja-jp/dotnet/api/system.text.encoding)
-
----
-
-## ?? ‚¨–â‚¢‡‚í‚¹
-
-Ž¿–â‚â’ñˆÄ‚ª‚ ‚éê‡‚ÍA[Issues](https://github.com/motoi-tsushima/rmsmf/issues) ‚ðì¬‚µ‚Ä‚­‚¾‚³‚¢B
+- [.NET Framework ãƒ‰ã‚­ãƒ¥ãƒ¡ãƒ³ãƒˆ](https://docs.microsoft.com/ja-jp/dotnet/framework/)
+- [æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ä¸€è¦§](https://docs.microsoft.com/ja-jp/dotnet/api/system.text.encoding)
 
 ---
 
-## ?? XV—š—ð
+## ãŠå•ã„åˆã‚ã›
+
+è³ªå•ã‚„ææ¡ˆãŒã‚ã‚‹å ´åˆã¯ã€[Issues](https://github.com/motoi-tsushima/rmsmf/issues) ã‚’ä½œæˆã—ã¦ãã ã•ã„ã€‚
+
+---
+
+## æ›´æ–°å±¥æ­´
 
 ### v1.0.0 (2026-01-17)
 
-- ?? ‘å‹K–ÍƒŠƒtƒ@ƒNƒ^ƒŠƒ“ƒOŠ®—¹
-  - ƒRƒ“ƒXƒgƒ‰ƒNƒ^‚Ì•ªŠ„i200s ¨ 25sj
-  - ŒŸØƒƒWƒbƒN‚Ì®—
-  - ƒGƒ‰[ƒƒbƒZ[ƒW‚Ì’è”‰»
-  - ‹¤’Êƒ†[ƒeƒBƒŠƒeƒBƒNƒ‰ƒX‚Ì’Ç‰Á
-- ? ’P‘ÌƒeƒXƒg’Ç‰Ái33ƒeƒXƒgA‘S‡Šij
-- ?? ƒhƒLƒ…ƒƒ“ƒg®”õ
+- ðŸš€ å¤§è¦æ¨¡ãƒªãƒ•ã‚¡ã‚¯ã‚¿ãƒªãƒ³ã‚°å®Œäº†
+  - ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã®åˆ†å‰²ï¼ˆ200è¡Œ â†’ 25è¡Œï¼‰
+  - æ¤œè¨¼ãƒ­ã‚¸ãƒƒã‚¯ã®æ•´ç†
+  - ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®å®šæ•°åŒ–
+  - å…±é€šãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£ã‚¯ãƒ©ã‚¹ã®è¿½åŠ 
+- ðŸ§ª å˜ä½“ãƒ†ã‚¹ãƒˆè¿½åŠ ï¼ˆ33ãƒ†ã‚¹ãƒˆã€å…¨åˆæ ¼ï¼‰
+- ðŸ“š ãƒ‰ã‚­ãƒ¥ãƒ¡ãƒ³ãƒˆæ•´å‚™
 
 ### v0.9.x
 
-- ‰Šúƒo[ƒWƒ‡ƒ“
-- Šî–{“I‚È•¶Žš—ñ’uŠ·‹@”\
-- ƒGƒ“ƒR[ƒfƒBƒ“ƒO•ÏŠ·‹@”\
+- åˆæœŸãƒãƒ¼ã‚¸ãƒ§ãƒ³
+- åŸºæœ¬çš„ãªæ–‡å­—åˆ—ç½®æ›æ©Ÿèƒ½
+- ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°å¤‰æ›æ©Ÿèƒ½
 
 ---
 
 <div align="center">
 
-**Made with ?? by [motoi-tsushima](https://github.com/motoi-tsushima)**
+**Made with â¤ï¸ by [motoi-tsushima](https://github.com/motoi-tsushima)**
 
 </div>
