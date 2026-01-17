@@ -60,7 +60,7 @@ namespace txprobe
             {
                 if (this.Parameters.Count == 0 && this.Options.Count == 0)
                 {
-                    throw new RmsmfException("目的のファイル名を指定してください。(/h ヘルプ表示)");
+                    throw new RmsmfException(rmsmf.ValidationMessages.MissingTargetFileName);
                 }
             }
         }
@@ -80,7 +80,7 @@ namespace txprobe
                 readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (readCharacterSet == Colipex.NonValue)
                 {
-                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/c)");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingEncodingName, "c"));
                 }
             }
             else
@@ -95,7 +95,7 @@ namespace txprobe
                 searchWordsCharacterSet = this.Options[OptionSearchWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (searchWordsCharacterSet == Colipex.NonValue)
                 {
-                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/sc)");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingEncodingName, "sc"));
                 }
             }
             else
@@ -110,7 +110,7 @@ namespace txprobe
                 filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (filesCharacterSet == Colipex.NonValue)
                 {
-                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/fc)");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingEncodingName, "fc"));
                 }
             }
             else
@@ -182,11 +182,11 @@ namespace txprobe
             }
             catch (ArgumentException ex)
             {
-                throw new RmsmfException("エンコーディング名が不正です。", ex);
+                throw new RmsmfException(rmsmf.ValidationMessages.InvalidEncodingName, ex);
             }
             catch (NotSupportedException ex)
             {
-                throw new RmsmfException("サポートされていないエンコーディングです。", ex);
+                throw new RmsmfException(rmsmf.ValidationMessages.UnsupportedEncoding, ex);
             }
         }
 
@@ -200,14 +200,14 @@ namespace txprobe
             {
                 if (this.Options[OptionSearchWords] == Colipex.NonValue)
                 {
-                    throw new RmsmfException("/s オプションのファイル名を指定してください。");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingOptionFileName, "s"));
                 }
 
                 this._searchWordsFileName = this.Options[OptionSearchWords].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._searchWordsFileName))
                 {
-                    throw new RmsmfException(this._searchWordsFileName + " が存在しません。 ");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.FileNotFound, this._searchWordsFileName));
                 }
             }
 
@@ -216,14 +216,14 @@ namespace txprobe
             {
                 if (this.Options[OptionFileNameList] == Colipex.NonValue)
                 {
-                    throw new RmsmfException("/f オプションのファイル名を指定してください。");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingOptionFileName, "f"));
                 }
 
                 this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
-                    throw new RmsmfException(this._fileNameListFileName + " が存在しません。 ");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.FileNotFound, this._fileNameListFileName));
                 }
             }
         }
@@ -233,30 +233,66 @@ namespace txprobe
         /// </summary>
         private void ValidateOptionConsistency()
         {
-            if (this.IsOption(OptionSearchWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
-            {
-                throw new RmsmfException("必須パラメータが入力されていません。");
-            }
+            ValidateRequiredParametersProvided();
+            ValidateFileSpecificationMethod();
+            ValidateSearchWordsHasTargetFiles();
+            ValidateEncodingOptionsDependencies();
+        }
 
-            if (this.IsOption(OptionFileNameList) && this.Parameters.Count > 0)
-            {
-                throw new RmsmfException("/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。");
-            }
+        /// <summary>
+        /// 必須パラメータが最低1つ指定されているか検証
+        /// </summary>
+        private void ValidateRequiredParametersProvided()
+        {
+            rmsmf.OptionValidator.ValidateAtLeastOneCondition(
+                this.IsOption(OptionSearchWords),
+                this.IsOption(OptionFileNameList),
+                this.Parameters.Count > 0
+            );
+        }
 
-            if (this.IsOption(OptionSearchWords) && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
-            {
-                throw new RmsmfException("対象となるファイルを指定してください。");
-            }
+        /// <summary>
+        /// ファイル指定方法が競合していないか検証
+        /// </summary>
+        private void ValidateFileSpecificationMethod()
+        {
+            rmsmf.OptionValidator.ValidateFileSpecificationNotConflicting(
+                this.IsOption(OptionFileNameList),
+                this.Parameters.Count
+            );
+        }
 
-            if (this.IsOption(OptionSearchWords) == false && this.IsOption(OptionSearchWordsCharacterSet))
+        /// <summary>
+        /// 検索単語オプション使用時に対象ファイルが指定されているか検証
+        /// </summary>
+        private void ValidateSearchWordsHasTargetFiles()
+        {
+            if (this.IsOption(OptionSearchWords) && 
+                this.IsOption(OptionFileNameList) == false && 
+                this.Parameters.Count == 0)
             {
-                throw new RmsmfException("検索単語ファイルが指定されていないのに、検索単語ファイルのエンコーディングが指定されています。");
+                throw new RmsmfException(rmsmf.ValidationMessages.SearchWordsRequiresTargetFiles);
             }
+        }
 
-            if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet))
-            {
-                throw new RmsmfException("ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。");
-            }
+        /// <summary>
+        /// エンコーディング関連オプションの依存関係を検証
+        /// </summary>
+        private void ValidateEncodingOptionsDependencies()
+        {
+            // 検索単語ファイルのエンコーディングは、検索単語ファイルオプションが必要
+            rmsmf.OptionValidator.ValidateEncodingOptionDependency(
+                this.IsOption(OptionSearchWords),
+                this.IsOption(OptionSearchWordsCharacterSet),
+                rmsmf.ValidationMessages.SearchWordsEncodingWithoutSearchWords
+            );
+
+            // ファイルリストのエンコーディングは、ファイルリストオプションが必要
+            rmsmf.OptionValidator.ValidateEncodingOptionDependency(
+                this.IsOption(OptionFileNameList),
+                this.IsOption(OptionFileNameListCharacterSet),
+                rmsmf.ValidationMessages.FileListEncodingWithoutFileList
+            );
         }
 
         /// <summary>
@@ -303,7 +339,7 @@ namespace txprobe
                 }
                 else
                 {
-                    throw new RmsmfException(this._searchWordsFileName + "の文字エンコーディングが分かりません。");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.UnknownEncoding, this._searchWordsFileName));
                 }
             }
 
@@ -325,7 +361,7 @@ namespace txprobe
 
             if(wordsList.Count == 0)
             {
-                throw new RmsmfException(this._searchWordsFileName + "の検索単語がゼロ件です。");
+                throw new RmsmfException(string.Format(rmsmf.ValidationMessages.EmptySearchWords, this._searchWordsFileName));
             }
 
             //検索単語テーブルへ登録する。
@@ -416,7 +452,7 @@ namespace txprobe
                 }
                 else
                 {
-                    throw new RmsmfException(this._fileNameListFileName + "の文字エンコーディングが分かりません。");
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.UnknownEncoding, this._fileNameListFileName));
                 }
             }
 
