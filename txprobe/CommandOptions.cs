@@ -296,55 +296,45 @@ namespace txprobe
         }
 
         /// <summary>
-        /// エスケープシーケンス変換
-        /// </summary>
-        /// <param name="input">変換対象文字列</param>
-        /// <returns>変換後文字列</returns>
-        private string ConvertEscapeSequences(string input)
-        {
-            return input
-                .Replace("\\r\\n", "\r\n")
-                .Replace("\\r", "\r")
-                .Replace("\\n", "\n")
-                .Replace("\\t", "\t")
-                .Replace("\\\\", "\\");
-        }
-
-        /// <summary>
         /// 検索単語テーブル初期化
         /// </summary>
         /// <returns>true=正常に初期化した</returns>
         public bool ReadSearchWords()
         {
-            bool normal = true;
-
             if (string.IsNullOrEmpty(this._searchWordsFileName))
             {
-                normal = false;
-                return normal;
+                return false;
             }
 
-            //検索単語の設定をする。
-            List<string> wordsList = new List<string>();
+            // エンコーディングの判定と設定
+            EnsureEncodingInitialized(
+                ref this._replaceEncoding, 
+                this._searchWordsFileName, 
+                rmsmf.ValidationMessages.UnknownEncoding);
 
-            if(this.ReplaceEncoding == null)
+            // ファイルから行を読み込み
+            List<string> lines = LoadSearchWordsFromFile();
+
+            // 空チェック
+            if (lines.Count == 0)
             {
-                //検索単語リストファイルの文字エンコーディングを判定する。
-                EncodingJudgment encJudg = new EncodingJudgment(0);
-                EncodingInfomation encInfo = encJudg.Judgment(this._searchWordsFileName);
-
-                if(encInfo.CodePage > 0)
-                {
-                    this.ReplaceEncoding = Encoding.GetEncoding(encInfo.CodePage);
-                }
-                else
-                {
-                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.UnknownEncoding, this._searchWordsFileName));
-                }
+                throw new RmsmfException(string.Format(rmsmf.ValidationMessages.EmptySearchWords, this._searchWordsFileName));
             }
 
-            //Read searchment word CSV file
-            //検索単語リストCSVを読み取る。
+            // 検索単語テーブルへ登録
+            ParseAndStoreSearchWords(lines);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 検索単語リストファイルから行を読み込む
+        /// </summary>
+        /// <returns>読み込んだ行のリスト</returns>
+        private List<string> LoadSearchWordsFromFile()
+        {
+            List<string> lines = new List<string>();
+
             using (var reader = new StreamReader(this._searchWordsFileName, this.ReplaceEncoding, true))
             {
                 while (!reader.EndOfStream)
@@ -353,26 +343,27 @@ namespace txprobe
                     line = this.ConvertEscapeSequences(line);
 
                     if (line.Length == 0) continue;
-                    //if (line.IndexOf(',') < 0) continue;
 
-                    wordsList.Add(line);
+                    lines.Add(line);
                 }
             }
 
-            if(wordsList.Count == 0)
-            {
-                throw new RmsmfException(string.Format(rmsmf.ValidationMessages.EmptySearchWords, this._searchWordsFileName));
-            }
+            return lines;
+        }
 
-            //検索単語テーブルへ登録する。
-            this._searchWordsCount = wordsList.Count;
+        /// <summary>
+        /// 読み込んだ行をパースして検索単語テーブルに格納
+        /// </summary>
+        /// <param name="lines">読み込んだ行のリスト</param>
+        private void ParseAndStoreSearchWords(List<string> lines)
+        {
+            this._searchWordsCount = lines.Count;
             this._searchWords = new string[this._searchWordsCount];
+
             for (int i = 0; i < this._searchWordsCount; i++)
             {
-                this._searchWords[i] = wordsList[i];
+                this._searchWords[i] = lines[i];
             }
-
-            return normal;
         }
 
         /// <summary>

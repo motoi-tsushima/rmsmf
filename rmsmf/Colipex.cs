@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -132,6 +133,56 @@ namespace rmsmf
             }
 
             return Encoding.GetEncoding(encodingNameOrCodePage);
+        }
+
+        /// <summary>
+        /// エンコーディングが未設定の場合、ファイルから判定して設定する
+        /// </summary>
+        /// <param name="encoding">エンコーディング（参照渡し）</param>
+        /// <param name="fileName">判定対象のファイル名</param>
+        /// <param name="errorMessage">エラーメッセージのフォーマット</param>
+        protected void EnsureEncodingInitialized(ref Encoding encoding, string fileName, string errorMessage)
+        {
+            if (encoding == null)
+            {
+                EncodingJudgment encJudg = new EncodingJudgment(0);
+                EncodingInfomation encInfo = encJudg.Judgment(fileName);
+
+                if (encInfo.CodePage > 0)
+                {
+                    encoding = Encoding.GetEncoding(encInfo.CodePage);
+                }
+                else
+                {
+                    throw new RmsmfException(string.Format(errorMessage, fileName));
+                }
+            }
+        }
+
+        /// <summary>
+        /// ファイルから行を読み込み、エスケープシーケンスを変換する
+        /// </summary>
+        /// <param name="fileName">読み込むファイル名</param>
+        /// <param name="encoding">使用するエンコーディング</param>
+        /// <returns>読み込んだ行のリスト</returns>
+        protected List<string> LoadLinesFromFile(string fileName, Encoding encoding)
+        {
+            List<string> lines = new List<string>();
+
+            using (var reader = new StreamReader(fileName, encoding, true))
+            {
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+                    line = this.ConvertEscapeSequences(line);
+
+                    if (line.Length == 0) continue;
+
+                    lines.Add(line);
+                }
+            }
+
+            return lines;
         }
     }
 }

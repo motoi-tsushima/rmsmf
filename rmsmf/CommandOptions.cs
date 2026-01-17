@@ -347,55 +347,45 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// エスケープシーケンス変換
-        /// </summary>
-        /// <param name="input">変換対象文字列</param>
-        /// <returns>変換後文字列</returns>
-        private string ConvertEscapeSequences(string input)
-        {
-            return input
-                .Replace("\\r\\n", "\r\n")
-                .Replace("\\r", "\r")
-                .Replace("\\n", "\n")
-                .Replace("\\t", "\t")
-                .Replace("\\\\", "\\");
-        }
-
-        /// <summary>
         /// 置換単語テーブル初期化
         /// </summary>
         /// <returns>true=正常に初期化した</returns>
         public bool ReadReplaceWords()
         {
-            bool normal = true;
-
             if (string.IsNullOrEmpty(this._replaceWordsFileName))
             {
-                normal = false;
-                return normal;
+                return false;
             }
 
-            //置換単語の設定をする。
-            List<string> wordsList = new List<string>();
+            // エンコーディングの判定と設定
+            EnsureEncodingInitialized(
+                ref this._replaceEncoding, 
+                this._replaceWordsFileName, 
+                ValidationMessages.UnknownEncoding);
 
-            if (this.ReplaceEncoding == null)
+            // ファイルから行を読み込み
+            List<string> lines = LoadReplaceWordsFromFile();
+
+            // 空チェック
+            if (lines.Count == 0)
             {
-                //置換単語リストファイルの文字エンコーディングを判定する。
-                EncodingJudgment encJudg = new EncodingJudgment(0);
-                EncodingInfomation encInfo = encJudg.Judgment(this._replaceWordsFileName);
-
-                if (encInfo.CodePage > 0)
-                {
-                    this.ReplaceEncoding = Encoding.GetEncoding(encInfo.CodePage);
-                }
-                else
-                {
-                    throw new RmsmfException(string.Format(ValidationMessages.UnknownEncoding, this._replaceWordsFileName));
-                }
+                throw new RmsmfException(string.Format(ValidationMessages.EmptyReplaceWords, this._replaceWordsFileName));
             }
 
-            //Read replacement word CSV file
-            //置換単語リストCSVを読み取る。
+            // 置換単語テーブルへ登録
+            ParseAndStoreReplaceWords(lines);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 置換単語リストファイルから行を読み込む
+        /// </summary>
+        /// <returns>読み込んだ行のリスト（カンマを含む行のみ）</returns>
+        private List<string> LoadReplaceWordsFromFile()
+        {
+            List<string> lines = new List<string>();
+
             using (var reader = new StreamReader(this._replaceWordsFileName, this.ReplaceEncoding, true))
             {
                 while (!reader.EndOfStream)
@@ -404,35 +394,37 @@ namespace rmsmf
                     line = this.ConvertEscapeSequences(line);
 
                     if (line.Length == 0) continue;
-                    if (line.IndexOf(',') < 0) continue;
+                    if (line.IndexOf(',') < 0) continue;  // カンマがない行はスキップ
 
-                    wordsList.Add(line);
+                    lines.Add(line);
                 }
             }
 
-            if (wordsList.Count == 0)
-            {
-                throw new RmsmfException(string.Format(ValidationMessages.EmptyReplaceWords, this._replaceWordsFileName));
-            }
+            return lines;
+        }
 
-            // 置換単語テーブルへ登録する
-            this._replaceWordsCount = wordsList.Count;
+        /// <summary>
+        /// 読み込んだ行をパースして置換単語テーブルに格納
+        /// </summary>
+        /// <param name="lines">読み込んだ行のリスト</param>
+        private void ParseAndStoreReplaceWords(List<string> lines)
+        {
+            this._replaceWordsCount = lines.Count;
             this._replaceWords = new string[2, this._replaceWordsCount];
+
             for (int i = 0; i < this._replaceWordsCount; i++)
             {
-                string[] columns = wordsList[i].Split(',');
-                
+                string[] columns = lines[i].Split(',');
+
                 // 入力検証: カンマ区切りで2つの要素が必要
                 if (columns.Length < 2)
                 {
                     throw new RmsmfException(string.Format(ValidationMessages.InvalidReplaceWordFormat, i + 1));
                 }
-                
+
                 this._replaceWords[0, i] = columns[0];
                 this._replaceWords[1, i] = columns[1];
             }
-
-            return normal;
         }
 
         /// <summary>
