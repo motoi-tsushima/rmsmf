@@ -57,7 +57,7 @@ namespace txprobe
                     commandOptions.SearchWords, commandOptions.Files, 
                     commandOptions.EnableProbe, commandOptions.OutputFileNameListFileName);
 
-                probe.Probe(commandOptions.encoding);
+                probe.Probe(commandOptions.ReadEncoding);
 
                 //正常に処理を完了した。
                 Console.WriteLine("");

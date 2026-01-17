@@ -87,12 +87,12 @@ namespace rmsmf
                         Console.WriteLine("文字エンコーディング名を指定してください。 (/w)");
                         return;
                     }
-                    this.Empty_WriteCharacterSet = false;
+                    this.EmptyWriteCharacterSet = false;
                 }
                 else
                 {
                     writeCharacterSet = readCharacterSet;
-                    this.Empty_WriteCharacterSet = true;
+                    this.EmptyWriteCharacterSet = true;
                 }
 
                 //Setting ReplaceWords CharacterSet 
@@ -187,46 +187,22 @@ namespace rmsmf
                 //Setting Encoding and Check error of Encoding
                 //エンコーディングの設定とエンコーディングのエラーの確認をする。
                 //-
-                int codePage;
-                int writeCodePage;
-                int repleaseCodePage;
-                int filesCodePage;
 
                 //Setting Read Encoding
                 errorEncoding = "Read Encoding";
-                if (readCharacterSet == CharacterSetJudgment)
-                    this.encoding = null;
-                else if (int.TryParse(readCharacterSet, out codePage))
-                    this.encoding = Encoding.GetEncoding(codePage);
-                else
-                    this.encoding = Encoding.GetEncoding(readCharacterSet);
+                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetJudgment);
 
                 //Setting Write Encoding
                 errorEncoding = "Write Encoding";
-                if (writeCharacterSet == CharacterSetJudgment)
-                    this.writeEncoding = null;
-                else if (int.TryParse(writeCharacterSet, out writeCodePage))
-                    this.writeEncoding = Encoding.GetEncoding(writeCodePage);
-                else
-                    this.writeEncoding = Encoding.GetEncoding(writeCharacterSet);
+                this.WriteEncoding = ResolveEncoding(writeCharacterSet, CharacterSetJudgment);
 
-                //Setting Replease Encoding
-                errorEncoding = "Replease Encoding";
-                if (replaceWordsCharacterSet == CharacterSetJudgment)
-                    this.repleaseEncoding = null;
-                else if (int.TryParse(replaceWordsCharacterSet, out repleaseCodePage))
-                    this.repleaseEncoding = Encoding.GetEncoding(repleaseCodePage);
-                else
-                    this.repleaseEncoding = Encoding.GetEncoding(replaceWordsCharacterSet);
+                //Setting Replace Encoding
+                errorEncoding = "Replace Encoding";
+                this.ReplaceEncoding = ResolveEncoding(replaceWordsCharacterSet, CharacterSetJudgment);
 
                 //Setting Files Encoding
                 errorEncoding = "Files Encoding";
-                if (filesCharacterSet == CharacterSetJudgment)
-                    this.filesEncoding = null;
-                else if (int.TryParse(filesCharacterSet, out filesCodePage))
-                    this.filesEncoding = Encoding.GetEncoding(filesCodePage);
-                else
-                    this.filesEncoding = Encoding.GetEncoding(filesCharacterSet);
+                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetJudgment);
 
             }
             catch (DirectoryNotFoundException ex)
@@ -263,11 +239,7 @@ namespace rmsmf
             {
                 if (this.Options[OptionReplaceWords] == Colipex.NonValue)
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = "/r オプションのファイル名を指定してください。";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException("/r オプションのファイル名を指定してください。");
                 }
 
                 //置換単語リストファイル名を保存する
@@ -276,11 +248,7 @@ namespace rmsmf
                 //置換単語リストファイル名の存在確認
                 if (!File.Exists(this._replaceWordsFileName))
                 {
-                    ExecutionState.isError = true;
-                    ExecutionState.isNormal = !ExecutionState.isError;
-                    ExecutionState.errorMessage = this._replaceWordsFileName + " が存在しません。 ";
-
-                    throw new Exception(ExecutionState.errorMessage);
+                    throw new RmsmfException(this._replaceWordsFileName + " が存在しません。 ");
                 }
             }
 
@@ -374,7 +342,7 @@ namespace rmsmf
             //置換単語の設定をする。
             List<string> wordsList = new List<string>();
 
-            if (this.repleaseEncoding == null)
+            if (this.ReplaceEncoding == null)
             {
                 //置換単語リストファイルの文字エンコーディングを判定する。
                 EncodingJudgment encJudg = new EncodingJudgment(0);
@@ -382,7 +350,7 @@ namespace rmsmf
 
                 if (encInfo.CodePage > 0)
                 {
-                    this.repleaseEncoding = Encoding.GetEncoding(encInfo.CodePage);
+                    this.ReplaceEncoding = Encoding.GetEncoding(encInfo.CodePage);
                 }
                 else
                 {
@@ -392,7 +360,7 @@ namespace rmsmf
 
             //Read replacement word CSV file
             //置換単語リストCSVを読み取る。
-            using (var reader = new StreamReader(this._replaceWordsFileName, this.repleaseEncoding, true))
+            using (var reader = new StreamReader(this._replaceWordsFileName, this.ReplaceEncoding, true))
             {
                 while (!reader.EndOfStream)
                 {
@@ -494,7 +462,7 @@ namespace rmsmf
 
             //ファイル名リストファイルが有る場合
 
-            if (this.filesEncoding == null)
+            if (this.FilesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
                 EncodingJudgment encJudg = new EncodingJudgment(0);
@@ -502,7 +470,7 @@ namespace rmsmf
 
                 if (encInfo.CodePage > 0)
                 {
-                    this.filesEncoding = Encoding.GetEncoding(encInfo.CodePage);
+                    this.FilesEncoding = Encoding.GetEncoding(encInfo.CodePage);
                 }
                 else
                 {
@@ -512,7 +480,7 @@ namespace rmsmf
 
             List<string> filesList = new List<string>();
 
-            using (var reader = new StreamReader(this._fileNameListFileName, this.filesEncoding, true))
+            using (var reader = new StreamReader(this._fileNameListFileName, this.FilesEncoding, true))
             {
                 while (!reader.EndOfStream)
                 {
@@ -663,27 +631,72 @@ namespace rmsmf
         /// <summary>
         /// 読み取り文字エンコーディング
         /// </summary>
-        public Encoding encoding = null;
+        private Encoding _readEncoding = null;
+
+        /// <summary>
+        /// 読み取り文字エンコーディング
+        /// </summary>
+        public Encoding ReadEncoding
+        {
+            get { return _readEncoding; }
+            private set { _readEncoding = value; }
+        }
 
         /// <summary>
         /// 書き込み文字エンコーディング
         /// </summary>
-        public Encoding writeEncoding = null;
+        private Encoding _writeEncoding = null;
+
+        /// <summary>
+        /// 書き込み文字エンコーディング
+        /// </summary>
+        public Encoding WriteEncoding
+        {
+            get { return _writeEncoding; }
+            private set { _writeEncoding = value; }
+        }
 
         /// <summary>
         /// 書き込み文字エンコーディングが指定されていない。
         /// </summary>
-        public bool Empty_WriteCharacterSet = false;
+        private bool _emptyWriteCharacterSet = false;
+
+        /// <summary>
+        /// 書き込み文字エンコーディングが指定されていない。
+        /// </summary>
+        public bool EmptyWriteCharacterSet
+        {
+            get { return _emptyWriteCharacterSet; }
+            private set { _emptyWriteCharacterSet = value; }
+        }
 
         /// <summary>
         /// 置換単語リストCSV文字エンコーディング
         /// </summary>
-        public Encoding repleaseEncoding = null;
+        private Encoding _replaceEncoding = null;
+
+        /// <summary>
+        /// 置換単語リストCSV文字エンコーディング
+        /// </summary>
+        public Encoding ReplaceEncoding
+        {
+            get { return _replaceEncoding; }
+            private set { _replaceEncoding = value; }
+        }
 
         /// <summary>
         /// ファイルリスト文字エンコーディング
         /// </summary>
-        public Encoding filesEncoding = null;
+        private Encoding _filesEncoding = null;
+
+        /// <summary>
+        /// ファイルリスト文字エンコーディング
+        /// </summary>
+        public Encoding FilesEncoding
+        {
+            get { return _filesEncoding; }
+            private set { _filesEncoding = value; }
+        }
 
 
     }

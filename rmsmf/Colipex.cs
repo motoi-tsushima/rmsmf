@@ -98,5 +98,40 @@ namespace rmsmf
                 return this.parameters;
             }
         }
+
+        /// <summary>
+        /// エスケープシーケンス変換
+        /// </summary>
+        /// <param name="input">変換対象文字列</param>
+        /// <returns>変換後文字列</returns>
+        protected string ConvertEscapeSequences(string input)
+        {
+            return input
+                .Replace("\\r\\n", "\r\n")
+                .Replace("\\r", "\r")
+                .Replace("\\n", "\n")
+                .Replace("\\t", "\t")
+                .Replace("\\\\", "\\");
+        }
+
+        /// <summary>
+        /// エンコーディング名またはコードページからEncodingオブジェクトを取得
+        /// </summary>
+        /// <param name="encodingNameOrCodePage">エンコーディング名またはコードページ</param>
+        /// <returns>Encodingオブジェクト、"Judgment"の場合はnull</returns>
+        protected Encoding ResolveEncoding(string encodingNameOrCodePage, string judgmentKeyword = "Judgment")
+        {
+            if (encodingNameOrCodePage == judgmentKeyword)
+            {
+                return null;
+            }
+
+            if (int.TryParse(encodingNameOrCodePage, out int codePage))
+            {
+                return Encoding.GetEncoding(codePage);
+            }
+
+            return Encoding.GetEncoding(encodingNameOrCodePage);
+        }
     }
 }

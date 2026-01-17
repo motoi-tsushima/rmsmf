@@ -152,37 +152,19 @@ namespace txprobe
                 //Setting Encoding and Check error of Encoding
                 //エンコーディングの設定とエンコーディングのエラーの確認をする。
                 //-
-                int codePage;
-                int repleaseCodePage;
-                int filesCodePage;
 
                 //Setting Read Encoding
                 errorEncoding = "Read Encoding";
-                if (readCharacterSet == CharacterSetJudgment)
-                    this.encoding = null;
-                else if (int.TryParse(readCharacterSet, out codePage))
-                    this.encoding = Encoding.GetEncoding(codePage);
-                else
-                    this.encoding = Encoding.GetEncoding(readCharacterSet);
+                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetJudgment);
 
 
-                //Setting Replease Encoding
-                errorEncoding = "Replease Encoding";
-                if (searchWordsCharacterSet == CharacterSetJudgment)
-                    this.repleaseEncoding = null;
-                else if (int.TryParse(searchWordsCharacterSet, out repleaseCodePage))
-                    this.repleaseEncoding = Encoding.GetEncoding(repleaseCodePage);
-                else
-                    this.repleaseEncoding = Encoding.GetEncoding(searchWordsCharacterSet);
+                //Setting Replace Encoding
+                errorEncoding = "Replace Encoding";
+                this.ReplaceEncoding = ResolveEncoding(searchWordsCharacterSet, CharacterSetJudgment);
 
                 //Setting Files Encoding
                 errorEncoding = "Files Encoding";
-                if (filesCharacterSet == CharacterSetJudgment)
-                    this.filesEncoding = null;
-                else if (int.TryParse(filesCharacterSet, out filesCodePage))
-                    this.filesEncoding = Encoding.GetEncoding(filesCodePage);
-                else
-                    this.filesEncoding = Encoding.GetEncoding(filesCharacterSet);
+                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetJudgment);
 
             }
             catch (DirectoryNotFoundException ex)
@@ -271,11 +253,7 @@ namespace txprobe
 
             if(this.IsOption(OptionSearchWords) == false && this.IsOption(OptionSearchWordsCharacterSet) == true)
             {
-                ExecutionState.isError = true;
-                ExecutionState.isNormal = !ExecutionState.isError;
-                ExecutionState.errorMessage = "検索単語ファイルが指定されていないのに、検索単語ファイルのエンコーディングが指定されています。";
-
-                throw new Exception(ExecutionState.errorMessage);
+                throw new RmsmfException("検索単語ファイルが指定されていないのに、検索単語ファイルのエンコーディングが指定されています。");
             }
 
             if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet) == true)
@@ -316,7 +294,7 @@ namespace txprobe
             //検索単語の設定をする。
             List<string> wordsList = new List<string>();
 
-            if(this.repleaseEncoding == null)
+            if(this.ReplaceEncoding == null)
             {
                 //検索単語リストファイルの文字エンコーディングを判定する。
                 EncodingJudgment encJudg = new EncodingJudgment(0);
@@ -324,7 +302,7 @@ namespace txprobe
 
                 if(encInfo.CodePage > 0)
                 {
-                    this.repleaseEncoding = Encoding.GetEncoding(encInfo.CodePage);
+                    this.ReplaceEncoding = Encoding.GetEncoding(encInfo.CodePage);
                 }
                 else
                 {
@@ -334,7 +312,7 @@ namespace txprobe
 
             //Read searchment word CSV file
             //検索単語リストCSVを読み取る。
-            using (var reader = new StreamReader(this._searchWordsFileName, this.repleaseEncoding, true))
+            using (var reader = new StreamReader(this._searchWordsFileName, this.ReplaceEncoding, true))
             {
                 while (!reader.EndOfStream)
                 {
@@ -378,32 +356,32 @@ namespace txprobe
 
                 string path = this.Parameters[0].TrimEnd(new char[] { '\x0a', '\x0d' });
 
-                string direcrtoryName = Path.GetDirectoryName(path);
-                if (direcrtoryName != null) 
+                string directoryName = Path.GetDirectoryName(path);
+                if (directoryName != null) 
                 { 
-                    if (direcrtoryName.Length == 0)
+                    if (directoryName.Length == 0)
                     {
-                        direcrtoryName = ".";
+                        directoryName = ".";
                     }
-                    else if (direcrtoryName.Length == 1)
+                    else if (directoryName.Length == 1)
                     {
-                        if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\')
+                        if (directoryName[0] != '.' && directoryName[0] != '\\')
                         {
-                            direcrtoryName = ".\\" + direcrtoryName;
+                            directoryName = ".\\" + directoryName;
                         }
                     }
-                    else if (direcrtoryName.Length > 1)
+                    else if (directoryName.Length > 1)
                     {
-                        if (direcrtoryName[0] != '.' && direcrtoryName[0] != '\\'
-                            && direcrtoryName[1] != ':')
+                        if (directoryName[0] != '.' && directoryName[0] != '\\'
+                            && directoryName[1] != ':')
                         {
-                            direcrtoryName = ".\\" + direcrtoryName;
+                            directoryName = ".\\" + directoryName;
                         }
                     }
                 }
                 else
                 {
-                    direcrtoryName = ".";
+                    directoryName = ".";
                 }
 
                 string searchWord = Path.GetFileName(path);
@@ -416,7 +394,7 @@ namespace txprobe
                         searchOption = System.IO.SearchOption.AllDirectories;
                     }
 
-                    this._files = Directory.GetFileSystemEntries(direcrtoryName, searchWord, searchOption);
+                    this._files = Directory.GetFileSystemEntries(directoryName, searchWord, searchOption);
                 }
                 catch(System.ArgumentException ex)
                 {
@@ -429,7 +407,7 @@ namespace txprobe
 
             //ファイル名リストファイルが有る場合
 
-            if(this.filesEncoding == null)
+            if(this.FilesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
                 EncodingJudgment encJudg = new EncodingJudgment(0);
@@ -437,7 +415,7 @@ namespace txprobe
 
                 if (encInfo.CodePage > 0)
                 {
-                    this.filesEncoding = Encoding.GetEncoding(encInfo.CodePage);
+                    this.FilesEncoding = Encoding.GetEncoding(encInfo.CodePage);
                 }
                 else
                 {
@@ -447,7 +425,7 @@ namespace txprobe
 
             List<string> filesList = new List<string>();
 
-            using (var reader = new StreamReader(this._fileNameListFileName, this.filesEncoding, true))
+            using (var reader = new StreamReader(this._fileNameListFileName, this.FilesEncoding, true))
             {
                 while (!reader.EndOfStream)
                 {
@@ -584,27 +562,72 @@ namespace txprobe
         /// <summary>
         /// 読み取り文字エンコーディング
         /// </summary>
-        public Encoding encoding = null;
+        private Encoding _readEncoding = null;
+
+        /// <summary>
+        /// 読み取り文字エンコーディング
+        /// </summary>
+        public Encoding ReadEncoding
+        {
+            get { return _readEncoding; }
+            private set { _readEncoding = value; }
+        }
 
         /// <summary>
         /// 書き込み文字エンコーディング
         /// </summary>
-        public Encoding writeEncoding = null;
+        private Encoding _writeEncoding = null;
+
+        /// <summary>
+        /// 書き込み文字エンコーディング
+        /// </summary>
+        public Encoding WriteEncoding
+        {
+            get { return _writeEncoding; }
+            private set { _writeEncoding = value; }
+        }
 
         /// <summary>
         /// 書き込み文字エンコーディングが指定されていない。
         /// </summary>
-        public bool Empty_WriteCharacterSet = false;
+        private bool _emptyWriteCharacterSet = false;
+
+        /// <summary>
+        /// 書き込み文字エンコーディングが指定されていない。
+        /// </summary>
+        public bool EmptyWriteCharacterSet
+        {
+            get { return _emptyWriteCharacterSet; }
+            private set { _emptyWriteCharacterSet = value; }
+        }
 
         /// <summary>
         /// 検索単語リストCSV文字エンコーディング
         /// </summary>
-        public Encoding repleaseEncoding = null;
+        private Encoding _replaceEncoding = null;
+
+        /// <summary>
+        /// 検索単語リストCSV文字エンコーディング
+        /// </summary>
+        public Encoding ReplaceEncoding
+        {
+            get { return _replaceEncoding; }
+            private set { _replaceEncoding = value; }
+        }
 
         /// <summary>
         /// ファイルリスト文字エンコーディング
         /// </summary>
-        public Encoding filesEncoding = null;
+        private Encoding _filesEncoding = null;
+
+        /// <summary>
+        /// ファイルリスト文字エンコーディング
+        /// </summary>
+        public Encoding FilesEncoding
+        {
+            get { return _filesEncoding; }
+            private set { _filesEncoding = value; }
+        }
 
 
     }

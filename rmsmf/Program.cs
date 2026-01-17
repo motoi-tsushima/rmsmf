@@ -56,7 +56,7 @@ namespace rmsmf
                 //ファイルの文字列置換処理の実行
                 ReplaceStringsInFiles replace = new ReplaceStringsInFiles(commandOptions.ReplaceWords, commandOptions.Files, commandOptions.EnableBOM);
 
-                replace.Replace(commandOptions.encoding, commandOptions.writeEncoding, commandOptions.WriteNewLine);
+                replace.Replace(commandOptions.ReadEncoding, commandOptions.WriteEncoding, commandOptions.WriteNewLine);
 
                 //正常に処理を完了した。
                 Console.WriteLine("Successful.");
