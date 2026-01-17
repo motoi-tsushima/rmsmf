@@ -34,11 +34,9 @@ namespace txprobe
 
             try
             {
-                //コマンドオプション取得
-                commandOptions = new CommandOptions(args);
-
-                //ヘルプ表示
-                if (commandOptions.CallHelp == true)
+                // ヘルプオプションの事前チェック
+                if (args.Length > 0 && (args[0] == "-h" || args[0] == "/h" || 
+                    args.Any(arg => arg == "-h" || arg == "/h")))
                 {
                     Help help = new Help();
                     help.Show();
@@ -48,6 +46,9 @@ namespace txprobe
 #endif
                     return;
                 }
+
+                //コマンドオプション取得
+                commandOptions = new CommandOptions(args);
 
                 commandOptions.ReadSearchWords();
                 commandOptions.ReadFileNameList();

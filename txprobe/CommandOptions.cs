@@ -31,232 +31,229 @@ namespace txprobe
         /// <param name="args"></param>
         public CommandOptions(string[] args) : base(args)
         {
+            ValidateRequiredParameters();
 
-            string readCharacterSet;
-            string searchWordsCharacterSet;
-            string filesCharacterSet;
+            ParseEncodingOptions(
+                out string readCharacterSet,
+                out string searchWordsCharacterSet,
+                out string filesCharacterSet);
 
-            string errorEncoding = null;
+            this._enableProbe = ParseProbeModeOption();
+            this.searchOptionAllDirectories = ParseAllDirectoriesOption();
+            this._outputFileNameListFileName = ParseOutputFileNameListOption();
 
-            //ヘルプオプションの場合
-            if (this.IsOption(OptionHelp) == true)
+            InitializeEncodings(
+                readCharacterSet,
+                searchWordsCharacterSet,
+                filesCharacterSet);
+
+            ValidateAndSetFileOptions();
+            ValidateOptionConsistency();
+        }
+
+        /// <summary>
+        /// 必須パラメータの検証
+        /// </summary>
+        private void ValidateRequiredParameters()
+        {
+            if (this.IsOption(OptionFileNameList) == false)
             {
-                this._callHelp = true;
-                return;
-            }
-
-            //パラメータがない場合は終了
-            if(this.IsOption(OptionFileNameList) == false)
-            {
-                if(this.Parameters.Count == 0 && this.Options.Count == 0)
+                if (this.Parameters.Count == 0 && this.Options.Count == 0)
                 {
                     throw new RmsmfException("目的のファイル名を指定してください。(/h ヘルプ表示)");
                 }
             }
+        }
 
+        /// <summary>
+        /// エンコーディング関連オプションの解析
+        /// </summary>
+        private void ParseEncodingOptions(
+            out string readCharacterSet,
+            out string searchWordsCharacterSet,
+            out string filesCharacterSet)
+        {
+            //Setting Read CharacterSet 
+            //読み取り文字エンコーディング名を設定する。
+            if (this.IsOption(OptionCharacterSet))
+            {
+                readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (readCharacterSet == Colipex.NonValue)
+                {
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/c)");
+                }
+            }
+            else
+            {
+                readCharacterSet = CharacterSetJudgment;
+            }
+
+            //Setting SearchWords CharacterSet 
+            //検索単語リストの文字エンコーディングの設定する。
+            if (this.IsOption(OptionSearchWordsCharacterSet))
+            {
+                searchWordsCharacterSet = this.Options[OptionSearchWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (searchWordsCharacterSet == Colipex.NonValue)
+                {
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/sc)");
+                }
+            }
+            else
+            {
+                searchWordsCharacterSet = readCharacterSet;
+            }
+
+            //Setting FileNameList CharacterSet 
+            //ファイルリストの文字エンコーディングを設定する。
+            if (this.IsOption(OptionFileNameListCharacterSet))
+            {
+                filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (filesCharacterSet == Colipex.NonValue)
+                {
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/fc)");
+                }
+            }
+            else
+            {
+                filesCharacterSet = readCharacterSet;
+            }
+        }
+
+        /// <summary>
+        /// Probemodeオプションの解析
+        /// </summary>
+        /// <returns>Probemodeが有効かどうか</returns>
+        private bool ParseProbeModeOption()
+        {
+            if (this.IsOption(OptionProbeMode))
+            {
+                return true;
+            }
+            else
+            {
+                // 検索文字列が無い場合は Probe Mode を有効にする
+                return this.IsOption(OptionSearchWords) == false;
+            }
+        }
+
+        /// <summary>
+        /// AllDirectoriesオプションの解析
+        /// </summary>
+        /// <returns>AllDirectoriesが有効かどうか</returns>
+        private bool ParseAllDirectoriesOption()
+        {
+            return this.IsOption(OptionAllDirectories);
+        }
+
+        /// <summary>
+        /// 出力ファイルリストオプションの解析
+        /// </summary>
+        /// <returns>出力ファイルリストのファイル名（null=指定なし）</returns>
+        private string ParseOutputFileNameListOption()
+        {
+            if (this.IsOption(OptionOutputFileNamelist))
+            {
+                if (this.Options[OptionOutputFileNamelist] == Colipex.NonValue)
+                {
+                    return "output_filelist.txt";
+                }
+                else
+                {
+                    return this.Options[OptionOutputFileNamelist].TrimEnd(new char[] { '\x0a', '\x0d' });
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Encodingオブジェクトの初期化
+        /// </summary>
+        private void InitializeEncodings(
+            string readCharacterSet,
+            string searchWordsCharacterSet,
+            string filesCharacterSet)
+        {
             try
             {
-                //Setting Read CharacterSet 
-                //読み取り文字エンコーディング名を設定する。
-                if (this.IsOption(OptionCharacterSet) == true)
-                {
-                    readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (readCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/c)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/c)");
-                        return;
-                    }
-                }
-                else
-                {
-                    readCharacterSet = CharacterSetJudgment;
-                }
-
-                //Setting SearchWords CharacterSet 
-                //検索単語リストの文字エンコーディングの設定する。
-                if (this.IsOption(OptionSearchWordsCharacterSet) == true)
-                {
-                    searchWordsCharacterSet = this.Options[OptionSearchWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (searchWordsCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/rc)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/rc)");
-                        return;
-                    }
-                }
-                else
-                {
-                    searchWordsCharacterSet = readCharacterSet;
-                }
-
-                //Setting FileNameList CharacterSet 
-                //ファイルリストの文字エンコーディングを設定する。
-                if (this.IsOption(OptionFileNameListCharacterSet) == true)
-                {
-                    filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (filesCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/fc)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/fc)");
-                        return;
-                    }
-                }
-                else
-                {
-                    filesCharacterSet = readCharacterSet;
-                }
-
-                //Probe Mode
-                if (this.IsOption(OptionProbeMode) == true)
-                {
-                    this._enableProbe = true;
-                }
-                else
-                {
-                    if (this.IsOption(OptionSearchWords) == false)
-                    {
-                        // 検索文字列が無い場合は Probe Mode を有効にする
-                        this._enableProbe = true;
-                    }
-                    else
-                    {
-                        this._enableProbe = false;
-                    }
-                }
-
-                // AllDirectories を有効にする
-                if (this.IsOption(OptionAllDirectories) == true)
-                {
-                    this.searchOptionAllDirectories = true;
-                }
-                else
-                {
-                    this.searchOptionAllDirectories = false;
-                }
-
-                // 出力ファイルリスト・オプションを設定する
-                if(this.IsOption(OptionOutputFileNamelist) == true)
-                {
-                    if (this.Options[OptionOutputFileNamelist] == Colipex.NonValue)
-                    {
-                        this._outputFileNameListFileName = "output_filelist.txt";
-                    }
-                    else 
-                    {                         //出力ファイルリストのファイル名を保存する
-                        this._outputFileNameListFileName = this.Options[OptionOutputFileNamelist].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    }
-                }
-
-                //-----------------------------------------------------------
-                //Setting Encoding and Check error of Encoding
-                //エンコーディングの設定とエンコーディングのエラーの確認をする。
-                //-
-
-                //Setting Read Encoding
-                errorEncoding = "Read Encoding";
                 this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetJudgment);
-
-
-                //Setting Replace Encoding
-                errorEncoding = "Replace Encoding";
                 this.ReplaceEncoding = ResolveEncoding(searchWordsCharacterSet, CharacterSetJudgment);
-
-                //Setting Files Encoding
-                errorEncoding = "Files Encoding";
                 this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetJudgment);
-
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new RmsmfException("指定のパスが存在しません。", ex);
-            }
-            catch (NotSupportedException ex)
-            {
-                throw new RmsmfException("管理下のエラー:NotSupportedException" + errorEncoding, ex);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new RmsmfException("管理下のエラー:ArgumentOutOfRangeException" + errorEncoding, ex);
             }
             catch (ArgumentException ex)
             {
-                if(errorEncoding == null)
-                    throw new RmsmfException("管理下のエラー:ArgumentException" + errorEncoding, ex);
-                else
-                {
-                    throw new RmsmfException(errorEncoding + " のエンコーディング名が不正です。", ex);
-                }
+                throw new RmsmfException("エンコーディング名が不正です。", ex);
             }
-            catch (Exception ex)
+            catch (NotSupportedException ex)
             {
-                throw;
+                throw new RmsmfException("サポートされていないエンコーディングです。", ex);
             }
+        }
 
-            //------------------------------------------------------------
+        /// <summary>
+        /// ファイル関連オプションの検証と設定
+        /// </summary>
+        private void ValidateAndSetFileOptions()
+        {
             // 検索単語リストファイルオプションの設定
-            //-
-            //検索単語リストが存在する。
-            if (this.IsOption(OptionSearchWords) == true)
+            if (this.IsOption(OptionSearchWords))
             {
                 if (this.Options[OptionSearchWords] == Colipex.NonValue)
                 {
-                    throw new RmsmfException("/r オプションのファイル名を指定してください。");
+                    throw new RmsmfException("/s オプションのファイル名を指定してください。");
                 }
 
-                //検索単語リストファイル名を保存する
-                this._searchWordsFileName = this.Options[OptionSearchWords].TrimEnd(new char[] { '\x0a', '\x0d' }); 
+                this._searchWordsFileName = this.Options[OptionSearchWords].TrimEnd(new char[] { '\x0a', '\x0d' });
 
-                //検索単語リストファイル名の存在確認
                 if (!File.Exists(this._searchWordsFileName))
                 {
                     throw new RmsmfException(this._searchWordsFileName + " が存在しません。 ");
                 }
             }
 
-            //------------------------------------------------------------
             // ファイルリストファイルオプションの設定
-            //-
-            if (this.IsOption(OptionFileNameList) == true)
+            if (this.IsOption(OptionFileNameList))
             {
                 if (this.Options[OptionFileNameList] == Colipex.NonValue)
                 {
                     throw new RmsmfException("/f オプションのファイル名を指定してください。");
                 }
 
-                //ファイルリストファイル名を保存する
-                this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' }); 
+                this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
                     throw new RmsmfException(this._fileNameListFileName + " が存在しません。 ");
                 }
             }
+        }
 
-            //------------------------------------------------------------
-            // オプションの正当性確認
-            //-
-            if(this.IsOption(OptionSearchWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
+        /// <summary>
+        /// オプションの組み合わせの正当性確認
+        /// </summary>
+        private void ValidateOptionConsistency()
+        {
+            if (this.IsOption(OptionSearchWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
                 throw new RmsmfException("必須パラメータが入力されていません。");
             }
 
-            if (this.IsOption(OptionFileNameList) == true && this.Parameters.Count > 0)
+            if (this.IsOption(OptionFileNameList) && this.Parameters.Count > 0)
             {
                 throw new RmsmfException("/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。");
             }
 
-            if (this.IsOption(OptionSearchWords) == true && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
+            if (this.IsOption(OptionSearchWords) && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
                 throw new RmsmfException("対象となるファイルを指定してください。");
             }
 
-            if(this.IsOption(OptionSearchWords) == false && this.IsOption(OptionSearchWordsCharacterSet) == true)
+            if (this.IsOption(OptionSearchWords) == false && this.IsOption(OptionSearchWordsCharacterSet))
             {
                 throw new RmsmfException("検索単語ファイルが指定されていないのに、検索単語ファイルのエンコーディングが指定されています。");
             }
 
-            if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet) == true)
+            if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet))
             {
                 throw new RmsmfException("ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。");
             }
@@ -451,19 +448,6 @@ namespace txprobe
 
 
             return normal;
-        }
-
-        /// <summary>
-        /// ヘルプモード
-        /// </summary>
-        private bool _callHelp = false;
-
-        /// <summary>
-        /// ヘルプモード
-        /// </summary>
-        public bool CallHelp
-        {
-            get { return this._callHelp; }
         }
 
         /// <summary>

@@ -31,24 +31,33 @@ namespace rmsmf
         /// <param name="args"></param>
         public CommandOptions(string[] args) : base(args)
         {
+            ValidateRequiredParameters();
 
-            string readCharacterSet;
-            string replaceWordsCharacterSet;
-            string filesCharacterSet;
-            string writeCharacterSet;
-            bool? existByteOrderMark;
-            string writeNewLine;
+            ParseEncodingOptions(
+                out string readCharacterSet,
+                out string writeCharacterSet,
+                out string replaceWordsCharacterSet,
+                out string filesCharacterSet);
 
-            string errorEncoding = null;
+            this._enableBOM = ParseBomOption();
+            this.searchOptionAllDirectories = ParseAllDirectoriesOption();
+            this._writeNewLine = ParseNewLineOption();
 
-            //ヘルプオプションの場合
-            if (this.IsOption(OptionHelp) == true)
-            {
-                this._callHelp = true;
-                return;
-            }
+            InitializeEncodings(
+                readCharacterSet,
+                writeCharacterSet,
+                replaceWordsCharacterSet,
+                filesCharacterSet);
 
-            //パラメータがない場合は終了
+            ValidateAndSetFileOptions();
+            ValidateOptionConsistency();
+        }
+
+        /// <summary>
+        /// 必須パラメータの検証
+        /// </summary>
+        private void ValidateRequiredParameters()
+        {
             if (this.IsOption(OptionFileNameList) == false)
             {
                 if (this.Parameters.Count == 0 && this.Options.Count == 0)
@@ -56,213 +65,189 @@ namespace rmsmf
                     throw new RmsmfException("目的のファイル名を指定してください。(/h ヘルプ表示)");
                 }
             }
+        }
 
+        /// <summary>
+        /// エンコーディング関連オプションの解析
+        /// </summary>
+        private void ParseEncodingOptions(
+            out string readCharacterSet,
+            out string writeCharacterSet,
+            out string replaceWordsCharacterSet,
+            out string filesCharacterSet)
+        {
+            //Setting Read CharacterSet 
+            //読み取り文字エンコーディング名を設定する。
+            if (this.IsOption(OptionCharacterSet))
+            {
+                readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (readCharacterSet == Colipex.NonValue)
+                {
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/c)");
+                }
+            }
+            else
+            {
+                readCharacterSet = CharacterSetJudgment;
+            }
+
+            //Setting Write CharacterSet 
+            //書き込み文字エンコーディング名の設定する。
+            if (this.IsOption(OptionWriteCharacterSet))
+            {
+                writeCharacterSet = this.Options[OptionWriteCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (writeCharacterSet == Colipex.NonValue)
+                {
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/w)");
+                }
+                this.EmptyWriteCharacterSet = false;
+            }
+            else
+            {
+                writeCharacterSet = readCharacterSet;
+                this.EmptyWriteCharacterSet = true;
+            }
+
+            //Setting ReplaceWords CharacterSet 
+            //置換単語リストの文字エンコーディングの設定する。
+            if (this.IsOption(OptionReplaceWordsCharacterSet))
+            {
+                replaceWordsCharacterSet = this.Options[OptionReplaceWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (replaceWordsCharacterSet == Colipex.NonValue)
+                {
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/rc)");
+                }
+            }
+            else
+            {
+                replaceWordsCharacterSet = readCharacterSet;
+            }
+
+            //Setting FileNameList CharacterSet 
+            //ファイルリストの文字エンコーディングを設定する。
+            if (this.IsOption(OptionFileNameListCharacterSet))
+            {
+                filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (filesCharacterSet == Colipex.NonValue)
+                {
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/fc)");
+                }
+            }
+            else
+            {
+                filesCharacterSet = readCharacterSet;
+            }
+        }
+
+        /// <summary>
+        /// BOMオプションの解析
+        /// </summary>
+        /// <returns>BOM設定（null=指定なし、true=有効、false=無効）</returns>
+        private bool? ParseBomOption()
+        {
+            if (this.IsOption(OptionWriteByteOrderMark))
+            {
+                string optionBOM = this.Options[OptionWriteByteOrderMark].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
+
+                if (optionBOM == "false" || optionBOM == "no" || optionBOM == "n")
+                    return false;
+                else
+                    return true;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// AllDirectoriesオプションの解析
+        /// </summary>
+        /// <returns>AllDirectoriesが有効かどうか</returns>
+        private bool ParseAllDirectoriesOption()
+        {
+            return this.IsOption(OptionAllDirectories);
+        }
+
+        /// <summary>
+        /// 改行コードオプションの解析
+        /// </summary>
+        /// <returns>改行コード設定（null=指定なし）</returns>
+        private string ParseNewLineOption()
+        {
+            if (this.IsOption(OptionNewLine))
+            {
+                string optionNewLine = this.Options[OptionNewLine].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
+
+                if (optionNewLine == "win" || optionNewLine == "windows" || optionNewLine == "w" || optionNewLine == "crlf")
+                    return NewLineCRLF;
+                else if (optionNewLine == "unix" || optionNewLine == "u"
+                    || optionNewLine == "linux" || optionNewLine == "l"
+                    || optionNewLine == "mac" || optionNewLine == "m"
+                    || optionNewLine == "lf")
+                    return NewLineLF;
+                else if (optionNewLine == "oldmac" || optionNewLine == "cr" || optionNewLine == "old")
+                    return NewLineCR;
+                else
+                    return NewLineCRLF;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Encodingオブジェクトの初期化
+        /// </summary>
+        private void InitializeEncodings(
+            string readCharacterSet,
+            string writeCharacterSet,
+            string replaceWordsCharacterSet,
+            string filesCharacterSet)
+        {
             try
             {
-                //Setting Read CharacterSet 
-                //読み取り文字エンコーディング名を設定する。
-                if (this.IsOption(OptionCharacterSet) == true)
-                {
-                    readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (readCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/c)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/c)");
-                        return;
-                    }
-                }
-                else
-                {
-                    readCharacterSet = CharacterSetJudgment;
-                }
-
-                //Setting Write CharacterSet 
-                //書き込み文字エンコーディング名の設定する。
-                if (this.IsOption(OptionWriteCharacterSet) == true)
-                {
-                    writeCharacterSet = this.Options[OptionWriteCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (writeCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/w)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/w)");
-                        return;
-                    }
-                    this.EmptyWriteCharacterSet = false;
-                }
-                else
-                {
-                    writeCharacterSet = readCharacterSet;
-                    this.EmptyWriteCharacterSet = true;
-                }
-
-                //Setting ReplaceWords CharacterSet 
-                //置換単語リストの文字エンコーディングの設定する。
-                if (this.IsOption(OptionReplaceWordsCharacterSet) == true)
-                {
-                    replaceWordsCharacterSet = this.Options[OptionReplaceWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (replaceWordsCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/rc)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/rc)");
-                        return;
-                    }
-                }
-                else
-                {
-                    replaceWordsCharacterSet = readCharacterSet;
-                }
-
-                //Setting FileNameList CharacterSet 
-                //ファイルリストの文字エンコーディングを設定する。
-                if (this.IsOption(OptionFileNameListCharacterSet) == true)
-                {
-                    filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
-                    if (filesCharacterSet == Colipex.NonValue)
-                    {
-                        //Console.WriteLine("Please specify the encoding name. (/fc)");
-                        Console.WriteLine("文字エンコーディング名を指定してください。 (/fc)");
-                        return;
-                    }
-                }
-                else
-                {
-                    filesCharacterSet = readCharacterSet;
-                }
-
-                //Setting ByteOrderMark
-                //BOM を設定する。
-                if (this.IsOption(OptionWriteByteOrderMark) == true)
-                {
-                    string optionBOM = this.Options[OptionWriteByteOrderMark].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
-
-                    if (optionBOM == "false" || optionBOM == "no" || optionBOM == "n")
-                        existByteOrderMark = false;
-                    else
-                        existByteOrderMark = true;
-                }
-                else
-                {
-                    existByteOrderMark = null;
-                }
-
-                this._enableBOM = existByteOrderMark;
-
-                // AllDirectories を有効にする
-                if (this.IsOption(OptionAllDirectories) == true)
-                {
-                    this.searchOptionAllDirectories = true;
-                }
-                else
-                {
-                    this.searchOptionAllDirectories = false;
-                }
-
-                //Setting New Line
-                //改行コード を設定する。
-                if (this.IsOption(OptionNewLine) == true)
-                {
-                    string optionNewLine = this.Options[OptionNewLine].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
-
-                    if (optionNewLine == "win" || optionNewLine == "windows" || optionNewLine == "w" || optionNewLine == "crlf")
-                        writeNewLine = NewLineCRLF;
-                    else if (optionNewLine == "unix" || optionNewLine == "u" 
-                        || optionNewLine == "linux" || optionNewLine == "l" 
-                        || optionNewLine == "mac" || optionNewLine == "m"
-                        || optionNewLine == "lf")
-                        writeNewLine = NewLineLF;
-                    else if (optionNewLine == "oldmac" || optionNewLine == "cr" || optionNewLine == "old")
-                        writeNewLine = NewLineCR;
-                    else
-                        writeNewLine = NewLineCRLF;
-                }
-                else
-                {
-                    writeNewLine = null;
-                }
-
-                this._writeNewLine = writeNewLine;
-
-
-                //-----------------------------------------------------------
-                //Setting Encoding and Check error of Encoding
-                //エンコーディングの設定とエンコーディングのエラーの確認をする。
-                //-
-
-                //Setting Read Encoding
-                errorEncoding = "Read Encoding";
                 this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetJudgment);
-
-                //Setting Write Encoding
-                errorEncoding = "Write Encoding";
                 this.WriteEncoding = ResolveEncoding(writeCharacterSet, CharacterSetJudgment);
-
-                //Setting Replace Encoding
-                errorEncoding = "Replace Encoding";
                 this.ReplaceEncoding = ResolveEncoding(replaceWordsCharacterSet, CharacterSetJudgment);
-
-                //Setting Files Encoding
-                errorEncoding = "Files Encoding";
                 this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetJudgment);
-
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new RmsmfException("指定のパスが存在しません。", ex);
-            }
-            catch (NotSupportedException ex)
-            {
-                throw new RmsmfException("管理下のエラー:NotSupportedException" + errorEncoding, ex);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                throw new RmsmfException("管理下のエラー:ArgumentOutOfRangeException" + errorEncoding, ex);
             }
             catch (ArgumentException ex)
             {
-                if (errorEncoding == null)
-                    throw new RmsmfException("管理下のエラー:ArgumentException" + errorEncoding, ex);
-                else
-                {
-                    throw new RmsmfException(errorEncoding + " のエンコーディング名が不正です。", ex);
-                }
+                throw new RmsmfException("エンコーディング名が不正です。", ex);
             }
-            catch (Exception ex)
+            catch (NotSupportedException ex)
             {
-                throw;
+                throw new RmsmfException("サポートされていないエンコーディングです。", ex);
             }
+        }
 
-            //------------------------------------------------------------
+        /// <summary>
+        /// ファイル関連オプションの検証と設定
+        /// </summary>
+        private void ValidateAndSetFileOptions()
+        {
             // 置換単語リストファイルオプションの設定
-            //-
-            //置換単語リストが存在する。
-            if (this.IsOption(OptionReplaceWords) == true)
+            if (this.IsOption(OptionReplaceWords))
             {
                 if (this.Options[OptionReplaceWords] == Colipex.NonValue)
                 {
                     throw new RmsmfException("/r オプションのファイル名を指定してください。");
                 }
 
-                //置換単語リストファイル名を保存する
                 this._replaceWordsFileName = this.Options[OptionReplaceWords].TrimEnd(new char[] { '\x0a', '\x0d' });
 
-                //置換単語リストファイル名の存在確認
                 if (!File.Exists(this._replaceWordsFileName))
                 {
                     throw new RmsmfException(this._replaceWordsFileName + " が存在しません。 ");
                 }
             }
 
-            //------------------------------------------------------------
             // ファイルリストファイルオプションの設定
-            //-
-            if (this.IsOption(OptionFileNameList) == true)
+            if (this.IsOption(OptionFileNameList))
             {
                 if (this.Options[OptionFileNameList] == Colipex.NonValue)
                 {
                     throw new RmsmfException("/f オプションのファイル名を指定してください。");
                 }
 
-                //ファイルリストファイル名を保存する
                 this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._fileNameListFileName))
@@ -270,10 +255,13 @@ namespace rmsmf
                     throw new RmsmfException(this._fileNameListFileName + " が存在しません。 ");
                 }
             }
+        }
 
-            //------------------------------------------------------------
-            // オプションの正当性確認
-            //-
+        /// <summary>
+        /// オプションの組み合わせの正当性確認
+        /// </summary>
+        private void ValidateOptionConsistency()
+        {
             if (this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
                 throw new RmsmfException("必須パラメータが入力されていません。");
@@ -281,7 +269,7 @@ namespace rmsmf
 
             if (this.IsOption(OptionReplaceWords) == false)
             {
-                if (this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false 
+                if (this.IsOption(OptionCharacterSet) == false && this.IsOption(OptionWriteCharacterSet) == false
                     && this.IsOption(OptionWriteByteOrderMark) == false
                     && this.IsOption(OptionNewLine) == false)
                 {
@@ -289,22 +277,22 @@ namespace rmsmf
                 }
             }
 
-            if (this.IsOption(OptionFileNameList) == true && this.Parameters.Count > 0)
+            if (this.IsOption(OptionFileNameList) && this.Parameters.Count > 0)
             {
                 throw new RmsmfException("/f:オプションによるファイル指定と、コマンドラインでのファイル指定を、同時に使用する事はできません。");
             }
 
-            if (this.IsOption(OptionReplaceWords) == true && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
+            if (this.IsOption(OptionReplaceWords) && this.IsOption(OptionFileNameList) == false && this.Parameters.Count == 0)
             {
                 throw new RmsmfException("置換対象となるファイルを指定してください。");
             }
 
-            if (this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionReplaceWordsCharacterSet) == true)
+            if (this.IsOption(OptionReplaceWords) == false && this.IsOption(OptionReplaceWordsCharacterSet))
             {
                 throw new RmsmfException("置換単語ファイルが指定されていないのに、置換単語ファイルのエンコーディングが指定されています。");
             }
 
-            if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet) == true)
+            if (this.IsOption(OptionFileNameList) == false && this.IsOption(OptionFileNameListCharacterSet))
             {
                 throw new RmsmfException("ファイルリストが指定されていないのに、ファイルリストのエンコーディングが指定されています。");
             }
@@ -521,19 +509,6 @@ namespace rmsmf
 
 
             return normal;
-        }
-
-        /// <summary>
-        /// ヘルプモード
-        /// </summary>
-        private bool _callHelp = false;
-
-        /// <summary>
-        /// ヘルプモード
-        /// </summary>
-        public bool CallHelp
-        {
-            get { return this._callHelp; }
         }
 
         /// <summary>
