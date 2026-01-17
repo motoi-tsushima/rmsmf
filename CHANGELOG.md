@@ -7,23 +7,109 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- txprobe: 新しいテキストファイル探索ツールを追加
+### 今後の予定
+- CI/CD パイプラインの構築（GitHub Actions）
+- パフォーマンス最適化
+- 追加のエンコーディング対応（UTF-16 など）
 
-## [1.0.0] - 2025-01-XX
+## [1.0.0] - 2026-01-17
 
-### Added
-- txprobe: テキストファイルの文字エンコーディングと改行コードを確認する機能
-- txprobe: 検索単語リストからファイル内の文字列を検索する機能
-- txprobe: プローブモード（検索単語が見つかったファイルのみ表示）
-- txprobe: サブディレクトリ検索オプション (/d)
+### ?? メジャーリリース - 大規模リファクタリング完了
 
-### Changed
-- txprobe: rmsmf.exe への依存を解消し、完全に独立した実行ファイルに変更
-- プロジェクト構成: rmsmf と txprobe を統合スイートとしてリリース
+#### Added（追加）
 
-### Fixed
+**?? テスト**
+- 単体テストプロジェクト追加 (`rmsmf.Tests`)
+  - ColipexTests: 11テスト
+  - OptionValidatorTests: 10テスト
+  - CommandOptionsTests: 12テスト
+  - **合計33テスト、全合格**
+
+**??? 新クラス**
+- `OptionValidator`: 共通検証ユーティリティクラス
+  - `ValidateFileSpecificationNotConflicting()`
+  - `ValidateEncodingOptionDependency()`
+  - `ValidateAtLeastOneCondition()`
+- `ValidationMessages`: エラーメッセージ定数クラス
+  - すべてのエラーメッセージを一元管理
+
+**?? 新メソッド（Colipex 基底クラス）**
+- `ConvertEscapeSequences(string)`: エスケープシーケンス変換（基底クラスに統合）
+- `ResolveEncoding(string)`: エンコーディング名解決
+- `EnsureEncodingInitialized()`: エンコーディング自動判定
+- `LoadLinesFromFile()`: ファイル読み込みユーティリティ
+
+**?? ドキュメント**
+- `README.md`: 包括的なプロジェクトドキュメント
+- `CONTRIBUTING.md`: コントリビューションガイド
+- `rmsmf.Tests\README.md`: テストプロジェクトのドキュメント
+
+**?? txprobe ツール**
+- テキストファイルの文字エンコーディングと改行コードを確認する機能
+- 検索単語リストからファイル内の文字列を検索する機能
+- プローブモード（検索単語が見つかったファイルのみ表示）
+- サブディレクトリ検索オプション (/d)
+
+#### Changed（変更）
+
+**?? リファクタリング**
+
+1. **コンストラクタの分割**
+   - `CommandOptions` コンストラクタ: 200行 → 25行
+   - 10個の小さなメソッドに分割
+
+2. **検証ロジックの整理**
+   - 5個の検証メソッドに分離
+   - 責務の明確化
+
+3. **ファイル読み込みメソッドの分割**
+   - `ReadReplaceWords()`: 70行 → 25行
+   - `ReadSearchWords()` (txprobe): 60行 → 25行
+   - それぞれ3つのメソッドに分割
+
+4. **エラーハンドリングの統一**
+   - `ExecutionState` クラス削除
+   - `RmsmfException` に統一
+   - エラーメッセージを `ValidationMessages` に集約
+
+5. **プロパティ化**
+   - public フィールドを適切なプロパティに変更
+   - カプセル化の強化
+
+6. **txprobe の独立化**
+   - rmsmf.exe への依存を解消
+   - 完全に独立した実行ファイルに変更
+
+#### Fixed（修正）
+
+- スペルミスの修正
+  - `repleaseEncoding` → `ReplaceEncoding`
+  - その他、変数名の正規化
+- 早期return問題の解決
+  - コンストラクタから早期returnを削除
+  - `CallHelp` プロパティ削除
+  - ヘルプチェックを `Program.cs` に移動
+- 不要なcatch句の削除
+  - `DirectoryNotFoundException`
+  - `ArgumentOutOfRangeException`
 - txprobe: PATH環境変数のフォルダーに配置しても動作しなかった問題を修正
+- 入力検証の強化
+  - 置換単語CSVのフォーマット検証
+  - ファイルリストの検証
+  - エンコーディング名の検証
+
+#### Removed（削除）
+
+- `ExecutionState` クラス（`RmsmfException` に置き換え）
+- `CallHelp` プロパティ（不要になった）
+- コンストラクタ内の早期return
+- 重複する `ConvertEscapeSequences()` メソッド（基底クラスに統合）
+
+#### Performance（パフォーマンス）
+
+- コード削減: 約150行以上の重複コード削除
+- メソッド平均行数: 100行超 → 20行以下
+- 循環的複雑度の大幅な低減
 
 ## [0.9.7] - 2024-XX-XX
 
