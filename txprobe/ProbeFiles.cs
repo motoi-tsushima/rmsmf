@@ -32,16 +32,22 @@ namespace txprobe
         private string _output_filelist_filename = null;
 
         /// <summary>
+        /// 出力ファイルリストの文字エンコーディング
+        /// </summary>
+        private Encoding _filesEncoding = null;
+
+        /// <summary>
         /// 出力データキュー（マルチスレッド対応）
         /// </summary>
         private BlockingCollection<string> _outputQueue = null;
 
-        public ProbeFiles(string[] searchWords, string[] files, bool enableProbe, string outputFileListName) 
+        public ProbeFiles(string[] searchWords, string[] files, bool enableProbe, string outputFileListName, Encoding filesEncoding) 
         { 
             _searchWords = searchWords;
             _files = files;
             _enableProbe = enableProbe;
             _output_filelist_filename = outputFileListName;
+            _filesEncoding = filesEncoding ?? Encoding.UTF8;
         }
 
         /// <summary>
@@ -230,7 +236,7 @@ namespace txprobe
         {
             try
             {
-                using (var ofs = new StreamWriter(this._output_filelist_filename, false, Encoding.UTF8))
+                using (var ofs = new StreamWriter(this._output_filelist_filename, false, this._filesEncoding))
                 {
                     // キューからデータを取得して書き込み
                     // GetConsumingEnumerable()はキューが空の場合は待機し、

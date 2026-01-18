@@ -287,12 +287,14 @@ namespace txprobe
                 rmsmf.ValidationMessages.SearchWordsEncodingWithoutSearchWords
             );
 
-            // ファイルリストのエンコーディングは、ファイルリストオプションが必要
-            rmsmf.OptionValidator.ValidateEncodingOptionDependency(
-                this.IsOption(OptionFileNameList),
-                this.IsOption(OptionFileNameListCharacterSet),
-                rmsmf.ValidationMessages.FileListEncodingWithoutFileList
-            );
+            // ファイルリストのエンコーディングは、ファイルリスト(/f)または出力ファイルリスト(/o)オプションが必要
+            if (this.IsOption(OptionFileNameListCharacterSet))
+            {
+                if (!this.IsOption(OptionFileNameList) && !this.IsOption(OptionOutputFileNamelist))
+                {
+                    throw new RmsmfException(rmsmf.ValidationMessages.FileListEncodingWithoutFileList);
+                }
+            }
         }
 
         /// <summary>
@@ -453,15 +455,30 @@ namespace txprobe
             {
                 while (!reader.EndOfStream)
                 {
-                    string getFileName = reader.ReadLine();
+                    string getLine = reader.ReadLine();
                     
-                    // 入力検証: 空行やnullをスキップ
-                    if (string.IsNullOrWhiteSpace(getFileName))
+                    // 空行やnullをスキップ
+                    if (string.IsNullOrWhiteSpace(getLine))
                     {
                         continue;
                     }
                     
-                    getFileName = getFileName.Trim();
+                    string getFileName = getLine.Trim();
+                    if (getLine.Contains(","))
+                    {
+                        // カンマ区切りの場合は、最初の項目をファイル名とする
+                        string[] columns = getLine.Split(',');
+                        
+                        // 入力検証: 配列が空でないことを確認
+                        if (columns.Length > 0 && !string.IsNullOrWhiteSpace(columns[0]))
+                        {
+                            getFileName = columns[0].Trim();
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
                     
                     if (!File.Exists(getFileName))
                     {

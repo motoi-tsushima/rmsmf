@@ -56,7 +56,8 @@ namespace txprobe
                 //ファイルのプローブ実行
                 ProbeFiles probe = new ProbeFiles(
                     commandOptions.SearchWords, commandOptions.Files, 
-                    commandOptions.EnableProbe, commandOptions.OutputFileNameListFileName);
+                    commandOptions.EnableProbe, commandOptions.OutputFileNameListFileName,
+                    commandOptions.FilesEncoding);
 
                 probe.Probe(commandOptions.ReadEncoding);
 
