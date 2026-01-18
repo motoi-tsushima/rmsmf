@@ -246,6 +246,46 @@ namespace rmsmf
                 return encInfo;
             }
 
+            // UTF-32 判定（UTF-16より先に判定）
+            bool isLittleEndian32;
+            outOfSpecification = Utf32_Judgment(out isLittleEndian32);
+
+            if (outOfSpecification == false)
+            {
+                if (isLittleEndian32)
+                {
+                    encInfo.CodePage = CodePageUtf32Le;
+                }
+                else
+                {
+                    encInfo.CodePage = CodePageUtf32Be;
+                }
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                encInfo.Bom = false;
+
+                return encInfo;
+            }
+
+            // UTF-16 判定
+            bool isLittleEndian16;
+            outOfSpecification = Utf16_Judgment(out isLittleEndian16);
+
+            if (outOfSpecification == false)
+            {
+                if (isLittleEndian16)
+                {
+                    encInfo.CodePage = CodePageUtf16Le;
+                }
+                else
+                {
+                    encInfo.CodePage = CodePageUtf16Be;
+                }
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                encInfo.Bom = false;
+
+                return encInfo;
+            }
+
             // UTF-8 判定
             outOfSpecification = Utf8_Judgment();
 
@@ -354,6 +394,277 @@ namespace rmsmf
             }
 
             return outOfSpecification;
+        }
+
+        /// <summary>
+        /// UTF-16であるか判定する
+        /// </summary>
+        /// <param name="isLittleEndian">true=Little Endian、false=Big Endian(出力引数)</param>
+        /// <returns>true=UTF-16では無い</returns>
+        public bool Utf16_Judgment(out bool isLittleEndian)
+        {
+            isLittleEndian = true;
+            bool outOfSpecification = false;
+
+            // ファイルサイズが奇数の場合は対象外
+            if (this.BufferSize % 2 != 0)
+            {
+                return true;
+            }
+
+            // ファイルサイズが0または2バイト未満の場合は判定不可
+            if (this.BufferSize < 2)
+            {
+                return true;
+            }
+
+            // LE/BEのヒューリスティック判定用カウンタ
+            int leScore = 0;
+            int beScore = 0;
+
+            // サロゲートペア状態管理
+            bool expectLowSurrogate = false;
+            ushort highSurrogate = 0;
+
+            // 2バイト単位で読み取り
+            for (int i = 0; i < this.BufferSize; i += 2)
+            {
+                // Little Endian として読み取り
+                ushort valueLe = (ushort)(this._buffer[i] | (this._buffer[i + 1] << 8));
+                // Big Endian として読み取り
+                ushort valueBe = (ushort)((this._buffer[i] << 8) | this._buffer[i + 1]);
+
+                // まずLEとして検証
+                if (IsValidUtf16CodeUnit(valueLe, ref expectLowSurrogate, ref highSurrogate, out bool isLeValid))
+                {
+                    leScore++;
+                    // ASCII範囲の文字はスコアを加算（テキストファイルらしさ）
+                    if (valueLe < 0x80)
+                    {
+                        leScore++;
+                    }
+                }
+                else if (!isLeValid)
+                {
+                    // 明らかに不正な並び
+                    leScore = -1000;
+                }
+
+                // リセットしてBEとして検証
+                expectLowSurrogate = false;
+                highSurrogate = 0;
+
+                if (IsValidUtf16CodeUnit(valueBe, ref expectLowSurrogate, ref highSurrogate, out bool isBeValid))
+                {
+                    beScore++;
+                    if (valueBe < 0x80)
+                    {
+                        beScore++;
+                    }
+                }
+                else if (!isBeValid)
+                {
+                    beScore = -1000;
+                }
+            }
+
+            // 最後に高サロゲートが残っていたら不正
+            if (expectLowSurrogate)
+            {
+                outOfSpecification = true;
+            }
+
+            // スコアが低すぎる場合はUTF-16ではない
+            if (leScore < 0 && beScore < 0)
+            {
+                outOfSpecification = true;
+            }
+
+            // LE/BEの判定
+            if (!outOfSpecification)
+            {
+                isLittleEndian = (leScore >= beScore);
+            }
+
+            return outOfSpecification;
+        }
+
+        /// <summary>
+        /// UTF-16コードユニットの妥当性を検証
+        /// </summary>
+        /// <param name="value">検証するコードユニット</param>
+        /// <param name="expectLowSurrogate">低サロゲート待ちフラグ</param>
+        /// <param name="highSurrogate">保持中の高サロゲート</param>
+        /// <param name="isValid">明らかに不正かどうか</param>
+        /// <returns>true=妥当、false=不正の可能性</returns>
+        private bool IsValidUtf16CodeUnit(ushort value, ref bool expectLowSurrogate, ref ushort highSurrogate, out bool isValid)
+        {
+            isValid = true;
+
+            // 非文字（Noncharacters）のチェック
+            if (value == 0xFFFE || value == 0xFFFF || (value >= 0xFDD0 && value <= 0xFDEF))
+            {
+                isValid = false;
+                return false;
+            }
+
+            // 高サロゲート (D800-DBFF)
+            if (value >= 0xD800 && value <= 0xDBFF)
+            {
+                if (expectLowSurrogate)
+                {
+                    // 高サロゲートの後に高サロゲート → 不正
+                    isValid = false;
+                    return false;
+                }
+                expectLowSurrogate = true;
+                highSurrogate = value;
+                return true;
+            }
+
+            // 低サロゲート (DC00-DFFF)
+            if (value >= 0xDC00 && value <= 0xDFFF)
+            {
+                if (!expectLowSurrogate)
+                {
+                    // 低サロゲートが単独で出現 → 不正
+                    isValid = false;
+                    return false;
+                }
+                // 正しいサロゲートペア
+                expectLowSurrogate = false;
+                highSurrogate = 0;
+                return true;
+            }
+
+            // BMP文字
+            if (expectLowSurrogate)
+            {
+                // 高サロゲートの後に非サロゲート → 不正
+                isValid = false;
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// UTF-32であるか判定する
+        /// </summary>
+        /// <param name="isLittleEndian">true=Little Endian、false=Big Endian(出力引数)</param>
+        /// <returns>true=UTF-32では無い</returns>
+        public bool Utf32_Judgment(out bool isLittleEndian)
+        {
+            isLittleEndian = true;
+            bool outOfSpecification = false;
+
+            // ファイルサイズが4の倍数でない場合は対象外
+            if (this.BufferSize % 4 != 0)
+            {
+                return true;
+            }
+
+            // ファイルサイズが0または4バイト未満の場合は判定不可
+            if (this.BufferSize < 4)
+            {
+                return true;
+            }
+
+            // LE/BEのヒューリスティック判定用カウンタ
+            int leScore = 0;
+            int beScore = 0;
+
+            // 4バイト単位で読み取り
+            for (int i = 0; i < this.BufferSize; i += 4)
+            {
+                // Little Endian として読み取り
+                uint valueLe = (uint)(this._buffer[i] | 
+                                     (this._buffer[i + 1] << 8) | 
+                                     (this._buffer[i + 2] << 16) | 
+                                     (this._buffer[i + 3] << 24));
+                
+                // Big Endian として読み取り
+                uint valueBe = (uint)((this._buffer[i] << 24) | 
+                                     (this._buffer[i + 1] << 16) | 
+                                     (this._buffer[i + 2] << 8) | 
+                                     this._buffer[i + 3]);
+
+                // LEとして検証
+                if (IsValidUtf32CodePoint(valueLe))
+                {
+                    leScore++;
+                    // ASCII範囲の文字はスコアを加算
+                    if (valueLe < 0x80)
+                    {
+                        leScore++;
+                    }
+                }
+                else
+                {
+                    leScore = -1000;
+                }
+
+                // BEとして検証
+                if (IsValidUtf32CodePoint(valueBe))
+                {
+                    beScore++;
+                    if (valueBe < 0x80)
+                    {
+                        beScore++;
+                    }
+                }
+                else
+                {
+                    beScore = -1000;
+                }
+            }
+
+            // スコアが低すぎる場合はUTF-32ではない
+            if (leScore < 0 && beScore < 0)
+            {
+                outOfSpecification = true;
+            }
+
+            // LE/BEの判定
+            if (!outOfSpecification)
+            {
+                isLittleEndian = (leScore >= beScore);
+            }
+
+            return outOfSpecification;
+        }
+
+        /// <summary>
+        /// UTF-32コードポイントの妥当性を検証
+        /// </summary>
+        /// <param name="value">検証するコードポイント</param>
+        /// <returns>true=妥当、false=不正</returns>
+        private bool IsValidUtf32CodePoint(uint value)
+        {
+            // Unicodeの最大値を超える
+            if (value > 0x10FFFF)
+            {
+                return false;
+            }
+
+            // サロゲート範囲 (D800-DFFF) はUTF-32では使用禁止
+            if (value >= 0xD800 && value <= 0xDFFF)
+            {
+                return false;
+            }
+
+            // 非文字（Noncharacters）
+            if ((value & 0xFFFE) == 0xFFFE) // nFFFE, nFFFF
+            {
+                return false;
+            }
+
+            if (value >= 0xFDD0 && value <= 0xFDEF)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
