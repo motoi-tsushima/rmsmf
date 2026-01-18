@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-33%20passing-brightgreen.svg)](rmsmf.Tests)
 
-複数のファイル内の複数の文字列を一括置換するコマンドラインツールです。文字エンコーディングの変換やBOM（Byte Order Mark）の制御も可能です。
+複数のファイル内の複数の文字列を一括置換するコマンドラインツールです。文字エンコーディングの変換や、改行コードの変換に、BOM（Byte Order Mark）の制御も可能です。
 
 ## 📑 目次
 
@@ -189,6 +189,15 @@ rmsmf *.txt /c:UTF-8 /w:UTF-8 /nl:lf
 
 # LF → CRLF
 rmsmf *.txt /c:UTF-8 /w:UTF-8 /nl:crlf
+```
+
+/c:  /w:  などの文字エンコーディング指定は省略可能です。
+省略すると文字エンコーディング自動判定をしますが、自動判定は完璧ではありませんので、ご注意ください。
+完璧な自動判定は有り得ません。
+
+```powershell
+# CRLF → LF
+rmsmf *.txt /nl:lf
 ```
 
 ---
