@@ -480,9 +480,47 @@ namespace rmsmf
                 outOfSpecification = true;
             }
 
-            // LE/BEの判定
+            // NULLバイトパターンチェックによるUTF-16判定の強化
             if (!outOfSpecification)
             {
+                int leNullPattern = 0;
+                int beNullPattern = 0;
+
+                for (int i = 0; i < this.BufferSize; i++)
+                {
+                    byte currentByte = this._buffer[i];
+                    
+                    // ASCII範囲のバイトをチェック
+                    if (IsAsciiRangeByte(currentByte))
+                    {
+                        // UTF-16LE パターン: XX 00
+                        if (i % 2 == 0 && i + 1 < this.BufferSize && this._buffer[i + 1] == 0x00)
+                        {
+                            leNullPattern++;
+                        }
+                        
+                        // UTF-16BE パターン: 00 XX
+                        if (i % 2 == 1 && i - 1 >= 0 && this._buffer[i - 1] == 0x00)
+                        {
+                            beNullPattern++;
+                        }
+                    }
+                }
+
+                // NULLパターンが見つからない場合はUTF-16ではない
+                if (leNullPattern == 0 && beNullPattern == 0)
+                {
+                    outOfSpecification = true;
+                }
+                else
+                {
+                    // NULLパターンに基づいてエンディアンを判定
+                    isLittleEndian = (leNullPattern >= beNullPattern);
+                }
+            }
+            else if (!outOfSpecification)
+            {
+                // スコアのみでエンディアン判定
                 isLittleEndian = (leScore >= beScore);
             }
 
@@ -625,9 +663,53 @@ namespace rmsmf
                 outOfSpecification = true;
             }
 
-            // LE/BEの判定
+            // NULLバイトパターンチェックによるUTF-32判定の強化
             if (!outOfSpecification)
             {
+                int leNullPattern = 0;
+                int beNullPattern = 0;
+
+                for (int i = 0; i < this.BufferSize; i++)
+                {
+                    byte currentByte = this._buffer[i];
+                    
+                    // ASCII範囲のバイトをチェック
+                    if (IsAsciiRangeByte(currentByte))
+                    {
+                        // UTF-32LE パターン: XX 00 00 00
+                        if (i % 4 == 0 && i + 3 < this.BufferSize &&
+                            this._buffer[i + 1] == 0x00 &&
+                            this._buffer[i + 2] == 0x00 &&
+                            this._buffer[i + 3] == 0x00)
+                        {
+                            leNullPattern++;
+                        }
+                        
+                        // UTF-32BE パターン: 00 00 00 XX
+                        if (i % 4 == 3 && i - 3 >= 0 &&
+                            this._buffer[i - 3] == 0x00 &&
+                            this._buffer[i - 2] == 0x00 &&
+                            this._buffer[i - 1] == 0x00)
+                        {
+                            beNullPattern++;
+                        }
+                    }
+                }
+
+                // NULLパターンが見つからない場合はUTF-32ではない
+                if (leNullPattern == 0 && beNullPattern == 0)
+                {
+                    outOfSpecification = true;
+                }
+                else
+                {
+                    // NULLパターンに基づいてエンディアンを判定
+                    isLittleEndian = (leNullPattern >= beNullPattern);
+                }
+            }
+            else if (!outOfSpecification)
+            {
+                // スコアのみでエンディアン判定
                 isLittleEndian = (leScore >= beScore);
             }
 
@@ -665,6 +747,20 @@ namespace rmsmf
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// ASCII範囲のバイトかどうかを判定
+        /// </summary>
+        /// <param name="b">判定するバイト</param>
+        /// <returns>true=ASCII範囲のバイト、false=それ以外</returns>
+        private bool IsAsciiRangeByte(byte b)
+        {
+            // 0x20-0x7E: 印字可能文字
+            // 0x09: タブ
+            // 0x0A: LF
+            // 0x0D: CR
+            return (b >= 0x20 && b <= 0x7E) || b == 0x09 || b == 0x0A || b == 0x0D;
         }
 
         /// <summary>
