@@ -26,6 +26,19 @@ namespace rmsmf
         private bool? _enableBOM = false;
 
         /// <summary>
+        /// 文字エンコーディングの自動判定モード
+        /// </summary>
+        private CommandOptions.EncodingJudgmentType _encodingJudgmentMode = CommandOptions.EncodingJudgmentType.Normal;
+        /// <summary>
+        /// 文字エンコーディングの自動判定モード
+        /// </summary>
+        public CommandOptions.EncodingJudgmentType EncodingJudgmentMode
+        {
+            get { return _encodingJudgmentMode; }
+            set { this._encodingJudgmentMode = value; }
+        }
+
+        /// <summary>
         /// コンストラクタ
         /// </summary>
         /// <param name="replaceWords">置換単語テーブル</param>
@@ -104,10 +117,34 @@ namespace rmsmf
                                     {
                                         bomExist = false;
 
-                                        EncodingJudgment encJudgment = new EncodingJudgment(buffer);
-                                        EncodingInfomation encInfo = encJudgment.Judgment();
+                                        if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.Normal)
+                                        {
+                                            EncodingInfomation encInfo =
+                                            EncodingJudgmentControl.NormalJudgeEncoding(buffer);
 
-                                        codePage = encInfo.CodePage;
+                                            codePage = encInfo.CodePage;
+                                        }
+                                        else if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.FirstParty)
+                                        {
+                                            EncodingInfomation encInfo =
+                                            EncodingJudgmentControl.JudgeEncoding(buffer);
+
+                                            codePage = encInfo.CodePage;
+                                        }
+                                        else if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.ThirdParty)
+                                        {
+                                            EncodingInfomation encInfo =
+                                            EncodingJudgmentControl.JudgeUtfUnknown(buffer);
+
+                                            codePage = encInfo.CodePage;
+                                        }
+                                        else
+                                        {
+                                            EncodingInfomation encInfo =
+                                            EncodingJudgmentControl.NormalJudgeEncoding(buffer);
+
+                                            codePage = encInfo.CodePage;
+                                        }
                                     }
 
                                     if (codePage > 0)

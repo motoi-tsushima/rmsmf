@@ -18,6 +18,7 @@ namespace rmsmf
         private const string OptionWriteByteOrderMark = "b";
         private const string OptionAllDirectories = "d";
         private const string OptionNewLine = "nl";
+        private const string OptionJudgmentMode = "j";
 
         public static readonly string NewLineCRLF = "CRLF";
         public static readonly string NewLineLF = "LF";
@@ -137,6 +138,38 @@ namespace rmsmf
             {
                 filesCharacterSet = readCharacterSet;
             }
+
+            //Setting Encoding Judgment Mode
+            //文字エンコーディング自動判定モードを設定する。
+            if (this.IsOption(OptionJudgmentMode))
+            {
+                string encJMode = string.Empty;
+                encJMode = this.Options[OptionJudgmentMode].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (encJMode == Colipex.NonValue)
+                {
+                    _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                }
+                else
+                {
+                    if (encJMode == "1")
+                    {
+                        _encodingJudgmentMode = EncodingJudgmentType.FirstParty;
+                    }
+                    else if (encJMode == "3")
+                    {
+                        _encodingJudgmentMode = EncodingJudgmentType.ThirdParty;
+                    }
+                    else
+                    {
+                        _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                    }
+                }
+            }
+            else
+            {
+                _encodingJudgmentMode = EncodingJudgmentType.Normal;
+            }
+
         }
 
         /// <summary>
@@ -713,6 +746,29 @@ namespace rmsmf
             private set { _filesEncoding = value; }
         }
 
+
+        /// <summary>
+        /// 文字エンコーディングの自動判定モード
+        /// </summary>
+        private EncodingJudgmentType _encodingJudgmentMode = EncodingJudgmentType.Normal;
+        /// <summary>
+        /// 文字エンコーディングの自動判定モード
+        /// </summary>
+        public EncodingJudgmentType EncodingJudgmentMode
+        {
+            get { return _encodingJudgmentMode; }
+            private set { _encodingJudgmentMode = value; }
+        }
+
+        /// <summary>
+        /// 文字エンコーディングの自動判定モードタイプ
+        /// </summary>
+        public enum EncodingJudgmentType
+        {
+            Normal = 0,
+            FirstParty = 1,
+            ThirdParty = 3
+        }
 
     }
 }

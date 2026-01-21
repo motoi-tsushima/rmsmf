@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using UtfUnknown;
 
 namespace rmsmf
 {
@@ -22,6 +23,52 @@ namespace rmsmf
         
         /// <summary>エンコーディング</summary>
         public Encoding Encoding { get; set; }
+    }
+
+    public static class EncodingJudgmentControl
+    {
+        public static EncodingInfomation JudgeEncoding(byte[] buffer)
+        {
+            EncodingInfomation encInfo;
+            EncodingJudgment encJudg = new EncodingJudgment(buffer);
+            encInfo = encJudg.Judgment();
+            return encInfo;
+        }
+        public static EncodingInfomation JudgeUtfUnknown(byte[] buffer)
+        {
+            EncodingInfomation encInfo = new EncodingInfomation();
+
+            var result = CharsetDetector.DetectFromBytes(buffer);
+            if (result != null)
+            {
+                if (result.Detected.Confidence > 0.5)
+                {
+                    encInfo.EncodingName = result.Detected.EncodingName;
+                    encInfo.CodePage = result.Detected.Encoding.CodePage;
+                }
+                else
+                {
+                    encInfo.CodePage = -1;
+                }
+            }
+            else
+            {
+                encInfo.CodePage = -1;
+            }
+            return encInfo;
+        }
+
+        public static EncodingInfomation NormalJudgeEncoding(byte[] buffer)
+        {
+            EncodingInfomation encInfo;
+
+            encInfo = JudgeEncoding(buffer);
+            if (encInfo.CodePage < 0)
+            {
+                encInfo = JudgeUtfUnknown(buffer);
+            }
+            return encInfo;
+        }
     }
 
     /// <summary>
