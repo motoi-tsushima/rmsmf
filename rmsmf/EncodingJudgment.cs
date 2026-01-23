@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using UtfUnknown;
+using System.Diagnostics.Eventing.Reader;
 
 namespace rmsmf
 {
@@ -978,7 +979,7 @@ namespace rmsmf
         /// <summary>
         /// EUC-JPバイト種別
         /// </summary>
-        public enum BYTECODE : byte { OneByteCode, TwoByteCode, KanaOneByte }
+        public enum BYTECODE : byte { OneByteCode, TwoByteCode, CodeSet2, CodeSet3 }
 
         /// <summary>
         /// EUC-JPであるか判定する
@@ -987,6 +988,10 @@ namespace rmsmf
         public bool EUCJP_Judgment()
         {
             bool outOfSpecification = false;
+            bool eucJP = false;
+            bool eucTW = false;
+            bool possibleJPorTW = false;
+            bool tw3ByteChar = false;
 
 
             BYTECODE beforeCode = BYTECODE.OneByteCode;
@@ -994,23 +999,92 @@ namespace rmsmf
 
             for (int i = 0; i < this.BufferSize; i++)
             {
-                // 2バイトコード
-                if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
+                // あり得ないバイト
+                if ((0x80 <= this._buffer[i] && this._buffer[i] <= 0x8D) ||
+                    (0x90 <= this._buffer[i] && this._buffer[i] <= 0x9F) ||
+                    this._buffer[i] == 0xA9 || this._buffer[i] == 0xFF)
                 {
-                    if (beforeCode == BYTECODE.KanaOneByte)
+                    outOfSpecification = true;
+                    break;
+                }
+                // 複数バイトコード
+                else if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
+                {
+                    if (possibleJPorTW)
                     {
-                        if (byteCharCount == 1)
-                        {
-                            byteCharCount = 2;
-                        }
-                        else
+                        if (byteCharCount < 2)
                         {
                             outOfSpecification = true;
                             break;
                         }
                     }
+                    else if (byteCharCount > 2)
+                    {
+                        if (byteCharCount == 3) 
+                        {
+                            if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
+                            {
+                                tw3ByteChar = true;
+                                byteCharCount++;
+                            }
+                            else if(eucJP == true)
+                            {
+                                outOfSpecification = true;
+                                break;
+                            }
+                            else
+                            {
+                                outOfSpecification = true;
+                                break;
+                            }
+                        }
+                        else if(byteCharCount == 4)
+                        {
+                            if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
+                            {
+                                if(tw3ByteChar)
+                                {
+                                    eucTW = true;
+                                    tw3ByteChar = false; // reset
+                                }
+                            }
+                            else
+                            {
+                                outOfSpecification = true;
+                                break;
+                            }
+                        }
+                    }
+                    else if (beforeCode == BYTECODE.CodeSet2)
+                    {
+                        if (byteCharCount != 1)
+                        {
+                            outOfSpecification = true;
+                            break;
+                        }
 
-                    if (beforeCode == BYTECODE.TwoByteCode)
+                        if (0xB1 <= this._buffer[i] && this._buffer[i] <= 0xDF)
+                        {
+                            eucJP = true;
+                        }
+                        else if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xB0)
+                        {
+                            possibleJPorTW = true;
+                        }
+
+                        byteCharCount++;
+                    }
+                    else if (beforeCode == BYTECODE.CodeSet3)
+                    {
+                        if (byteCharCount != 1)
+                        {
+                            outOfSpecification = true;
+                            break;
+                        }
+
+                        byteCharCount++;
+                    }
+                    else if (beforeCode == BYTECODE.TwoByteCode)
                     {
                         if (byteCharCount == 1)
                             byteCharCount = 2;
@@ -1032,10 +1106,46 @@ namespace rmsmf
                     beforeCode = BYTECODE.OneByteCode;
                     byteCharCount = 1;
                 }
-                // 半角カタカナ2バイトコード
-                else if (this._buffer[i] == 0x8E && byteCharCount == 1)
+                // CS2 2バイトコード
+                else if (this._buffer[i] == 0x8E)
                 {
-                    beforeCode = BYTECODE.KanaOneByte;
+                    if(byteCharCount != 1)
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
+
+                    if ((beforeCode == BYTECODE.TwoByteCode
+                        || beforeCode == BYTECODE.CodeSet2 
+                        || beforeCode == BYTECODE.CodeSet3) 
+                        && byteCharCount == 1)
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
+
+                    beforeCode = BYTECODE.CodeSet2;
+                    byteCharCount = 1;
+                }
+                // CS3 3バイトコード
+                else if (this._buffer[i] == 0x8F)
+                {
+                    if (byteCharCount != 1)
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
+
+                    if ((beforeCode == BYTECODE.TwoByteCode
+                        || beforeCode == BYTECODE.CodeSet2
+                        || beforeCode == BYTECODE.CodeSet3)
+                        && byteCharCount == 1)
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
+
+                    beforeCode = BYTECODE.CodeSet3;
                     byteCharCount = 1;
                 }
                 // あり得ない
