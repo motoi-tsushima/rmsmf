@@ -99,12 +99,14 @@
     <Compile Include="EncodingJudgment.cs" />
     <Compile Include="ExecutionState.cs" />
     <Compile Include="Help.cs" />
+    <Compile Include="HelpMessages.cs" />
     <Compile Include="OptionValidator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReplaceStringsInFiles.cs" />
     <Compile Include="RmsmfException.cs" />
     <Compile Include="ValidationMessages.cs" />
+    <Compile Include="VersionWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

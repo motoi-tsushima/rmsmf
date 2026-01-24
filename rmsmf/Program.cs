@@ -37,20 +37,20 @@ namespace rmsmf
             try
             {
                 // バージョンオプションの事前チェック
-                if (args.Length == 0 ||
-                    (args.Length > 0 && (args[0] == "-v" || args[0] == "/v" ||
-                    args.Any(arg => arg == "-v" || arg == "/v")))
-                    )
+                if (args.Length == 0)
                 {
-                    Console.WriteLine("{0}  version {1}  {2}\n", thisAssemName.Name, ver, copyright);
-                    Console.WriteLine("{0} is licensed under MIT License.", thisAssemName.Name);
-                    Console.WriteLine("https://github.com/motoi-tsushima/rmsmf");
-                    Console.WriteLine("");
-                    Console.WriteLine("This software includes the following third-party components:\n");
-                    Console.WriteLine("UTF.Unknown");
-                    Console.WriteLine("Copyright (c) 2018 Nikolay Pultsin");
-                    Console.WriteLine("Licensed under MIT License");
-                    Console.WriteLine("https://github.com/CharsetDetector/UTF-unknown");
+                    VersionWriter.WriteVersion(false, thisAssemName.Name, ver, copyright);
+#if DEBUG
+                    Console.WriteLine("\nPress any key to exit...");
+                    Console.ReadKey();
+#endif
+                    return;
+                }
+
+                if (args.Length > 0 && (args[0] == "-v" || args[0] == "/v" ||
+                    args.Any(arg => arg == "-v" || arg == "/v") ))
+                {
+                    VersionWriter.WriteVersion(true, thisAssemName.Name, ver, copyright);
 #if DEBUG
                     Console.WriteLine("\nPress any key to exit...");
                     Console.ReadKey();

@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using UtfUnknown;
 using System.Diagnostics.Eventing.Reader;
+using System.Globalization;
+using UtfUnknown;
 
 namespace rmsmf
 {
@@ -83,6 +84,15 @@ namespace rmsmf
         /// <summary>コードページ：ISO-2022-JP (JIS)</summary>
         private const int CodePageJis = 50220;
         
+        /// <summary>コードページ：ISO-2022-KR</summary>
+        private const int CodePageIso2022Kr = 50225;
+        
+        /// <summary>コードページ：ISO-2022-CN (x-cp50227)</summary>
+        private const int CodePageIso2022Cn = 50227;
+        
+        /// <summary>コードページ：ISO-2022-TW</summary>
+        private const int CodePageIso2022Tw = 50229;
+        
         /// <summary>コードページ：UTF-8</summary>
         private const int CodePageUtf8 = 65001;
         
@@ -100,6 +110,15 @@ namespace rmsmf
         
         /// <summary>コードページ：EUC-JP</summary>
         private const int CodePageEucJp = 20932;
+        
+        /// <summary>コードページ：EUC-KR</summary>
+        private const int CodePageEucKr = 51949;
+        
+        /// <summary>コードページ：EUC-CN (GB2312)</summary>
+        private const int CodePageEucCn = 51936;
+        
+        /// <summary>コードページ：EUC-TW</summary>
+        private const int CodePageEucTw = 51950;
         
         /// <summary>コードページ：Shift_JIS</summary>
         private const int CodePageShiftJis = 932;
@@ -164,11 +183,29 @@ namespace rmsmf
                 case 50220:
                     encodingName = "iso-2022-jp";
                     break;
+                case 50225:
+                    encodingName = "iso-2022-kr";
+                    break;
+                case 50227:
+                    encodingName = "x-cp50227";
+                    break;
+                case 50229:
+                    encodingName = "iso-2022-tw";
+                    break;
                 case 65001:
                     encodingName = "utf-8";
                     break;
                 case 20932:
                     encodingName = "euc-jp";
+                    break;
+                case 51936:
+                    encodingName = "euc-cn";
+                    break;
+                case 51949:
+                    encodingName = "euc-kr";
+                    break;
+                case 51950:
+                    encodingName = "euc-tw";
                     break;
                 case 932:
                     encodingName = "shift_jis";
@@ -272,15 +309,16 @@ namespace rmsmf
                 encInfo.Bom = false;
             }
 
-            // ISO-2022-JP または ASCII 判定
-            bool isJIS;
-            outOfSpecification = JIS_Judgment(out isJIS);
+            // ISO-2022 または ASCII 判定
+            bool isISO2022;
+            int iso2022CodePage;
+            outOfSpecification = ISO2022_Judgment(out isISO2022, out iso2022CodePage);
 
             if (outOfSpecification == false)
             {
-                if (isJIS == true)
+                if (isISO2022 == true)
                 {
-                    encInfo.CodePage = CodePageJis;
+                    encInfo.CodePage = iso2022CodePage;
                     encInfo.Bom = false;
                 }
                 else
@@ -346,12 +384,13 @@ namespace rmsmf
                 return encInfo;
             }
 
-            // EUC-JP 判定
-            outOfSpecification = EUCJP_Judgment();
+            // EUC 判定 (EUC-JP/KR/CN/TW)
+            int eucCodePage;
+            outOfSpecification = EUCxx_Judgment(out eucCodePage);
 
             if (outOfSpecification == false)
             {
-                encInfo.CodePage = CodePageEucJp;
+                encInfo.CodePage = eucCodePage;
                 encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
                 encInfo.Bom = false;
 
@@ -375,33 +414,71 @@ namespace rmsmf
 
 
         /// <summary>
-        /// JIS又はASCIIであるか判定する
+        /// ISO-2022 (JP/KR/CN/TW) 又はASCIIであるか判定する
         /// </summary>
-        /// <param name="isJIS">true=JISである(出力引数)</param>
-        /// <returns>true=JIS又はASCIIでは無い</returns>
-        public bool JIS_Judgment(out bool isJIS)
+        /// <param name="isISO2022">true=ISO-2022である(出力引数)</param>
+        /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
+        /// <returns>true=ISO-2022又はASCIIでは無い</returns>
+        public bool ISO2022_Judgment(out bool isISO2022, out int codePage)
         {
+            codePage = -1;
+            isISO2022 = false;
             bool outOfSpecification = false;    //規格外フラグ
             bool escExist = false;  //ESCシーケンス存在フラグ
-            byte[][] byteESC = new byte[][] {   //ESCシーケンス一覧
-                  new byte[] { 0x1B, 0x28, 0x42 } //ASCII
-                , new byte[] { 0x1B, 0x24, 0x42 } //JIS X 0208-1983（新JIS）
-                , new byte[] { 0x1B, 0x24, 0x40 } //JIS X 0208-1978（旧JIS）
-                , new byte[] { 0x1B, 0x28, 0x4A } //JIS X 0201 ローマ字
-                , new byte[] { 0x1B, 0x24, 0x28, 0x44 } //JIS X 0212-1990（補助漢字）
-                , new byte[] { 0x1B, 0x24, 0x28, 0x4F } //JIS X 0213:2000 第1面
-                , new byte[] { 0x1B, 0x24, 0x28, 0x50 } //JIS X 0213:2004 第1面
-                , new byte[] { 0x1B, 0x24, 0x28, 0x51 } //JIS X 0213 第2面
-                , new byte[] { 0x1B, 0x24, 0x41 }   //GB2312（中国語簡体字）
-                , new byte[] { 0x1B, 0x24, 0x28, 0x43 } //KS X 1001（韓国語）
-                , new byte[] { 0x1B, 0x2E, 0x41 } //ISO-8859-1（G2指示）
-                , new byte[] { 0x1B, 0x2E, 0x46 } //ISO-8859-7（ギリシャ文字、G2指示）
-                , new byte[] { 0x1B, 0x28, 0x49 } //JIS X 0201 カタカナ
+            
+            // 各ISO-2022バリアントの特徴的なESCシーケンスをスコアリング
+            int jpScore = 0;   // ISO-2022-JP
+            int krScore = 0;   // ISO-2022-KR
+            int cnScore = 0;   // ISO-2022-CN
+            int twScore = 0;   // ISO-2022-TW
+            
+            // 共通のESCシーケンス一覧
+            byte[][] commonESC = new byte[][] {
+                new byte[] { 0x1B, 0x28, 0x42 }, //ASCII
+                new byte[] { 0x1B, 0x2E, 0x41 }, //ISO-8859-1（G2指示）
+                new byte[] { 0x1B, 0x2E, 0x46 }  //ISO-8859-7（ギリシャ文字、G2指示）
             };
-             
+            
+            // ISO-2022-JP 特有のESCシーケンス
+            byte[][] jpESC = new byte[][] {
+                new byte[] { 0x1B, 0x24, 0x42 },       //JIS X 0208-1983（新JIS）
+                new byte[] { 0x1B, 0x24, 0x40 },       //JIS X 0208-1978（旧JIS）
+                new byte[] { 0x1B, 0x28, 0x4A },       //JIS X 0201 ローマ字
+                new byte[] { 0x1B, 0x24, 0x28, 0x44 }, //JIS X 0212-1990（補助漢字）
+                new byte[] { 0x1B, 0x24, 0x28, 0x4F }, //JIS X 0213:2000 第1面
+                new byte[] { 0x1B, 0x24, 0x28, 0x50 }, //JIS X 0213:2004 第1面
+                new byte[] { 0x1B, 0x24, 0x28, 0x51 }, //JIS X 0213 第2面
+                new byte[] { 0x1B, 0x28, 0x49 }        //JIS X 0201 カタカナ
+            };
+            
+            // ISO-2022-KR 特有のESCシーケンス
+            byte[][] krESC = new byte[][] {
+                new byte[] { 0x1B, 0x24, 0x29, 0x43 }  //KS X 1001（韓国語）
+            };
+            
+            // ISO-2022-CN 特有のESCシーケンス
+            byte[][] cnESC = new byte[][] {
+                new byte[] { 0x1B, 0x24, 0x29, 0x41 }, //GB2312（中国語簡体字）
+                new byte[] { 0x1B, 0x24, 0x41 },       //GB2312（中国語簡体字、別形式）
+                new byte[] { 0x1B, 0x24, 0x29, 0x47 }, //CNS 11643-1992 Plane 1
+                new byte[] { 0x1B, 0x24, 0x2A, 0x48 }  //CNS 11643-1992 Plane 2
+            };
+            
+            // ISO-2022-TW 特有のESCシーケンス
+            byte[][] twESC = new byte[][] {
+                new byte[] { 0x1B, 0x24, 0x29, 0x47 }, //CNS 11643-1992 Plane 1
+                new byte[] { 0x1B, 0x24, 0x2A, 0x48 }, //CNS 11643-1992 Plane 2
+                new byte[] { 0x1B, 0x24, 0x2B, 0x49 }, //CNS 11643-1992 Plane 3
+                new byte[] { 0x1B, 0x24, 0x2B, 0x4A }, //CNS 11643-1992 Plane 4
+                new byte[] { 0x1B, 0x24, 0x2B, 0x4B }, //CNS 11643-1992 Plane 5
+                new byte[] { 0x1B, 0x24, 0x2B, 0x4C }, //CNS 11643-1992 Plane 6
+                new byte[] { 0x1B, 0x24, 0x2B, 0x4D }  //CNS 11643-1992 Plane 7
+            };
+            
             byte[] backESC = { 0, 0, 0, 0 };    //直近4バイト保存バッファ
+            bool hasShiftFunction = false;      // SO/SI の存在（KR/CN/TW用）
 
-            // if ISO-2022-JP
+            // ISO-2022はすべて7bitのみ
 
             for (int i = 0; i < this.BufferSize; i++)
             {
@@ -410,35 +487,112 @@ namespace rmsmf
                     outOfSpecification = true;
                     break;
                 }
-                else
+                
+                // SO (Shift Out: 0x0E) / SI (Shift In: 0x0F) の検出
+                if (this._buffer[i] == 0x0E || this._buffer[i] == 0x0F)
                 {
-                    //直近4バイト保存
-                    backESC[0] = backESC[1];
-                    backESC[1] = backESC[2];
-                    backESC[2] = backESC[3];
-                    backESC[3] = this._buffer[i];
+                    hasShiftFunction = true;
+                    // KR, CN, TW で使用される
+                    krScore += 5;
+                    cnScore += 3;
+                    twScore += 3;
+                }
+                
+                //直近4バイト保存
+                backESC[0] = backESC[1];
+                backESC[1] = backESC[2];
+                backESC[2] = backESC[3];
+                backESC[3] = this._buffer[i];
 
-                    //ESCシーケンス照合
-                    for (int j=0; j< byteESC.Length; j++)
+                //ESCシーケンス照合
+                
+                // 共通ESCシーケンス
+                for (int j = 0; j < commonESC.Length; j++)
+                {
+                    if (IsMatched(backESC, commonESC[j]))
                     {
-                        //ESCシーケンス長さ分だけ比較
-                        if (IsMatched(backESC, byteESC[j]))
-                        {
-                            //ESCシーケンスが存在した
-                            escExist = true;    //ESCシーケンス存在フラグON
-                            break;
-                        }
+                        escExist = true;
+                        break;
+                    }
+                }
+                
+                // ISO-2022-JP
+                for (int j = 0; j < jpESC.Length; j++)
+                {
+                    if (IsMatched(backESC, jpESC[j]))
+                    {
+                        escExist = true;
+                        jpScore += 10;
+                        break;
+                    }
+                }
+                
+                // ISO-2022-KR
+                for (int j = 0; j < krESC.Length; j++)
+                {
+                    if (IsMatched(backESC, krESC[j]))
+                    {
+                        escExist = true;
+                        krScore += 10;
+                        break;
+                    }
+                }
+                
+                // ISO-2022-CN
+                for (int j = 0; j < cnESC.Length; j++)
+                {
+                    if (IsMatched(backESC, cnESC[j]))
+                    {
+                        escExist = true;
+                        cnScore += 10;
+                        break;
+                    }
+                }
+                
+                // ISO-2022-TW
+                for (int j = 0; j < twESC.Length; j++)
+                {
+                    if (IsMatched(backESC, twESC[j]))
+                    {
+                        escExist = true;
+                        twScore += 10;
+                        break;
                     }
                 }
             }
 
             if (escExist)
             {
-                isJIS = true;
+                isISO2022 = true;
+                
+                // 最高スコアのバリアントを選択
+                int maxScore = Math.Max(Math.Max(jpScore, krScore), Math.Max(cnScore, twScore));
+                
+                if (maxScore == jpScore)
+                {
+                    codePage = CodePageJis;
+                }
+                else if (maxScore == krScore)
+                {
+                    codePage = CodePageIso2022Kr;
+                }
+                else if (maxScore == cnScore)
+                {
+                    codePage = CodePageIso2022Cn;
+                }
+                else if (maxScore == twScore)
+                {
+                    codePage = CodePageIso2022Tw;
+                }
+                else
+                {
+                    // スコアがすべて0の場合（共通ESCのみ）、デフォルトでJPを選択
+                    codePage = CodePageJis;
+                }
             }
             else
             {
-                isJIS = false;
+                isISO2022 = false;
             }
 
             return outOfSpecification;
@@ -977,125 +1131,164 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// EUC-JPバイト種別
+        /// EUCバイト種別
         /// </summary>
         public enum BYTECODE : byte { OneByteCode, TwoByteCode, CodeSet2, CodeSet3 }
 
         /// <summary>
-        /// EUC-JPであるか判定する
+        /// EUC-JP/KR/CN/TWであるか判定する
         /// </summary>
-        /// <returns>true=EUC-JPでは無い</returns>
-        public bool EUCJP_Judgment()
+        /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
+        /// <returns>true=EUCでは無い</returns>
+        public bool EUCxx_Judgment(out int codePage)
         {
+            codePage = -1;
             bool outOfSpecification = false;
-            bool eucJP = false;
-            bool eucTW = false;
-            bool possibleJPorTW = false;
-            bool tw3ByteChar = false;
 
+            // 各EUCの特徴をスコアリング
+            int jpScore = 0;  // EUC-JP
+            int krScore = 0;  // EUC-KR
+            int cnScore = 0;  // EUC-CN
+            int twScore = 0;  // EUC-TW
+
+            bool isDefinitelyJP = false;
+            bool isDefinitelyTW = false;
 
             BYTECODE beforeCode = BYTECODE.OneByteCode;
             int byteCharCount = 0;
 
             for (int i = 0; i < this.BufferSize; i++)
             {
-                // あり得ないバイト
-                if ((0x80 <= this._buffer[i] && this._buffer[i] <= 0x8D) ||
-                    (0x90 <= this._buffer[i] && this._buffer[i] <= 0x9F) ||
-                    this._buffer[i] == 0xA9 || this._buffer[i] == 0xFF)
+                byte currentByte = this._buffer[i];
+
+                // ステップ1：構造によるフィルタリング（確実性が高い）
+                
+                // 0x8E (SS2) の検出
+                if (currentByte == 0x8E)
                 {
-                    outOfSpecification = true;
-                    break;
+                    if (i + 1 < this.BufferSize)
+                    {
+                        byte nextByte = this._buffer[i + 1];
+                        
+                        // EUC-TW: 0x8E + 0xA1〜0xB0 + 0xA1〜0xFE + 0xA1〜0xFE (4バイト構造)
+                        if (nextByte >= 0xA1 && nextByte <= 0xB0 && i + 3 < this.BufferSize)
+                        {
+                            byte byte3 = this._buffer[i + 2];
+                            byte byte4 = this._buffer[i + 3];
+                            if (byte3 >= 0xA1 && byte3 <= 0xFE && byte4 >= 0xA1 && byte4 <= 0xFE)
+                            {
+                                isDefinitelyTW = true;
+                                twScore += 100;
+                                i += 3; // 4バイト分スキップ
+                                beforeCode = BYTECODE.OneByteCode;
+                                byteCharCount = 0;
+                                continue;
+                            }
+                        }
+                        
+                        // EUC-JP: 0x8E + 0xA1〜0xDF (半角カナ)
+                        if (nextByte >= 0xA1 && nextByte <= 0xDF)
+                        {
+                            isDefinitelyJP = true;
+                            jpScore += 50;
+                            i += 1; // 2バイト分スキップ
+                            beforeCode = BYTECODE.OneByteCode;
+                            byteCharCount = 0;
+                            continue;
+                        }
+                        
+                        // EUC-JP: 0x8E + 0xB1〜0xDF (特にこの範囲は半角カナとして使われる)
+                        if (nextByte >= 0xB1 && nextByte <= 0xFE)
+                        {
+                            jpScore += 10;
+                            i += 1;
+                            beforeCode = BYTECODE.OneByteCode;
+                            byteCharCount = 0;
+                            continue;
+                        }
+                    }
+                    
+                    // 0x8Eの後に適切なバイトが続かない場合は規格外
+                    if (i + 1 >= this.BufferSize || 
+                        (this._buffer[i + 1] < 0xA1 || this._buffer[i + 1] > 0xFE))
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
                 }
-                // 複数バイトコード
-                else if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
+                
+                // 0x8F (SS3) の検出 - EUC-JP確定
+                if (currentByte == 0x8F)
                 {
-                    if (possibleJPorTW)
+                    if (i + 2 < this.BufferSize)
                     {
-                        if (byteCharCount < 2)
+                        byte byte2 = this._buffer[i + 1];
+                        byte byte3 = this._buffer[i + 2];
+                        if (byte2 >= 0xA1 && byte2 <= 0xFE && byte3 >= 0xA1 && byte3 <= 0xFE)
                         {
-                            outOfSpecification = true;
-                            break;
+                            isDefinitelyJP = true;
+                            jpScore += 100;
+                            i += 2; // 3バイト分スキップ
+                            beforeCode = BYTECODE.OneByteCode;
+                            byteCharCount = 0;
+                            continue;
                         }
                     }
-                    else if (byteCharCount > 2)
+                    
+                    // 0x8Fの後に適切なバイトが続かない場合は規格外
+                    if (i + 2 >= this.BufferSize || 
+                        this._buffer[i + 1] < 0xA1 || this._buffer[i + 1] > 0xFE ||
+                        this._buffer[i + 2] < 0xA1 || this._buffer[i + 2] > 0xFE)
                     {
-                        if (byteCharCount == 3) 
-                        {
-                            if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
-                            {
-                                tw3ByteChar = true;
-                                byteCharCount++;
-                            }
-                            else if(eucJP == true)
-                            {
-                                outOfSpecification = true;
-                                break;
-                            }
-                            else
-                            {
-                                outOfSpecification = true;
-                                break;
-                            }
-                        }
-                        else if(byteCharCount == 4)
-                        {
-                            if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xFE)
-                            {
-                                if(tw3ByteChar)
-                                {
-                                    eucTW = true;
-                                    tw3ByteChar = false; // reset
-                                }
-                            }
-                            else
-                            {
-                                outOfSpecification = true;
-                                break;
-                            }
-                        }
+                        outOfSpecification = true;
+                        break;
                     }
-                    else if (beforeCode == BYTECODE.CodeSet2)
-                    {
-                        if (byteCharCount != 1)
-                        {
-                            outOfSpecification = true;
-                            break;
-                        }
+                }
 
-                        if (0xB1 <= this._buffer[i] && this._buffer[i] <= 0xDF)
-                        {
-                            eucJP = true;
-                        }
-                        else if (0xA1 <= this._buffer[i] && this._buffer[i] <= 0xB0)
-                        {
-                            possibleJPorTW = true;
-                        }
-
-                        byteCharCount++;
-                    }
-                    else if (beforeCode == BYTECODE.CodeSet3)
+                // ステップ2：2バイト文字（G1領域）の範囲チェック
+                
+                // 2バイトコード (0xA1〜0xFE)
+                if (0xA1 <= currentByte && currentByte <= 0xFE)
+                {
+                    // 2バイト文字の1バイト目の場合
+                    if (beforeCode != BYTECODE.TwoByteCode || byteCharCount == 2)
                     {
-                        if (byteCharCount != 1)
+                        // EUC-CN: 1バイト目が 0xB0〜0xF7 (常用漢字域) に集中する
+                        if (currentByte >= 0xB0 && currentByte <= 0xF7)
                         {
-                            outOfSpecification = true;
-                            break;
+                            cnScore += 2;
                         }
-
-                        byteCharCount++;
+                        
+                        // EUC-KR: 1バイト目が 0xB0〜0xC8 (ハングル域) に集中する
+                        if (currentByte >= 0xB0 && currentByte <= 0xC8)
+                        {
+                            krScore += 2;
+                        }
+                        
+                        // EUC-JP/TW: 漢字域が広く分布
+                        if (currentByte >= 0xA1 && currentByte <= 0xFE)
+                        {
+                            jpScore += 1;
+                            twScore += 1;
+                        }
                     }
-                    else if (beforeCode == BYTECODE.TwoByteCode)
+
+                    if (beforeCode == BYTECODE.TwoByteCode)
                     {
                         if (byteCharCount == 1)
                             byteCharCount = 2;
                         else if (byteCharCount == 2)
                             byteCharCount = 1;
                     }
+                    else
+                    {
+                        byteCharCount = 1;
+                    }
 
                     beforeCode = BYTECODE.TwoByteCode;
                 }
-                // 1バイトコード
-                else if (this._buffer[i] <= 0x7F)
+                // 1バイトコード (ASCII)
+                else if (currentByte <= 0x7F)
                 {
                     if (beforeCode == BYTECODE.TwoByteCode && byteCharCount == 1)
                     {
@@ -1106,57 +1299,134 @@ namespace rmsmf
                     beforeCode = BYTECODE.OneByteCode;
                     byteCharCount = 1;
                 }
-                // CS2 2バイトコード
-                else if (this._buffer[i] == 0x8E)
-                {
-                    if(byteCharCount != 1)
-                    {
-                        outOfSpecification = true;
-                        break;
-                    }
-
-                    if ((beforeCode == BYTECODE.TwoByteCode
-                        || beforeCode == BYTECODE.CodeSet2 
-                        || beforeCode == BYTECODE.CodeSet3) 
-                        && byteCharCount == 1)
-                    {
-                        outOfSpecification = true;
-                        break;
-                    }
-
-                    beforeCode = BYTECODE.CodeSet2;
-                    byteCharCount = 1;
-                }
-                // CS3 3バイトコード
-                else if (this._buffer[i] == 0x8F)
-                {
-                    if (byteCharCount != 1)
-                    {
-                        outOfSpecification = true;
-                        break;
-                    }
-
-                    if ((beforeCode == BYTECODE.TwoByteCode
-                        || beforeCode == BYTECODE.CodeSet2
-                        || beforeCode == BYTECODE.CodeSet3)
-                        && byteCharCount == 1)
-                    {
-                        outOfSpecification = true;
-                        break;
-                    }
-
-                    beforeCode = BYTECODE.CodeSet3;
-                    byteCharCount = 1;
-                }
-                // あり得ない
-                else
+                // 0x80〜0x8D, 0x90〜0x9F, 0xFF など不正なバイト
+                else if (currentByte != 0x8E && currentByte != 0x8F)
                 {
                     outOfSpecification = true;
                     break;
                 }
             }
 
-            return outOfSpecification;
+            // 規格外の場合は終了
+            if (outOfSpecification)
+            {
+                return true;
+            }
+
+            // ステップ3：最終判定
+            
+            // 確定的な特徴がある場合はそれを優先
+            if (isDefinitelyTW)
+            {
+                codePage = CodePageEucTw;
+                return false;
+            }
+            
+            if (isDefinitelyJP)
+            {
+                codePage = CodePageEucJp;
+                return false;
+            }
+
+            // スコアリングによる判定
+            int maxScore = Math.Max(Math.Max(jpScore, krScore), Math.Max(cnScore, twScore));
+            
+            // スコアが低すぎる場合はEUCではないと判定
+            if (maxScore <= 0)
+            {
+                return true;
+            }
+
+            // 各スコアをリスト化して上位候補を抽出
+            var scores = new List<Tuple<int, int>>
+            {
+                Tuple.Create(jpScore, CodePageEucJp),
+                Tuple.Create(krScore, CodePageEucKr),
+                Tuple.Create(cnScore, CodePageEucCn),
+                Tuple.Create(twScore, CodePageEucTw)
+            };
+            
+            // スコアの降順でソート
+            scores.Sort((a, b) => b.Item1.CompareTo(a.Item1));
+            
+            int topScore = scores[0].Item1;
+            int secondScore = scores.Count > 1 ? scores[1].Item1 : 0;
+            
+            // スコア差の閾値（この値以下なら「同点に近い」と判断）
+            const int scoreThreshold = 5;
+            
+            // スコアが同点または非常に近い場合、OSカルチャー情報を参照
+            if (topScore - secondScore <= scoreThreshold)
+            {
+                int cultureBasedCodePage = GetEucCodePageFromOsCulture();
+                
+                // OSカルチャーに基づくコードページが候補に含まれているか確認
+                if (cultureBasedCodePage != -1)
+                {
+                    // 上位2つの候補のスコアが近い場合、OSカルチャーを優先
+                    foreach (var score in scores)
+                    {
+                        if (score.Item2 == cultureBasedCodePage && score.Item1 >= topScore - scoreThreshold)
+                        {
+                            codePage = cultureBasedCodePage;
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            // OSカルチャー情報による判定ができない場合、最高スコアのエンコーディングを選択
+            codePage = scores[0].Item2;
+
+            return false;
+        }
+
+        /// <summary>
+        /// OSカルチャー情報から推定されるEUCコードページを取得
+        /// </summary>
+        /// <returns>EUCコードページ（該当なしの場合は-1）</returns>
+        private int GetEucCodePageFromOsCulture()
+        {
+            try
+            {
+                CultureInfo currentCulture = CultureInfo.CurrentCulture;
+                string cultureName = currentCulture.Name;
+
+                // カルチャー名から判定
+                // 日本語
+                if (cultureName.StartsWith("ja", StringComparison.OrdinalIgnoreCase))
+                {
+                    return CodePageEucJp;
+                }
+                // 韓国語
+                else if (cultureName.StartsWith("ko", StringComparison.OrdinalIgnoreCase))
+                {
+                    return CodePageEucKr;
+                }
+                // 中国語（簡体字）
+                else if (cultureName.Equals("zh-CN", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-Hans", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-SG", StringComparison.OrdinalIgnoreCase))
+                {
+                    return CodePageEucCn;
+                }
+                // 中国語（繁体字・台湾）
+                else if (cultureName.Equals("zh-TW", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-Hant", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-HK", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-MO", StringComparison.OrdinalIgnoreCase))
+                {
+                    return CodePageEucTw;
+                }
+                
+                // 該当なし
+                return -1;
+            }
+            catch
+            {
+                // エラーが発生した場合は判定不可
+                return -1;
+            }
         }
 
         /// <summary>
