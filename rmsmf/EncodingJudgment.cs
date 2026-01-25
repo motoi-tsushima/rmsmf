@@ -114,6 +114,9 @@ namespace rmsmf
         /// <summary>コードページ：EUC-KR</summary>
         private const int CodePageEucKr = 51949;
         
+        /// <summary>コードページ：CP949 (Windows Korean)</summary>
+        private const int CodePageCp949 = 949;
+        
         /// <summary>コードページ：EUC-CN (GB2312)</summary>
         private const int CodePageEucCn = 51936;
         
@@ -203,6 +206,9 @@ namespace rmsmf
                     break;
                 case 51949:
                     encodingName = "euc-kr";
+                    break;
+                case 949:
+                    encodingName = "cp949";
                     break;
                 case 51950:
                     encodingName = "euc-tw";
@@ -1136,7 +1142,7 @@ namespace rmsmf
         public enum BYTECODE : byte { OneByteCode, TwoByteCode, CodeSet2, CodeSet3 }
 
         /// <summary>
-        /// EUC-JP/KR/CN/TWであるか判定する
+        /// EUC-JP/KR/CN/TW/CP949であるか判定する
         /// </summary>
         /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
         /// <returns>true=EUCでは無い</returns>
@@ -1150,9 +1156,11 @@ namespace rmsmf
             int krScore = 0;  // EUC-KR
             int cnScore = 0;  // EUC-CN
             int twScore = 0;  // EUC-TW
+            int cp949Score = 0;  // CP949
 
             bool isDefinitelyJP = false;
             bool isDefinitelyTW = false;
+            bool isDefinitelyCP949 = false;
 
             BYTECODE beforeCode = BYTECODE.OneByteCode;
             int byteCharCount = 0;
@@ -1247,22 +1255,73 @@ namespace rmsmf
 
                 // ステップ2：2バイト文字（G1領域）の範囲チェック
                 
+                // CP949の拡張範囲（0x81〜0xA0）をチェック
+                if (0x81 <= currentByte && currentByte <= 0xA0)
+                {
+                    // CP949の拡張領域の1バイト目が検出された場合、CP949確定
+                    isDefinitelyCP949 = true;
+                    cp949Score += 100;
+                    
+                    // 2バイト目もチェック
+                    if (i + 1 < this.BufferSize)
+                    {
+                        byte nextByte = this._buffer[i + 1];
+                        // CP949の2バイト目は 0x41〜0xFE の範囲
+                        if ((nextByte >= 0x41 && nextByte <= 0x5A) ||  // A-Z
+                            (nextByte >= 0x61 && nextByte <= 0x7A) ||  // a-z
+                            (nextByte >= 0x81 && nextByte <= 0xFE))    // 拡張範囲
+                        {
+                            i++; // 2バイト分スキップ
+                            beforeCode = BYTECODE.OneByteCode;
+                            byteCharCount = 0;
+                            continue;
+                        }
+                        else
+                        {
+                            // 2バイト目が不正な場合は規格外
+                            outOfSpecification = true;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // ファイル終端で2バイト目がない場合は規格外
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+                
                 // 2バイトコード (0xA1〜0xFE)
                 if (0xA1 <= currentByte && currentByte <= 0xFE)
                 {
                     // 2バイト文字の1バイト目の場合
                     if (beforeCode != BYTECODE.TwoByteCode || byteCharCount == 2)
                     {
+                        // 次のバイトをチェックしてCP949の拡張範囲かどうか判定
+                        if (i + 1 < this.BufferSize)
+                        {
+                            byte nextByte = this._buffer[i + 1];
+                            // CP949の2バイト目拡張範囲：0x41〜0x5A (A-Z), 0x61〜0x7A (a-z), 0x81〜0xA0
+                            if ((nextByte >= 0x41 && nextByte <= 0x5A) ||  // A-Z
+                                (nextByte >= 0x61 && nextByte <= 0x7A) ||  // a-z
+                                (nextByte >= 0x81 && nextByte <= 0xA0))    // 拡張範囲
+                            {
+                                isDefinitelyCP949 = true;
+                                cp949Score += 100;
+                            }
+                        }
+                        
                         // EUC-CN: 1バイト目が 0xB0〜0xF7 (常用漢字域) に集中する
                         if (currentByte >= 0xB0 && currentByte <= 0xF7)
                         {
                             cnScore += 2;
                         }
                         
-                        // EUC-KR: 1バイト目が 0xB0〜0xC8 (ハングル域) に集中する
+                        // EUC-KR/CP949: 1バイト目が 0xB0〜0xC8 (ハングル域) に集中する
                         if (currentByte >= 0xB0 && currentByte <= 0xC8)
                         {
                             krScore += 2;
+                            cp949Score += 2;  // CP949もEUC-KRの範囲を含む
                         }
                         
                         // EUC-JP/TW: 漢字域が広く分布
@@ -1316,6 +1375,12 @@ namespace rmsmf
             // ステップ3：最終判定
             
             // 確定的な特徴がある場合はそれを優先
+            if (isDefinitelyCP949)
+            {
+                codePage = CodePageCp949;
+                return false;
+            }
+            
             if (isDefinitelyTW)
             {
                 codePage = CodePageEucTw;
@@ -1329,7 +1394,7 @@ namespace rmsmf
             }
 
             // スコアリングによる判定
-            int maxScore = Math.Max(Math.Max(jpScore, krScore), Math.Max(cnScore, twScore));
+            int maxScore = Math.Max(Math.Max(Math.Max(jpScore, krScore), Math.Max(cnScore, twScore)), cp949Score);
             
             // スコアが低すぎる場合はEUCではないと判定
             if (maxScore <= 0)
@@ -1343,7 +1408,8 @@ namespace rmsmf
                 Tuple.Create(jpScore, CodePageEucJp),
                 Tuple.Create(krScore, CodePageEucKr),
                 Tuple.Create(cnScore, CodePageEucCn),
-                Tuple.Create(twScore, CodePageEucTw)
+                Tuple.Create(twScore, CodePageEucTw),
+                Tuple.Create(cp949Score, CodePageCp949)
             };
             
             // スコアの降順でソート
@@ -1398,10 +1464,11 @@ namespace rmsmf
                 {
                     return CodePageEucJp;
                 }
-                // 韓国語
+                // 韓国語（Windows環境ではCP949を優先）
                 else if (cultureName.StartsWith("ko", StringComparison.OrdinalIgnoreCase))
                 {
-                    return CodePageEucKr;
+                    // Windows環境ではCP949がより標準的
+                    return CodePageCp949;
                 }
                 // 中国語（簡体字）
                 else if (cultureName.Equals("zh-CN", StringComparison.OrdinalIgnoreCase) ||
