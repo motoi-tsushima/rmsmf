@@ -1,19 +1,19 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 
 namespace rmsmf
 {
     /// <summary>
-    /// ƒRƒ}ƒ“ƒhƒIƒvƒVƒ‡ƒ“ŒŸØ‚Ì‚½‚ß‚Ìƒ†[ƒeƒBƒŠƒeƒBƒNƒ‰ƒX
+    /// ã‚³ãƒžãƒ³ãƒ‰ã‚ªãƒ—ã‚·ãƒ§ãƒ³æ¤œè¨¼ã®ãŸã‚ã®ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£ã‚¯ãƒ©ã‚¹
     /// </summary>
     public static class OptionValidator
     {
         /// <summary>
-        /// ƒtƒ@ƒCƒ‹ƒŠƒXƒgƒIƒvƒVƒ‡ƒ“‚ÆƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ƒpƒ‰ƒ[ƒ^‚ª“¯Žž‚ÉŽw’è‚³‚ê‚Ä‚¢‚È‚¢‚©ŒŸØ
+        /// ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã‚ªãƒ—ã‚·ãƒ§ãƒ³ã¨ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãŒåŒæ™‚ã«æŒ‡å®šã•ã‚Œã¦ã„ãªã„ã‹æ¤œè¨¼
         /// </summary>
-        /// <param name="hasFileListOption">ƒtƒ@ƒCƒ‹ƒŠƒXƒgƒIƒvƒVƒ‡ƒ“‚ªŽw’è‚³‚ê‚Ä‚¢‚é‚©</param>
-        /// <param name="parameterCount">ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ƒpƒ‰ƒ[ƒ^‚Ì”</param>
-        /// <exception cref="RmsmfException">—¼•û‚ªŽw’è‚³‚ê‚Ä‚¢‚éê‡</exception>
+        /// <param name="hasFileListOption">ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã‚ªãƒ—ã‚·ãƒ§ãƒ³ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã‹</param>
+        /// <param name="parameterCount">ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®æ•°</param>
+        /// <exception cref="RmsmfException">ä¸¡æ–¹ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆ</exception>
         public static void ValidateFileSpecificationNotConflicting(bool hasFileListOption, int parameterCount)
         {
             if (hasFileListOption && parameterCount > 0)
@@ -23,12 +23,12 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// ƒGƒ“ƒR[ƒfƒBƒ“ƒOŠÖ˜AƒIƒvƒVƒ‡ƒ“‚ÌˆË‘¶ŠÖŒW‚ðŒŸØ
+        /// ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°é–¢é€£ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®ä¾å­˜é–¢ä¿‚ã‚’æ¤œè¨¼
         /// </summary>
-        /// <param name="hasMainOption">ƒƒCƒ“ƒIƒvƒVƒ‡ƒ“i—á: ’uŠ·’PŒêƒtƒ@ƒCƒ‹j‚ªŽw’è‚³‚ê‚Ä‚¢‚é‚©</param>
-        /// <param name="hasEncodingOption">ƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“‚ªŽw’è‚³‚ê‚Ä‚¢‚é‚©</param>
-        /// <param name="errorMessage">ƒGƒ‰[ƒƒbƒZ[ƒW</param>
-        /// <exception cref="RmsmfException">ƒƒCƒ“ƒIƒvƒVƒ‡ƒ“‚È‚µ‚ÅƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“‚ªŽw’è‚³‚ê‚Ä‚¢‚éê‡</exception>
+        /// <param name="hasMainOption">ãƒ¡ã‚¤ãƒ³ã‚ªãƒ—ã‚·ãƒ§ãƒ³ï¼ˆä¾‹: ç½®æ›å˜èªžãƒ•ã‚¡ã‚¤ãƒ«ï¼‰ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã‹</param>
+        /// <param name="hasEncodingOption">ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã‹</param>
+        /// <param name="errorMessage">ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸</param>
+        /// <exception cref="RmsmfException">ãƒ¡ã‚¤ãƒ³ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãªã—ã§ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆ</exception>
         public static void ValidateEncodingOptionDependency(bool hasMainOption, bool hasEncodingOption, string errorMessage)
         {
             if (!hasMainOption && hasEncodingOption)
@@ -38,10 +38,10 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// •K{‚Ìƒpƒ‰ƒ[ƒ^‚Ü‚½‚ÍƒIƒvƒVƒ‡ƒ“‚ªŽw’è‚³‚ê‚Ä‚¢‚é‚©ŒŸØ
+        /// å¿…é ˆã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã¾ãŸã¯ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã‹æ¤œè¨¼
         /// </summary>
-        /// <param name="conditions">ƒ`ƒFƒbƒN‚·‚éðŒ‚ÌƒŠƒXƒgi‚¢‚¸‚ê‚©‚ªtrue‚Å‚ ‚é•K—v‚ª‚ ‚éj</param>
-        /// <exception cref="RmsmfException">‚·‚×‚Ä‚ÌðŒ‚ªfalse‚Ìê‡</exception>
+        /// <param name="conditions">ãƒã‚§ãƒƒã‚¯ã™ã‚‹æ¡ä»¶ã®ãƒªã‚¹ãƒˆï¼ˆã„ãšã‚Œã‹ãŒtrueã§ã‚ã‚‹å¿…è¦ãŒã‚ã‚‹ï¼‰</param>
+        /// <exception cref="RmsmfException">ã™ã¹ã¦ã®æ¡ä»¶ãŒfalseã®å ´åˆ</exception>
         public static void ValidateAtLeastOneCondition(params bool[] conditions)
         {
             foreach (bool condition in conditions)

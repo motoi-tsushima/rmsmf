@@ -1,42 +1,42 @@
-using System;
+ï»¿using System;
 
 namespace rmsmf
 {
     /// <summary>
-    /// ŒŸØƒGƒ‰[ƒƒbƒZ[ƒW‚Ì’è”ƒNƒ‰ƒX
+    /// æ¤œè¨¼ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã®å®šæ•°ã‚¯ãƒ©ã‚¹
     /// </summary>
     public static class ValidationMessages
     {
-        // •K{ƒpƒ‰ƒ[ƒ^ŠÖ˜A
-        public const string MissingRequiredParameters = "•K{ƒpƒ‰ƒ[ƒ^‚ª“ü—Í‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB";
-        public const string MissingTargetFileName = "–Ú“I‚Ìƒtƒ@ƒCƒ‹–¼‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B(/h ƒwƒ‹ƒv•\¦)";
+        // å¿…é ˆãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿é–¢é€£
+        public const string MissingRequiredParameters = "å¿…é ˆãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãŒå…¥åŠ›ã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚";
+        public const string MissingTargetFileName = "ç›®çš„ã®ãƒ•ã‚¡ã‚¤ãƒ«åã‚’æŒ‡å®šã—ã¦ãã ã•ã„ã€‚(/h ãƒ˜ãƒ«ãƒ—è¡¨ç¤º)";
 
-        // ƒtƒ@ƒCƒ‹w’èŠÖ˜A
-        public const string ConflictingFileSpecificationMethods = "/f:ƒIƒvƒVƒ‡ƒ“‚É‚æ‚éƒtƒ@ƒCƒ‹w’è‚ÆAƒRƒ}ƒ“ƒhƒ‰ƒCƒ“‚Å‚Ìƒtƒ@ƒCƒ‹w’è‚ğA“¯‚Ég—p‚·‚é–‚Í‚Å‚«‚Ü‚¹‚ñB";
-        public const string ReplaceWordsRequiresTargetFiles = "’uŠ·‘ÎÛ‚Æ‚È‚éƒtƒ@ƒCƒ‹‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B";
-        public const string SearchWordsRequiresTargetFiles = "‘ÎÛ‚Æ‚È‚éƒtƒ@ƒCƒ‹‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B";
+        // ãƒ•ã‚¡ã‚¤ãƒ«æŒ‡å®šé–¢é€£
+        public const string ConflictingFileSpecificationMethods = "/f:ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã«ã‚ˆã‚‹ãƒ•ã‚¡ã‚¤ãƒ«æŒ‡å®šã¨ã€ã‚³ãƒãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ã§ã®ãƒ•ã‚¡ã‚¤ãƒ«æŒ‡å®šã‚’ã€åŒæ™‚ã«ä½¿ç”¨ã™ã‚‹äº‹ã¯ã§ãã¾ã›ã‚“ã€‚";
+        public const string ReplaceWordsRequiresTargetFiles = "ç½®æ›å¯¾è±¡ã¨ãªã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŒ‡å®šã—ã¦ãã ã•ã„ã€‚";
+        public const string SearchWordsRequiresTargetFiles = "å¯¾è±¡ã¨ãªã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æŒ‡å®šã—ã¦ãã ã•ã„ã€‚";
 
-        // ƒGƒ“ƒR[ƒfƒBƒ“ƒOŠÖ˜A
-        public const string MissingEncodingName = "•¶šƒGƒ“ƒR[ƒfƒBƒ“ƒO–¼‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B (/{0})";
-        public const string InvalidEncodingName = "ƒGƒ“ƒR[ƒfƒBƒ“ƒO–¼‚ª•s³‚Å‚·B";
-        public const string UnsupportedEncoding = "ƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚È‚¢ƒGƒ“ƒR[ƒfƒBƒ“ƒO‚Å‚·B";
-        public const string UnknownEncoding = "{0}‚Ì•¶šƒGƒ“ƒR[ƒfƒBƒ“ƒO‚ª•ª‚©‚è‚Ü‚¹‚ñB";
+        // ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°é–¢é€£
+        public const string MissingEncodingName = "æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°åã‚’æŒ‡å®šã—ã¦ãã ã•ã„ã€‚ (/{0})";
+        public const string InvalidEncodingName = "ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°åãŒä¸æ­£ã§ã™ã€‚";
+        public const string UnsupportedEncoding = "ã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ãªã„ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã§ã™ã€‚";
+        public const string UnknownEncoding = "{0}ã®æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ãŒåˆ†ã‹ã‚Šã¾ã›ã‚“ã€‚";
 
-        // ƒGƒ“ƒR[ƒfƒBƒ“ƒOƒIƒvƒVƒ‡ƒ“ˆË‘¶ŠÖŒW
-        public const string ReplaceWordsEncodingWithoutReplaceWords = "’uŠ·’PŒêƒtƒ@ƒCƒ‹‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢‚Ì‚ÉA’uŠ·’PŒêƒtƒ@ƒCƒ‹‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO‚ªw’è‚³‚ê‚Ä‚¢‚Ü‚·B";
-        public const string SearchWordsEncodingWithoutSearchWords = "ŒŸõ’PŒêƒtƒ@ƒCƒ‹‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢‚Ì‚ÉAŒŸõ’PŒêƒtƒ@ƒCƒ‹‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO‚ªw’è‚³‚ê‚Ä‚¢‚Ü‚·B";
-        public const string FileListEncodingWithoutFileList = "ƒtƒ@ƒCƒ‹ƒŠƒXƒg‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢‚Ì‚ÉAƒtƒ@ƒCƒ‹ƒŠƒXƒg‚ÌƒGƒ“ƒR[ƒfƒBƒ“ƒO‚ªw’è‚³‚ê‚Ä‚¢‚Ü‚·B";
+        // ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚ªãƒ—ã‚·ãƒ§ãƒ³ä¾å­˜é–¢ä¿‚
+        public const string ReplaceWordsEncodingWithoutReplaceWords = "ç½®æ›å˜èªãƒ•ã‚¡ã‚¤ãƒ«ãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„ã®ã«ã€ç½®æ›å˜èªãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ãŒæŒ‡å®šã•ã‚Œã¦ã„ã¾ã™ã€‚";
+        public const string SearchWordsEncodingWithoutSearchWords = "æ¤œç´¢å˜èªãƒ•ã‚¡ã‚¤ãƒ«ãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„ã®ã«ã€æ¤œç´¢å˜èªãƒ•ã‚¡ã‚¤ãƒ«ã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ãŒæŒ‡å®šã•ã‚Œã¦ã„ã¾ã™ã€‚";
+        public const string FileListEncodingWithoutFileList = "ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„ã®ã«ã€ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã®ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ãŒæŒ‡å®šã•ã‚Œã¦ã„ã¾ã™ã€‚";
 
-        // •ÏŠ·ƒ‚[ƒhŠÖ˜A
-        public const string ConversionRequiresOutputEncoding = "•¶šƒGƒ“ƒR[ƒfƒBƒ“ƒO‚Ì•ÏŠ·‚ğ‚·‚éê‡‚ÍA/w:‚É‚æ‚èo—Íæ‚Ì•¶šƒGƒ“ƒR[ƒfƒBƒ“ƒO‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B";
+        // å¤‰æ›ãƒ¢ãƒ¼ãƒ‰é–¢é€£
+        public const string ConversionRequiresOutputEncoding = "æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã®å¤‰æ›ã‚’ã™ã‚‹å ´åˆã¯ã€/w:ã«ã‚ˆã‚Šå‡ºåŠ›å…ˆã®æ–‡å­—ã‚¨ãƒ³ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ã‚’æŒ‡å®šã—ã¦ãã ã•ã„ã€‚";
 
-        // ƒtƒ@ƒCƒ‹‘¶İŠÖ˜A
-        public const string FileNotFound = "{0} ‚ª‘¶İ‚µ‚Ü‚¹‚ñB ";
-        public const string MissingOptionFileName = "/{0} ƒIƒvƒVƒ‡ƒ“‚Ìƒtƒ@ƒCƒ‹–¼‚ğw’è‚µ‚Ä‚­‚¾‚³‚¢B";
+        // ãƒ•ã‚¡ã‚¤ãƒ«å­˜åœ¨é–¢é€£
+        public const string FileNotFound = "{0} ãŒå­˜åœ¨ã—ã¾ã›ã‚“ã€‚ ";
+        public const string MissingOptionFileName = "/{0} ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã®ãƒ•ã‚¡ã‚¤ãƒ«åã‚’æŒ‡å®šã—ã¦ãã ã•ã„ã€‚";
 
-        // ƒtƒ@ƒCƒ‹“à—eŠÖ˜A
-        public const string EmptyReplaceWords = "{0}‚Ì’uŠ·?Œê‚ªƒ[ƒŒ‚Å‚·B";
-        public const string EmptySearchWords = "{0}‚ÌŒŸõ’PŒê‚ªƒ[ƒŒ‚Å‚·B";
-        public const string InvalidReplaceWordFormat = "’uŠ·’PŒêƒtƒ@ƒCƒ‹‚Ì{0}s–Ú‚ª•s³‚Å‚·BƒJƒ“ƒ}‹æØ‚è‚ÅuŒŸõ•¶š—ñ,’uŠ·•¶š—ñv‚ÌŒ`®‚Åw’è‚µ‚Ä‚­‚¾‚³‚¢B";
+        // ãƒ•ã‚¡ã‚¤ãƒ«å†…å®¹é–¢é€£
+        public const string EmptyReplaceWords = "{0}ã®ç½®æ›?èªãŒã‚¼ãƒ­ä»¶ã§ã™ã€‚";
+        public const string EmptySearchWords = "{0}ã®æ¤œç´¢å˜èªãŒã‚¼ãƒ­ä»¶ã§ã™ã€‚";
+        public const string InvalidReplaceWordFormat = "ç½®æ›å˜èªãƒ•ã‚¡ã‚¤ãƒ«ã®{0}è¡Œç›®ãŒä¸æ­£ã§ã™ã€‚ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Šã§ã€Œæ¤œç´¢æ–‡å­—åˆ—,ç½®æ›æ–‡å­—åˆ—ã€ã®å½¢å¼ã§æŒ‡å®šã—ã¦ãã ã•ã„ã€‚";
     }
 }

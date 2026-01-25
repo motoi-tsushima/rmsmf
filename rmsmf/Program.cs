@@ -24,6 +24,20 @@ namespace rmsmf
         /// <param name="args"></param>
         static void Main(string[] args)
         {
+            #region Change culture for testing
+            //// テスト用にカルチャーを変更
+            //Console.OutputEncoding = System.Text.Encoding.UTF8;
+            //string testCulture = "en-US";
+            ////string testCulture = "ko";
+
+            ////string testCulture = "zh-CN";
+            ////string testCulture = "zh-Hans";
+
+            ////string testCulture = "zh-TW";
+            ////string testCulture = "zh-HK";
+            //System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(testCulture);
+            #endregion
+
             //Show version
             Assembly thisAssem = typeof(Program).Assembly;
             AssemblyName thisAssemName = thisAssem.GetName();

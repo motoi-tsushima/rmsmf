@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,17 +11,17 @@ namespace txprobe
         private string[] _helpMessage;
 
         /// <summary>
-        /// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+        /// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
         /// </summary>
         public Help()
         {
-            // ƒJƒ‹ƒ`ƒƒ[î•ñ‚ÉŠî‚Ã‚¢‚Ä“KØ‚ÈŒ¾Œê‚Ìƒwƒ‹ƒvƒƒbƒZ[ƒW‚ğæ“¾
+            // ã‚«ãƒ«ãƒãƒ£ãƒ¼æƒ…å ±ã«åŸºã¥ã„ã¦é©åˆ‡ãªè¨€èªã®ãƒ˜ãƒ«ãƒ—ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å–å¾—
             string languageCode = HelpMessages.GetLanguageCode();
             this._helpMessage = HelpMessages.GetTxprobeHelpMessage(languageCode);
         }
 
         /// <summary>
-        /// ƒwƒ‹ƒv‚ğ•\¦‚·‚é
+        /// ãƒ˜ãƒ«ãƒ—ã‚’è¡¨ç¤ºã™ã‚‹
         /// </summary>
         public void Show()
         {

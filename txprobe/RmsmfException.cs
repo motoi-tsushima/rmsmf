@@ -1,9 +1,9 @@
-using System;
+ï»¿using System;
 
 namespace rmsmf
 {
     /// <summary>
-    /// RMSMFƒAƒvƒŠƒP[ƒVƒ‡ƒ“ŒÅ—L‚Ì—áŠOƒNƒ‰ƒX
+    /// RMSMFã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³å›ºæœ‰ã®ä¾‹å¤–ã‚¯ãƒ©ã‚¹
     /// </summary>
     public class RmsmfException : Exception
     {

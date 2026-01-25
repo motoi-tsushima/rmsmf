@@ -1,19 +1,19 @@
-using System;
+ï»¿using System;
 
 namespace rmsmf
 {
     /// <summary>
-    /// ƒo[ƒWƒ‡ƒ“‚Æƒ‰ƒCƒZƒ“ƒXî•ñ‚Ì•\¦‚ğs‚¤ƒ†[ƒeƒBƒŠƒeƒBƒNƒ‰ƒX
+    /// ãƒãƒ¼ã‚¸ãƒ§ãƒ³ã¨ãƒ©ã‚¤ã‚»ãƒ³ã‚¹æƒ…å ±ã®è¡¨ç¤ºã‚’è¡Œã†ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£ã‚¯ãƒ©ã‚¹
     /// </summary>
     public static class VersionWriter
     {
         /// <summary>
-        /// ƒo[ƒWƒ‡ƒ“‚Æƒ‰ƒCƒZƒ“ƒX‚Ì•\¦
+        /// ãƒãƒ¼ã‚¸ãƒ§ãƒ³ã¨ãƒ©ã‚¤ã‚»ãƒ³ã‚¹ã®è¡¨ç¤º
         /// </summary>
-        /// <param name="showLicense">ƒ‰ƒCƒZƒ“ƒX•\¦‚ğ‚·‚é</param>
-        /// <param name="asmName">ƒAƒZƒ“ƒuƒŠ–¼</param>
-        /// <param name="version">–{‘Ìƒo[ƒWƒ‡ƒ“</param>
-        /// <param name="copyright">’˜ìŒ •\¦</param>
+        /// <param name="showLicense">ãƒ©ã‚¤ã‚»ãƒ³ã‚¹è¡¨ç¤ºã‚’ã™ã‚‹</param>
+        /// <param name="asmName">ã‚¢ã‚»ãƒ³ãƒ–ãƒªå</param>
+        /// <param name="version">æœ¬ä½“ãƒãƒ¼ã‚¸ãƒ§ãƒ³</param>
+        /// <param name="copyright">è‘—ä½œæ¨©è¡¨ç¤º</param>
         public static void WriteVersion(bool showLicense, string asmName, Version version, string copyright)
         {
             string[] thirdParty = {

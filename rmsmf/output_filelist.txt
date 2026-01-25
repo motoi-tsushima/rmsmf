@@ -1,0 +1,4 @@
+.\OptionValidator.cs	,shift_jis	,CR-LF	,No BOM
+.\VersionWriter.cs	,shift_jis	,CR-LF	,No BOM
+.\ValidationMessages.cs	,shift_jis	,CR-LF	,No BOM
+.\RmsmfException.cs	,shift_jis	,CR-LF	,No BOM
