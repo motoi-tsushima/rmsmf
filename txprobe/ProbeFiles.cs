@@ -102,6 +102,7 @@ namespace txprobe
                         {
                             bool bomExist = false;
                             int codePage;
+                            EncodingInfomation encInfo = null;
 
                             // 読み込みエンコーディングの有無で分岐
                             if (encoding == null)
@@ -130,6 +131,12 @@ namespace txprobe
                                 {
                                     bomExist = true;
                                     codePage = bomJudg.CodePage;
+                                    // BOMありの場合、簡略的なencInfoを作成
+                                    encInfo = new EncodingInfomation
+                                    {
+                                        CodePage = codePage,
+                                        Bom = true
+                                    };
                                 }
                                 else
                                 {
@@ -137,28 +144,28 @@ namespace txprobe
 
                                     if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.Normal)
                                     {
-                                        EncodingInfomation encInfo = 
+                                        encInfo = 
                                         EncodingJudgmentControl.NormalJudgeEncoding(buffer);
 
                                         codePage = encInfo.CodePage;
                                     }
                                     else if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.FirstParty)
                                     {
-                                        EncodingInfomation encInfo = 
+                                        encInfo = 
                                         EncodingJudgmentControl.JudgeEncoding(buffer);
 
                                         codePage = encInfo.CodePage;
                                     }
                                     else if(this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.ThirdParty)
                                     {
-                                        EncodingInfomation encInfo =
+                                        encInfo =
                                         EncodingJudgmentControl.JudgeUtfUnknown(buffer);
 
                                         codePage = encInfo.CodePage;
                                     }
                                     else
                                     {
-                                        EncodingInfomation encInfo =
+                                        encInfo =
                                         EncodingJudgmentControl.NormalJudgeEncoding(buffer);
 
                                         codePage = encInfo.CodePage;
@@ -196,6 +203,13 @@ namespace txprobe
                                     bomExist = false;
                                     codePage = encoding.CodePage;
                                 }
+                                
+                                // エンコーディング指定がある場合も簡略的なencInfoを作成
+                                encInfo = new EncodingInfomation
+                                {
+                                    CodePage = codePage,
+                                    Bom = bomExist
+                                };
                             }
 
                             if(inEncoding == null)
@@ -223,7 +237,7 @@ namespace txprobe
                             using (var reader = new StreamReader(fs, inEncoding, true))
                             {
                                 // 検索メイン処理
-                                ReadForSearch(fileName, reader, inEncoding, bomExist);
+                                ReadForSearch(fileName, reader, inEncoding, bomExist, encInfo);
                             }
                         }
                     }
@@ -392,8 +406,9 @@ namespace txprobe
         /// <param name="reader">Read File Stream. 読み取りファイルストリーム。</param>
         /// <param name="encoding">Read File Encoding. 読み取りファイルの文字エンコーディング。</param>
         /// <param name="bomExist">Read File BOM Existence Flag. 読み取りファイルのBOM有無フラグ。</param>
+        /// <param name="encInfo">Encoding Information. エンコーディング判定情報。</param>
         /// <returns>正常終了=true</returns>
-        public bool ReadForSearch(string fileName, StreamReader reader, Encoding encoding, bool bomExist)
+        public bool ReadForSearch(string fileName, StreamReader reader, Encoding encoding, bool bomExist, EncodingInfomation encInfo = null)
         {
             bool rc = true;
             string dispBOM;
@@ -414,7 +429,15 @@ namespace txprobe
             }
             else
             {
-                encodingName = encoding.WebName;
+                // EncodingVariantが設定されている場合はそれを使用
+                if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingVariant))
+                {
+                    encodingName = encInfo.EncodingVariant;
+                }
+                else
+                {
+                    encodingName = encoding.WebName;
+                }
             }
 
             // 読み取りファイルを全て読み込む

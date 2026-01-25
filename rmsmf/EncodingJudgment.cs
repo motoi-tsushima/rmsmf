@@ -25,6 +25,9 @@ namespace rmsmf
         
         /// <summary>エンコーディング</summary>
         public Encoding Encoding { get; set; }
+        
+        /// <summary>エンコーディングの亜種（HKSCS, CP949等の区別用）</summary>
+        public string EncodingVariant { get; set; }
     }
 
     public static class EncodingJudgmentControl
@@ -123,6 +126,12 @@ namespace rmsmf
         /// <summary>コードページ：EUC-TW</summary>
         private const int CodePageEucTw = 51950;
         
+        /// <summary>コードページ：Big5 / CP950 (Traditional Chinese)</summary>
+        private const int CodePageBig5 = 950;
+        
+        /// <summary>コードページ：HKSCS (Hong Kong SCS) - Big5と同じ950を使用、EncodingNameで区別</summary>
+        private const int CodePageHkscs = 950;
+        
         /// <summary>コードページ：Shift_JIS</summary>
         private const int CodePageShiftJis = 932;
         
@@ -212,6 +221,9 @@ namespace rmsmf
                     break;
                 case 51950:
                     encodingName = "euc-tw";
+                    break;
+                case 950:
+                    encodingName = "big5";
                     break;
                 case 932:
                     encodingName = "shift_jis";
@@ -390,7 +402,7 @@ namespace rmsmf
                 return encInfo;
             }
 
-            // EUC 判定 (EUC-JP/KR/CN/TW)
+            // EUC 判定 (EUC-JP/KR/CN/TW/CP949) - 日本語エンコーディングを優先
             int eucCodePage;
             outOfSpecification = EUCxx_Judgment(out eucCodePage);
 
@@ -403,7 +415,7 @@ namespace rmsmf
                 return encInfo;
             }
 
-            // Shift_JIS 判定
+            // Shift_JIS 判定 - Big5より先に判定（バイト範囲が重複するため）
             outOfSpecification = SJIS_Judgment();
 
             if (outOfSpecification == false)
@@ -411,6 +423,25 @@ namespace rmsmf
                 encInfo.CodePage = CodePageShiftJis;
                 encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
                 encInfo.Bom = false;
+                return encInfo;
+            }
+
+            // Big5 判定 (Big5/CP950/HKSCS) - 最後に判定
+            int big5CodePage;
+            bool isHKSCS;
+            outOfSpecification = Big5xx_Judgment(out big5CodePage, out isHKSCS);
+
+            if (outOfSpecification == false)
+            {
+                encInfo.CodePage = big5CodePage;
+                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                encInfo.Bom = false;
+                // HKSCSの場合、EncodingVariantに設定
+                if (isHKSCS)
+                {
+                    encInfo.EncodingVariant = "hkscs";
+                }
+
                 return encInfo;
             }
 
@@ -1256,22 +1287,55 @@ namespace rmsmf
                 // ステップ2：2バイト文字（G1領域）の範囲チェック
                 
                 // CP949の拡張範囲（0x81〜0xA0）をチェック
+                // ただし、0x81-0x9FはShift_JISと重複するため、慎重に判定
                 if (0x81 <= currentByte && currentByte <= 0xA0)
                 {
-                    // CP949の拡張領域の1バイト目が検出された場合、CP949確定
-                    isDefinitelyCP949 = true;
-                    cp949Score += 100;
+                    // この範囲はEUC-JP/CN/TWでは無効
+                    // EUC-KR/CP949またはShift_JIS/Big5の可能性
                     
-                    // 2バイト目もチェック
+                    // 2バイト目をチェック
                     if (i + 1 < this.BufferSize)
                     {
                         byte nextByte = this._buffer[i + 1];
-                        // CP949の2バイト目は 0x41〜0xFE の範囲
-                        if ((nextByte >= 0x41 && nextByte <= 0x5A) ||  // A-Z
-                            (nextByte >= 0x61 && nextByte <= 0x7A) ||  // a-z
-                            (nextByte >= 0x81 && nextByte <= 0xFE))    // 拡張範囲
+                        
+                        // 2バイト目が 0x40-0x7E または 0x80 の場合、Shift_JISまたはBig5
+                        // EUCではないので除外
+                        if ((nextByte >= 0x40 && nextByte <= 0x7E) || nextByte == 0x80)
                         {
+                            outOfSpecification = true;
+                            break;
+                        }
+                        
+                        // 2バイト目が 0xA1-0xFE の場合、EUC-KRまたはCP949の可能性
+                        // ただし、0x81-0x9FはShift_JISとも重複するため、CP949として扱わない
+                        // 0xA0のみCP949固有
+                        if (nextByte >= 0xA1 && nextByte <= 0xFE)
+                        {
+                            if (currentByte == 0xA0)
+                            {
+                                // 0xA0 + 0xA1-0xFE → CP949確定
+                                isDefinitelyCP949 = true;
+                                cp949Score += 100;
+                            }
+                            else
+                            {
+                                // 0x81-0x9F + 0xA1-0xFE → EUC-KRまたはCP949
+                                // Shift_JISではない（Shift_JISの2バイト目は0x80-0xFCだが、0xA1-0xFEはEUCパターン）
+                                // EUC-JPではこの範囲は無効なので、EUC-KRまたはCP949
+                                krScore += 5;
+                                cp949Score += 5;
+                            }
                             i++; // 2バイト分スキップ
+                            beforeCode = BYTECODE.OneByteCode;
+                            byteCharCount = 0;
+                            continue;
+                        }
+                        // 2バイト目が 0x81-0xA0 の場合、CP949の可能性
+                        else if (nextByte >= 0x81 && nextByte <= 0xA0)
+                        {
+                            // これはCP949のパターン
+                            cp949Score += 10;
+                            i++;
                             beforeCode = BYTECODE.OneByteCode;
                             byteCharCount = 0;
                             continue;
@@ -1291,23 +1355,29 @@ namespace rmsmf
                     }
                 }
                 
+                
+                
                 // 2バイトコード (0xA1〜0xFE)
                 if (0xA1 <= currentByte && currentByte <= 0xFE)
                 {
                     // 2バイト文字の1バイト目の場合
+                    // beforeCode != BYTECODE.TwoByteCode: 前のバイトが2バイト文字でない
+                    // byteCharCount == 2: 2バイト文字の2バイト目を読み終わった直後
                     if (beforeCode != BYTECODE.TwoByteCode || byteCharCount == 2)
                     {
-                        // 次のバイトをチェックしてCP949の拡張範囲かどうか判定
+                        // これは2バイト文字の1バイト目
+                        // 次のバイト（2バイト目）をチェック
                         if (i + 1 < this.BufferSize)
                         {
                             byte nextByte = this._buffer[i + 1];
-                            // CP949の2バイト目拡張範囲：0x41〜0x5A (A-Z), 0x61〜0x7A (a-z), 0x81〜0xA0
-                            if ((nextByte >= 0x41 && nextByte <= 0x5A) ||  // A-Z
-                                (nextByte >= 0x61 && nextByte <= 0x7A) ||  // a-z
-                                (nextByte >= 0x81 && nextByte <= 0xA0))    // 拡張範囲
+                            
+                            // **重要**: 2バイト目が 0x40-0x7E の範囲にある場合、EUCではない
+                            // これはBig5またはShift_JISの特徴
+                            // （ただし、0x80も除外する必要がある）
+                            if ((nextByte >= 0x40 && nextByte <= 0x7E) || nextByte == 0x80)
                             {
-                                isDefinitelyCP949 = true;
-                                cp949Score += 100;
+                                outOfSpecification = true;
+                                break;
                             }
                         }
                         
@@ -1330,21 +1400,16 @@ namespace rmsmf
                             jpScore += 1;
                             twScore += 1;
                         }
-                    }
-
-                    if (beforeCode == BYTECODE.TwoByteCode)
-                    {
-                        if (byteCharCount == 1)
-                            byteCharCount = 2;
-                        else if (byteCharCount == 2)
-                            byteCharCount = 1;
+                        
+                        // 状態を「2バイト文字の1バイト目」に設定
+                        beforeCode = BYTECODE.TwoByteCode;
+                        byteCharCount = 1;
                     }
                     else
                     {
-                        byteCharCount = 1;
+                        // これは2バイト文字の2バイト目
+                        byteCharCount = 2;
                     }
-
-                    beforeCode = BYTECODE.TwoByteCode;
                 }
                 // 1バイトコード (ASCII)
                 else if (currentByte <= 0x7F)
@@ -1358,8 +1423,37 @@ namespace rmsmf
                     beforeCode = BYTECODE.OneByteCode;
                     byteCharCount = 1;
                 }
-                // 0x80〜0x8D, 0x90〜0x9F, 0xFF など不正なバイト
-                else if (currentByte != 0x8E && currentByte != 0x8F)
+                // Shift_JISの半角カナ（0xA1-0xDF）の検出
+                // EUCでは0xA1-0xFEは必ず2バイト文字の1バイト目
+                // 直前が2バイト文字の1バイト目でない場合、Shift_JISの半角カナの可能性
+                else if (currentByte >= 0xA1 && currentByte <= 0xDF && 
+                         beforeCode != BYTECODE.TwoByteCode)
+                {
+                    // 次のバイトをチェック
+                    if (i + 1 < this.BufferSize)
+                    {
+                        byte nextByte = this._buffer[i + 1];
+                        // 次のバイトがASCII（0x00-0x7F）または半角カナ（0xA1-0xDF）の場合
+                        // Shift_JISの半角カナとして扱う（EUCではない）
+                        if (nextByte <= 0x7F || (nextByte >= 0xA1 && nextByte <= 0xDF))
+                        {
+                            outOfSpecification = true;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // ファイル終端の場合、1バイト文字として完結している
+                        // これはShift_JISの半角カナの可能性が高い
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+                // 0x80, 0x8D, 0x90〜0x9F, 0xFF は無効なバイト（0x8E, 0x8Fを除く）
+                else if (currentByte == 0x80 || 
+                         (currentByte >= 0x8D && currentByte <= 0x9F && 
+                          currentByte != 0x8E && currentByte != 0x8F) ||
+                         currentByte == 0xFF)
                 {
                     outOfSpecification = true;
                     break;
@@ -1602,6 +1696,162 @@ namespace rmsmf
             }
 
             return outOfSpecification;
+        }
+
+        /// <summary>
+        /// Big5 / CP950 / HKSCS であるか判定する
+        /// </summary>
+        /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
+        /// <param name="isHKSCS">HKSCSであるかどうか</param>
+        /// <returns>true=Big5系では無い</returns>
+        public bool Big5xx_Judgment(out int codePage, out bool isHKSCS)
+        {
+            codePage = -1;
+            isHKSCS = false;
+            bool outOfSpecification = false;
+
+            // 判定フラグとスコア
+            bool isBig5Compatible = false;  // Big5系の基本構造を満たしているか
+            bool isDefinitelyHKSCS = false; // HKSCS確定
+            int hkscsScore = 0;
+            int cp950Score = 0;
+            int big5Score = 0;
+
+            bool expectingSecondByte = false;
+            byte firstByte = 0;
+
+            for (int i = 0; i < this.BufferSize; i++)
+            {
+                byte currentByte = this._buffer[i];
+
+                // 1バイト文字（ASCII）
+                if (!expectingSecondByte && currentByte <= 0x7F)
+                {
+                    // ASCII文字は問題なし
+                    continue;
+                }
+
+                // Big5系の1バイト目の範囲チェック
+                if (!expectingSecondByte)
+                {
+                    // Big5/CP950の1バイト目: 0x81-0xFE（標準Big5は0xA1-0xF9）
+                    if (currentByte >= 0x81 && currentByte <= 0xFE)
+                    {
+                        // HKSCS特有の範囲: 0x87-0x9F
+                        if (currentByte >= 0x87 && currentByte <= 0x9F)
+                        {
+                            isDefinitelyHKSCS = true;
+                            hkscsScore += 100;
+                        }
+                        // HKSCS特有の範囲: 0xFA-0xFE
+                        else if (currentByte >= 0xFA && currentByte <= 0xFE)
+                        {
+                            isDefinitelyHKSCS = true;
+                            hkscsScore += 50;
+                        }
+                        // CP950拡張範囲: 0xF9（IBM拡張文字）
+                        else if (currentByte == 0xF9)
+                        {
+                            cp950Score += 10;
+                        }
+                        // 標準Big5範囲: 0xA1-0xF9
+                        else if (currentByte >= 0xA1 && currentByte <= 0xF9)
+                        {
+                            big5Score += 1;
+                        }
+
+                        expectingSecondByte = true;
+                        firstByte = currentByte;
+                    }
+                    else
+                    {
+                        // Big5系の1バイト目の範囲外 → 規格外
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    // 2バイト目のチェック
+                    // Big5系の2バイト目: 0x40-0x7E, 0x80-0xFE（0x7Fと0xFFを除く）
+                    if ((currentByte >= 0x40 && currentByte <= 0x7E) ||
+                        (currentByte >= 0x80 && currentByte <= 0xFE))
+                    {
+                        // Big5系の構造を満たしている
+                        isBig5Compatible = true;
+
+                        // 2バイト目が 0x40-0x7E の範囲にある場合、Big5系確定
+                        // （EUC-TWは2バイト目が 0xA1-0xFE のみ）
+                        if (currentByte >= 0x40 && currentByte <= 0x7E)
+                        {
+                            big5Score += 5;
+                        }
+
+                        // CP950のIBM拡張文字範囲: 0xF9D6-0xF9FE
+                        if (firstByte == 0xF9 && currentByte >= 0xD6 && currentByte <= 0xFE)
+                        {
+                            cp950Score += 20;
+                        }
+
+                        expectingSecondByte = false;
+                        firstByte = 0;
+                    }
+                    else
+                    {
+                        // 2バイト目が範囲外 → 規格外
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+            }
+
+            // 最後のバイトが1バイト目で終わった場合は規格外
+            if (expectingSecondByte)
+            {
+                outOfSpecification = true;
+            }
+
+            // 規格外の場合は終了
+            if (outOfSpecification)
+            {
+                return true;
+            }
+
+            // Big5系の構造を満たしていない場合は終了
+            if (!isBig5Compatible)
+            {
+                return true;
+            }
+
+            // 判定ロジック
+            // 1. HKSCS確定フラグがある場合
+            if (isDefinitelyHKSCS)
+            {
+                codePage = CodePageBig5;  // .NETでは950を使用
+                isHKSCS = true;
+                return false;
+            }
+
+            // 2. スコアリングによる判定
+            int maxScore = Math.Max(Math.Max(hkscsScore, cp950Score), big5Score);
+
+            if (maxScore == hkscsScore && hkscsScore > 0)
+            {
+                codePage = CodePageBig5;  // .NETでは950を使用
+                isHKSCS = true;
+            }
+            else if (maxScore == cp950Score && cp950Score > 0)
+            {
+                codePage = CodePageBig5;
+                isHKSCS = false;
+            }
+            else
+            {
+                codePage = CodePageBig5;  // デフォルトはBig5
+                isHKSCS = false;
+            }
+
+            return false;
         }
 
     }
