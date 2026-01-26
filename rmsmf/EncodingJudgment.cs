@@ -25,6 +25,9 @@ namespace rmsmf
         
         /// <summary>エンコーディング</summary>
         public Encoding Encoding { get; set; }
+        
+        /// <summary>エンコーディングのバリアント（例: HKSCS）</summary>
+        public string EncodingVariant { get; set; }
     }
 
     public static class EncodingJudgmentControl
