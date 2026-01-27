@@ -48,9 +48,10 @@ namespace rmsmf
 
             CommandOptions commandOptions = null;
 
+
             try
             {
-                // バージョンオプションの事前チェック
+                // 引数なしの場合は簡易バージョン表示
                 if (args.Length == 0)
                 {
                     VersionWriter.WriteVersion(false, thisAssemName.Name, ver, copyright);
@@ -61,31 +62,18 @@ namespace rmsmf
                     return;
                 }
 
-                if (args.Length > 0 && (args[0] == "-v" || args[0] == "/v" ||
-                    args.Any(arg => arg == "-v" || arg == "/v") ))
-                {
-                    VersionWriter.WriteVersion(true, thisAssemName.Name, ver, copyright);
-#if DEBUG
-                    Console.WriteLine("\nPress any key to exit...");
-                    Console.ReadKey();
-#endif
-                    return;
-                }
-                // ヘルプオプションの事前チェック
-                if (args.Length > 0 && (args[0] == "-h" || args[0] == "/h" || 
-                    args.Any(arg => arg == "-h" || arg == "/h")))
-                {
-                    Help help = new Help();
-                    help.Show();
-#if DEBUG
-                    Console.WriteLine("\nPress any key to exit...");
-                    Console.ReadKey();
-#endif
-                    return;
-                }
-
-                //コマンドオプション取得
+                //コマンドオプション取得（カルチャー設定、ヘルプ・バージョン表示を含む）
                 commandOptions = new CommandOptions(args);
+
+                // ヘルプまたはバージョンが表示された場合は終了
+                if (commandOptions.HelpOrVersionDisplayed)
+                {
+#if DEBUG
+                    Console.WriteLine("\nPress any key to exit...");
+                    Console.ReadKey();
+#endif
+                    return;
+                }
 
                 commandOptions.ReadReplaceWords();
                 commandOptions.ReadFileNameList();

@@ -23,8 +23,11 @@ namespace txprobe
         private const string OptionAllDirectories = "d";
         private const string OptionOutputFileNamelist = "o";
         private const string OptionJudgmentMode = "j";
+        private const string OptionCultureInfo = "ci";
 
         private bool searchOptionAllDirectories = false; // AllDirectories オプション
+        private string _cultureInfo = null; // CultureInfo オプション
+        private bool _helpOrVersionDisplayed = false; // ヘルプまたはバージョンが表示されたかどうか
 
         /// <summary>
         /// コマンドオプション
@@ -32,6 +35,31 @@ namespace txprobe
         /// <param name="args"></param>
         public CommandOptions(string[] args) : base(args)
         {
+            // 最初にカルチャー情報を設定（ヘルプやバージョン表示に反映させるため）
+            this._cultureInfo = ParseCultureInfoOption();
+            if (!string.IsNullOrEmpty(this._cultureInfo))
+            {
+                try
+                {
+                    System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(this._cultureInfo);
+                }
+                catch (System.Globalization.CultureNotFoundException ex)
+                {
+                    throw new RmsmfException("無効なカルチャー情報が指定されました: " + this._cultureInfo + "\n" + ex.Message, ex);
+                }
+                catch (ArgumentException ex)
+                {
+                    throw new RmsmfException("無効なカルチャー情報が指定されました: " + this._cultureInfo + "\n" + ex.Message, ex);
+                }
+            }
+
+            // ヘルプまたはバージョンオプションのチェック（カルチャー設定後）
+            if (CheckAndDisplayHelpOrVersion())
+            {
+                this._helpOrVersionDisplayed = true;
+                return; // ヘルプまたはバージョンを表示した場合は、以降の処理をスキップ
+            }
+
             ValidateRequiredParameters();
 
             ParseEncodingOptions(
@@ -64,6 +92,38 @@ namespace txprobe
                     throw new RmsmfException(rmsmf.ValidationMessages.MissingTargetFileName);
                 }
             }
+        }
+
+        /// <summary>
+        /// ヘルプまたはバージョンオプションをチェックして表示
+        /// </summary>
+        /// <returns>ヘルプまたはバージョンを表示した場合は true</returns>
+        private bool CheckAndDisplayHelpOrVersion()
+        {
+            // バージョンオプションのチェック
+            if (this.IsOption("v"))
+            {
+                System.Reflection.Assembly thisAssem = typeof(CommandOptions).Assembly;
+                System.Reflection.AssemblyName thisAssemName = thisAssem.GetName();
+                System.Reflection.AssemblyCopyrightAttribute[] copyrightAttributes = 
+                    (System.Reflection.AssemblyCopyrightAttribute[])thisAssem.GetCustomAttributes(typeof(System.Reflection.AssemblyCopyrightAttribute), false);
+
+                Version ver = thisAssemName.Version;
+                String copyright = copyrightAttributes[0].Copyright;
+
+                VersionWriter.WriteVersion(true, thisAssemName.Name, ver, copyright);
+                return true;
+            }
+
+            // ヘルプオプションのチェック
+            if (this.IsOption(OptionHelp))
+            {
+                Help help = new Help();
+                help.Show();
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -192,6 +252,24 @@ namespace txprobe
                 else
                 {
                     return this.Options[OptionOutputFileNamelist].TrimEnd(new char[] { '\x0a', '\x0d' });
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// カルチャー情報オプションの解析
+        /// </summary>
+        /// <returns>カルチャー情報文字列（null=指定なし）</returns>
+        private string ParseCultureInfoOption()
+        {
+            if (this.IsOption(OptionCultureInfo))
+            {
+                string cultureInfo = this.Options[OptionCultureInfo].TrimEnd(new char[] { '\x0a', '\x0d' });
+                if (cultureInfo != Colipex.NonValue && !string.IsNullOrWhiteSpace(cultureInfo))
+                {
+                    return cultureInfo;
                 }
             }
 
@@ -617,6 +695,22 @@ namespace txprobe
         public string OutputFileNameListFileName
         {
             get { return this._outputFileNameListFileName; }
+        }
+
+        /// <summary>
+        /// カルチャー情報
+        /// </summary>
+        public string CultureInfo
+        {
+            get { return this._cultureInfo; }
+        }
+
+        /// <summary>
+        /// ヘルプまたはバージョンが表示されたかどうか
+        /// </summary>
+        public bool HelpOrVersionDisplayed
+        {
+            get { return this._helpOrVersionDisplayed; }
         }
 
         /// <summary>
