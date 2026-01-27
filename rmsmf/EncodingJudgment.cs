@@ -123,8 +123,20 @@ namespace rmsmf
         /// <summary>コードページ：EUC-TW</summary>
         private const int CodePageEucTw = 51950;
         
-        /// <summary>コードページ：Shift_JIS</summary>
+        /// <summary>コードページ：Shift_JIS (CP932)</summary>
         private const int CodePageShiftJis = 932;
+        
+        /// <summary>コードページ：CP949 (韓国)</summary>
+        private const int CodePageCp949 = 949;
+        
+        /// <summary>コードページ：CP936 (GBK, 中国簡体字)</summary>
+        private const int CodePageCp936 = 936;
+        
+        /// <summary>コードページ：GB18030 (中国)</summary>
+        private const int CodePageGb18030 = 54936;
+        
+        /// <summary>コードページ：CP950 (Big5, 台湾・香港繁体字)</summary>
+        private const int CodePageCp950 = 950;
         
         /// <summary>マジックナンバー：バッファインデックス2</summary>
         private const int BufferIndex2 = 2;
@@ -212,6 +224,18 @@ namespace rmsmf
                     break;
                 case 932:
                     encodingName = "shift_jis";
+                    break;
+                case 949:
+                    encodingName = "cp949";
+                    break;
+                case 936:
+                    encodingName = "gbk";
+                    break;
+                case 54936:
+                    encodingName = "gb18030";
+                    break;
+                case 950:
+                    encodingName = "big5";
                     break;
                 case 1200:
                     encodingName = "utf-16";
@@ -387,32 +411,84 @@ namespace rmsmf
                 return encInfo;
             }
 
-            // EUC 判定 (EUC-JP/KR/CN/TW)
-            int eucCodePage;
-            outOfSpecification = EUCxx_Judgment(out eucCodePage);
+            // カルチャー情報を取得して判定順序を決定
+            bool isChineseSimplified = IsChineseSimplifiedCulture();
 
-            if (outOfSpecification == false)
+            if (isChineseSimplified)
             {
-                encInfo.CodePage = eucCodePage;
-                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
-                encInfo.Bom = false;
+                // 中国（簡体字）の場合：CP936/GB18030のみ判定（EUC-CNはスキップ）
+                
+                // CP936/GB18030 判定
+                int cpxxxCodePage;
+                outOfSpecification = CPxxx_Judgment(out cpxxxCodePage);
 
-                return encInfo;
+                if (outOfSpecification == false)
+                {
+                    encInfo.CodePage = cpxxxCodePage;
+                    encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                    encInfo.Bom = false;
+                    return encInfo;
+                }
             }
-
-            // Shift_JIS 判定
-            outOfSpecification = SJIS_Judgment();
-
-            if (outOfSpecification == false)
+            else
             {
-                encInfo.CodePage = CodePageShiftJis;
-                encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
-                encInfo.Bom = false;
-                return encInfo;
+                // 中国以外の場合：EUC → CPxxx の順で判定（従来通り）
+                
+                // EUC 判定 (EUC-JP/KR/TW)
+                int eucCodePage;
+                outOfSpecification = EUCxx_Judgment(out eucCodePage);
+
+                if (outOfSpecification == false)
+                {
+                    encInfo.CodePage = eucCodePage;
+                    encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                    encInfo.Bom = false;
+
+                    return encInfo;
+                }
+
+                // CPxxx 判定（カルチャー別）
+                int cpxxxCodePage;
+                outOfSpecification = CPxxx_Judgment(out cpxxxCodePage);
+
+                if (outOfSpecification == false)
+                {
+                    encInfo.CodePage = cpxxxCodePage;
+                    encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                    encInfo.Bom = false;
+                    return encInfo;
+                }
             }
 
             // 不明
             return encInfo;
+        }
+
+        /// <summary>
+        /// 現在のカルチャーが中国簡体字かどうかを判定
+        /// </summary>
+        /// <returns>true=中国簡体字、false=それ以外</returns>
+        private bool IsChineseSimplifiedCulture()
+        {
+            try
+            {
+                CultureInfo currentCulture = CultureInfo.CurrentCulture;
+                string cultureName = currentCulture.Name;
+
+                // 中国語（簡体字）のカルチャー
+                if (cultureName.Equals("zh-CN", StringComparison.OrdinalIgnoreCase) ||
+                    cultureName.Equals("zh-Hans", StringComparison.OrdinalIgnoreCase) ||
+                    cultureName.Equals("zh-SG", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
 
@@ -1139,23 +1215,25 @@ namespace rmsmf
         public enum BYTECODE : byte { OneByteCode, TwoByteCode, CodeSet2, CodeSet3 }
 
         /// <summary>
-        /// EUC-JP/KR/CN/TWであるか判定する
+        /// EUC-JP/KR/CN/TWであるか判定する（カルチャー別）
         /// </summary>
         /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
         /// <returns>true=EUCでは無い</returns>
         public bool EUCxx_Judgment(out int codePage)
         {
-            codePage = -1;
+            // カルチャー情報から判定対象のEUCを決定
+            int targetEucCodePage = GetEucCodePageFromCulture();
+            
+            // カルチャーに対応するEUCが無い場合は判定スキップ
+            if (targetEucCodePage == -1)
+            {
+                codePage = -1;
+                return true;
+            }
+            
+            // 対象のEUCで判定
             bool outOfSpecification = false;
-
-            // 各EUCの特徴をスコアリング
-            int jpScore = 0;  // EUC-JP
-            int krScore = 0;  // EUC-KR
-            int cnScore = 0;  // EUC-CN
-            int twScore = 0;  // EUC-TW
-
-            bool isDefinitelyJP = false;
-            bool isDefinitelyTW = false;
+            codePage = -1;
 
             BYTECODE beforeCode = BYTECODE.OneByteCode;
             int byteCharCount = 0;
@@ -1164,8 +1242,6 @@ namespace rmsmf
             {
                 byte currentByte = this._buffer[i];
 
-                // ステップ1：構造によるフィルタリング（確実性が高い）
-                
                 // 0x8E (SS2) の検出
                 if (currentByte == 0x8E)
                 {
@@ -1174,40 +1250,32 @@ namespace rmsmf
                         byte nextByte = this._buffer[i + 1];
                         
                         // EUC-TW: 0x8E + 0xA1〜0xB0 + 0xA1〜0xFE + 0xA1〜0xFE (4バイト構造)
-                        if (nextByte >= 0xA1 && nextByte <= 0xB0 && i + 3 < this.BufferSize)
+                        if (targetEucCodePage == CodePageEucTw)
                         {
-                            byte byte3 = this._buffer[i + 2];
-                            byte byte4 = this._buffer[i + 3];
-                            if (byte3 >= 0xA1 && byte3 <= 0xFE && byte4 >= 0xA1 && byte4 <= 0xFE)
+                            if (nextByte >= 0xA1 && nextByte <= 0xB0 && i + 3 < this.BufferSize)
                             {
-                                isDefinitelyTW = true;
-                                twScore += 100;
-                                i += 3; // 4バイト分スキップ
+                                byte byte3 = this._buffer[i + 2];
+                                byte byte4 = this._buffer[i + 3];
+                                if (byte3 >= 0xA1 && byte3 <= 0xFE && byte4 >= 0xA1 && byte4 <= 0xFE)
+                                {
+                                    i += 3; // 4バイト分スキップ
+                                    beforeCode = BYTECODE.OneByteCode;
+                                    byteCharCount = 0;
+                                    continue;
+                                }
+                            }
+                        }
+                        
+                        // EUC-JP: 0x8E + 0xA1〜0xFE (半角カナ)
+                        if (targetEucCodePage == CodePageEucJp)
+                        {
+                            if (nextByte >= 0xA1 && nextByte <= 0xFE)
+                            {
+                                i += 1; // 2バイト分スキップ
                                 beforeCode = BYTECODE.OneByteCode;
                                 byteCharCount = 0;
                                 continue;
                             }
-                        }
-                        
-                        // EUC-JP: 0x8E + 0xA1〜0xDF (半角カナ)
-                        if (nextByte >= 0xA1 && nextByte <= 0xDF)
-                        {
-                            isDefinitelyJP = true;
-                            jpScore += 50;
-                            i += 1; // 2バイト分スキップ
-                            beforeCode = BYTECODE.OneByteCode;
-                            byteCharCount = 0;
-                            continue;
-                        }
-                        
-                        // EUC-JP: 0x8E + 0xB1〜0xDF (特にこの範囲は半角カナとして使われる)
-                        if (nextByte >= 0xB1 && nextByte <= 0xFE)
-                        {
-                            jpScore += 10;
-                            i += 1;
-                            beforeCode = BYTECODE.OneByteCode;
-                            byteCharCount = 0;
-                            continue;
                         }
                     }
                     
@@ -1220,62 +1288,44 @@ namespace rmsmf
                     }
                 }
                 
-                // 0x8F (SS3) の検出 - EUC-JP確定
+                // 0x8F (SS3) の検出 - EUC-JP専用
                 if (currentByte == 0x8F)
                 {
-                    if (i + 2 < this.BufferSize)
+                    if (targetEucCodePage == CodePageEucJp)
                     {
-                        byte byte2 = this._buffer[i + 1];
-                        byte byte3 = this._buffer[i + 2];
-                        if (byte2 >= 0xA1 && byte2 <= 0xFE && byte3 >= 0xA1 && byte3 <= 0xFE)
+                        if (i + 2 < this.BufferSize)
                         {
-                            isDefinitelyJP = true;
-                            jpScore += 100;
-                            i += 2; // 3バイト分スキップ
-                            beforeCode = BYTECODE.OneByteCode;
-                            byteCharCount = 0;
-                            continue;
+                            byte byte2 = this._buffer[i + 1];
+                            byte byte3 = this._buffer[i + 2];
+                            if (byte2 >= 0xA1 && byte2 <= 0xFE && byte3 >= 0xA1 && byte3 <= 0xFE)
+                            {
+                                i += 2; // 3バイト分スキップ
+                                beforeCode = BYTECODE.OneByteCode;
+                                byteCharCount = 0;
+                                continue;
+                            }
+                        }
+                        
+                        // 0x8Fの後に適切なバイトが続かない場合は規格外
+                        if (i + 2 >= this.BufferSize || 
+                            this._buffer[i + 1] < 0xA1 || this._buffer[i + 1] > 0xFE ||
+                            this._buffer[i + 2] < 0xA1 || this._buffer[i + 2] > 0xFE)
+                        {
+                            outOfSpecification = true;
+                            break;
                         }
                     }
-                    
-                    // 0x8Fの後に適切なバイトが続かない場合は規格外
-                    if (i + 2 >= this.BufferSize || 
-                        this._buffer[i + 1] < 0xA1 || this._buffer[i + 1] > 0xFE ||
-                        this._buffer[i + 2] < 0xA1 || this._buffer[i + 2] > 0xFE)
+                    else
                     {
+                        // EUC-JP以外で0x8Fが出現したら規格外
                         outOfSpecification = true;
                         break;
                     }
                 }
 
-                // ステップ2：2バイト文字（G1領域）の範囲チェック
-                
                 // 2バイトコード (0xA1〜0xFE)
                 if (0xA1 <= currentByte && currentByte <= 0xFE)
                 {
-                    // 2バイト文字の1バイト目の場合
-                    if (beforeCode != BYTECODE.TwoByteCode || byteCharCount == 2)
-                    {
-                        // EUC-CN: 1バイト目が 0xB0〜0xF7 (常用漢字域) に集中する
-                        if (currentByte >= 0xB0 && currentByte <= 0xF7)
-                        {
-                            cnScore += 2;
-                        }
-                        
-                        // EUC-KR: 1バイト目が 0xB0〜0xC8 (ハングル域) に集中する
-                        if (currentByte >= 0xB0 && currentByte <= 0xC8)
-                        {
-                            krScore += 2;
-                        }
-                        
-                        // EUC-JP/TW: 漢字域が広く分布
-                        if (currentByte >= 0xA1 && currentByte <= 0xFE)
-                        {
-                            jpScore += 1;
-                            twScore += 1;
-                        }
-                    }
-
                     if (beforeCode == BYTECODE.TwoByteCode)
                     {
                         if (byteCharCount == 1)
@@ -1316,79 +1366,16 @@ namespace rmsmf
                 return true;
             }
 
-            // ステップ3：最終判定
-            
-            // 確定的な特徴がある場合はそれを優先
-            if (isDefinitelyTW)
-            {
-                codePage = CodePageEucTw;
-                return false;
-            }
-            
-            if (isDefinitelyJP)
-            {
-                codePage = CodePageEucJp;
-                return false;
-            }
-
-            // スコアリングによる判定
-            int maxScore = Math.Max(Math.Max(jpScore, krScore), Math.Max(cnScore, twScore));
-            
-            // スコアが低すぎる場合はEUCではないと判定
-            if (maxScore <= 0)
-            {
-                return true;
-            }
-
-            // 各スコアをリスト化して上位候補を抽出
-            var scores = new List<Tuple<int, int>>
-            {
-                Tuple.Create(jpScore, CodePageEucJp),
-                Tuple.Create(krScore, CodePageEucKr),
-                Tuple.Create(cnScore, CodePageEucCn),
-                Tuple.Create(twScore, CodePageEucTw)
-            };
-            
-            // スコアの降順でソート
-            scores.Sort((a, b) => b.Item1.CompareTo(a.Item1));
-            
-            int topScore = scores[0].Item1;
-            int secondScore = scores.Count > 1 ? scores[1].Item1 : 0;
-            
-            // スコア差の閾値（この値以下なら「同点に近い」と判断）
-            const int scoreThreshold = 5;
-            
-            // スコアが同点または非常に近い場合、OSカルチャー情報を参照
-            if (topScore - secondScore <= scoreThreshold)
-            {
-                int cultureBasedCodePage = GetEucCodePageFromOsCulture();
-                
-                // OSカルチャーに基づくコードページが候補に含まれているか確認
-                if (cultureBasedCodePage != -1)
-                {
-                    // 上位2つの候補のスコアが近い場合、OSカルチャーを優先
-                    foreach (var score in scores)
-                    {
-                        if (score.Item2 == cultureBasedCodePage && score.Item1 >= topScore - scoreThreshold)
-                        {
-                            codePage = cultureBasedCodePage;
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            // OSカルチャー情報による判定ができない場合、最高スコアのエンコーディングを選択
-            codePage = scores[0].Item2;
-
+            // 判定成功
+            codePage = targetEucCodePage;
             return false;
         }
 
         /// <summary>
-        /// OSカルチャー情報から推定されるEUCコードページを取得
+        /// カルチャー情報から対象となるEUCコードページを取得
         /// </summary>
         /// <returns>EUCコードページ（該当なしの場合は-1）</returns>
-        private int GetEucCodePageFromOsCulture()
+        private int GetEucCodePageFromCulture()
         {
             try
             {
@@ -1396,24 +1383,24 @@ namespace rmsmf
                 string cultureName = currentCulture.Name;
 
                 // カルチャー名から判定
-                // 日本語
+                // 日本語 -> EUC-JP
                 if (cultureName.StartsWith("ja", StringComparison.OrdinalIgnoreCase))
                 {
                     return CodePageEucJp;
                 }
-                // 韓国語
+                // 韓国語 -> EUC-KR
                 else if (cultureName.StartsWith("ko", StringComparison.OrdinalIgnoreCase))
                 {
                     return CodePageEucKr;
                 }
-                // 中国語（簡体字）
+                // 中国語（簡体字） -> EUC-CN
                 else if (cultureName.Equals("zh-CN", StringComparison.OrdinalIgnoreCase) ||
                          cultureName.Equals("zh-Hans", StringComparison.OrdinalIgnoreCase) ||
                          cultureName.Equals("zh-SG", StringComparison.OrdinalIgnoreCase))
                 {
                     return CodePageEucCn;
                 }
-                // 中国語（繁体字・台湾）
+                // 中国語（繁体字・台湾・香港） -> EUC-TW
                 else if (cultureName.Equals("zh-TW", StringComparison.OrdinalIgnoreCase) ||
                          cultureName.Equals("zh-Hant", StringComparison.OrdinalIgnoreCase) ||
                          cultureName.Equals("zh-HK", StringComparison.OrdinalIgnoreCase) ||
@@ -1535,6 +1522,364 @@ namespace rmsmf
 
                 // 一つ前のバイト種別の保存
                 beforeSjisByte = sjisByte;
+            }
+
+            return outOfSpecification;
+        }
+
+        /// <summary>
+        /// カルチャー別のCPxxx判定
+        /// </summary>
+        /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
+        /// <returns>true=CPxxxでは無い</returns>
+        public bool CPxxx_Judgment(out int codePage)
+        {
+            codePage = -1;
+            bool outOfSpecification = true;
+            
+            try
+            {
+                CultureInfo currentCulture = CultureInfo.CurrentCulture;
+                string cultureName = currentCulture.Name;
+
+                // カルチャー別に対応するCPxxxを判定
+                if (cultureName.StartsWith("ja", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 日本 -> CP932 (Shift_JIS)
+                    outOfSpecification = SJIS_Judgment();
+                    if (!outOfSpecification)
+                    {
+                        codePage = CodePageShiftJis;
+                    }
+                }
+                else if (cultureName.StartsWith("ko", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 韓国 -> CP949
+                    outOfSpecification = CP949_Judgment();
+                    if (!outOfSpecification)
+                    {
+                        codePage = CodePageCp949;
+                    }
+                }
+                else if (cultureName.Equals("zh-CN", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-Hans", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-SG", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 中国（簡体字） -> CP936 / GB18030
+                    int cp936CodePage;
+                    outOfSpecification = CP936_Judgment(out cp936CodePage);
+                    if (!outOfSpecification)
+                    {
+                        codePage = cp936CodePage;
+                    }
+                }
+                else if (cultureName.Equals("zh-TW", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-Hant", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 台湾（繁体字） -> CP950
+                    outOfSpecification = CP950_Judgment();
+                    if (!outOfSpecification)
+                    {
+                        codePage = CodePageCp950;
+                    }
+                }
+                else if (cultureName.Equals("zh-HK", StringComparison.OrdinalIgnoreCase) ||
+                         cultureName.Equals("zh-MO", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 香港（繁体字） -> CP950
+                    outOfSpecification = CP950_Judgment();
+                    if (!outOfSpecification)
+                    {
+                        codePage = CodePageCp950;
+                    }
+                }
+                else
+                {
+                    // 該当するカルチャーなし
+                    outOfSpecification = true;
+                }
+            }
+            catch
+            {
+                outOfSpecification = true;
+            }
+
+            return outOfSpecification;
+        }
+
+        /// <summary>
+        /// CP949 (韓国) バイト種別
+        /// </summary>
+        public enum CP949_BYTECODE : byte { OneByteCode, TwoByteBefore, TwoByteAfter, OutOfSpec, Unknown }
+
+        /// <summary>
+        /// CP949 (韓国) であるか判定する
+        /// </summary>
+        /// <returns>true=CP949では無い</returns>
+        public bool CP949_Judgment()
+        {
+            bool outOfSpecification = false;
+            CP949_BYTECODE beforeByte = CP949_BYTECODE.OneByteCode;
+            CP949_BYTECODE currentByteType = CP949_BYTECODE.OneByteCode;
+
+            for (int i = 0; i < this.BufferSize; i++)
+            {
+                byte b = this._buffer[i];
+
+                // バイト種別判定
+                if (beforeByte != CP949_BYTECODE.TwoByteBefore && b <= 0x7F)
+                {
+                    // ASCII範囲
+                    currentByteType = CP949_BYTECODE.OneByteCode;
+                }
+                else if (beforeByte != CP949_BYTECODE.TwoByteBefore && b >= 0x81 && b <= 0xFE)
+                {
+                    // 2バイト文字の1バイト目
+                    currentByteType = CP949_BYTECODE.TwoByteBefore;
+                }
+                else if (beforeByte == CP949_BYTECODE.TwoByteBefore &&
+                        ((b >= 0x41 && b <= 0x5A) || (b >= 0x61 && b <= 0x7A) || (b >= 0x81 && b <= 0xFE)))
+                {
+                    // 2バイト文字の2バイト目
+                    currentByteType = CP949_BYTECODE.TwoByteAfter;
+                }
+                else if (b == 0x80)
+                {
+                    // 未定義領域
+                    currentByteType = CP949_BYTECODE.OutOfSpec;
+                }
+                else
+                {
+                    currentByteType = CP949_BYTECODE.Unknown;
+                }
+
+                // バイト種別規格判定
+                if (currentByteType == CP949_BYTECODE.OutOfSpec || currentByteType == CP949_BYTECODE.Unknown)
+                {
+                    outOfSpecification = true;
+                    break;
+                }
+
+                if (currentByteType == CP949_BYTECODE.TwoByteBefore)
+                {
+                    if (i == (this.BufferSize - 1))
+                    {
+                        // 最後のバイトで2バイト文字の前半が来たら規格外
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+
+                if (beforeByte == CP949_BYTECODE.TwoByteBefore)
+                {
+                    // 直前が2バイト文字の前半の場合
+                    if (currentByteType != CP949_BYTECODE.TwoByteAfter)
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+
+                // 一つ前のバイト種別の保存
+                beforeByte = currentByteType;
+            }
+
+            return outOfSpecification;
+        }
+
+        /// <summary>
+        /// CP936/GB18030 (中国簡体字) バイト種別
+        /// </summary>
+        public enum CP936_BYTECODE : byte { OneByteCode, TwoByteBefore, TwoByteAfter, FourByte1, FourByte2, FourByte3, FourByte4, OutOfSpec, Unknown }
+
+        /// <summary>
+        /// CP936 (GBK) / GB18030 (中国) であるか判定する
+        /// </summary>
+        /// <param name="codePage">CP936 or GB18030</param>
+        /// <returns>true=CP936/GB18030では無い</returns>
+        public bool CP936_Judgment(out int codePage)
+        {
+            codePage = -1;
+            bool outOfSpecification = false;
+            CP936_BYTECODE beforeByte = CP936_BYTECODE.OneByteCode;
+            CP936_BYTECODE currentByteType = CP936_BYTECODE.OneByteCode;
+            bool hasGB18030FourByte = false; // 4バイトシーケンスが検出されたか
+
+            for (int i = 0; i < this.BufferSize; i++)
+            {
+                byte b = this._buffer[i];
+
+                // バイト種別判定
+                if (beforeByte == CP936_BYTECODE.OneByteCode || beforeByte == CP936_BYTECODE.TwoByteAfter || beforeByte == CP936_BYTECODE.FourByte4)
+                {
+                    if (b <= 0x7F)
+                    {
+                        // ASCII範囲
+                        currentByteType = CP936_BYTECODE.OneByteCode;
+                    }
+                    else if (b >= 0x81 && b <= 0xFE)
+                    {
+                        // 2バイト文字または4バイト文字の1バイト目
+                        currentByteType = CP936_BYTECODE.TwoByteBefore;
+                    }
+                    else
+                    {
+                        currentByteType = CP936_BYTECODE.OutOfSpec;
+                    }
+                }
+                else if (beforeByte == CP936_BYTECODE.TwoByteBefore)
+                {
+                    if ((b >= 0x40 && b <= 0x7E) || (b >= 0x80 && b <= 0xFE))
+                    {
+                        // 2バイト文字の2バイト目（GBK）
+                        currentByteType = CP936_BYTECODE.TwoByteAfter;
+                    }
+                    else if (b >= 0x30 && b <= 0x39)
+                    {
+                        // 4バイト文字の2バイト目（GB18030）
+                        currentByteType = CP936_BYTECODE.FourByte2;
+                        hasGB18030FourByte = true;
+                    }
+                    else
+                    {
+                        currentByteType = CP936_BYTECODE.OutOfSpec;
+                    }
+                }
+                else if (beforeByte == CP936_BYTECODE.FourByte2)
+                {
+                    if (b >= 0x81 && b <= 0xFE)
+                    {
+                        // 4バイト文字の3バイト目（GB18030）
+                        currentByteType = CP936_BYTECODE.FourByte3;
+                    }
+                    else
+                    {
+                        currentByteType = CP936_BYTECODE.OutOfSpec;
+                    }
+                }
+                else if (beforeByte == CP936_BYTECODE.FourByte3)
+                {
+                    if (b >= 0x30 && b <= 0x39)
+                    {
+                        // 4バイト文字の4バイト目（GB18030）
+                        currentByteType = CP936_BYTECODE.FourByte4;
+                    }
+                    else
+                    {
+                        currentByteType = CP936_BYTECODE.OutOfSpec;
+                    }
+                }
+                else
+                {
+                    currentByteType = CP936_BYTECODE.Unknown;
+                }
+
+                // バイト種別規格判定
+                if (currentByteType == CP936_BYTECODE.OutOfSpec || currentByteType == CP936_BYTECODE.Unknown)
+                {
+                    outOfSpecification = true;
+                    break;
+                }
+
+                // 一つ前のバイト種別の保存
+                beforeByte = currentByteType;
+            }
+
+            // 最後が未完成の場合
+            if (!outOfSpecification)
+            {
+                if (beforeByte == CP936_BYTECODE.TwoByteBefore ||
+                    beforeByte == CP936_BYTECODE.FourByte2 ||
+                    beforeByte == CP936_BYTECODE.FourByte3)
+                {
+                    outOfSpecification = true;
+                }
+            }
+
+            if (!outOfSpecification)
+            {
+                // GB18030の4バイトシーケンスが検出された場合はGB18030、そうでなければCP936
+                codePage = hasGB18030FourByte ? CodePageGb18030 : CodePageCp936;
+            }
+
+            return outOfSpecification;
+        }
+
+        /// <summary>
+        /// CP950 (Big5, 台湾・香港繁体字) バイト種別
+        /// </summary>
+        public enum CP950_BYTECODE : byte { OneByteCode, TwoByteBefore, TwoByteAfter, OutOfSpec, Unknown }
+
+        /// <summary>
+        /// CP950 (Big5, 台湾・香港) であるか判定する
+        /// </summary>
+        /// <returns>true=CP950では無い</returns>
+        public bool CP950_Judgment()
+        {
+            bool outOfSpecification = false;
+            CP950_BYTECODE beforeByte = CP950_BYTECODE.OneByteCode;
+            CP950_BYTECODE currentByteType = CP950_BYTECODE.OneByteCode;
+
+            for (int i = 0; i < this.BufferSize; i++)
+            {
+                byte b = this._buffer[i];
+
+                // バイト種別判定
+                if (beforeByte != CP950_BYTECODE.TwoByteBefore && b <= 0x7F)
+                {
+                    // ASCII範囲
+                    currentByteType = CP950_BYTECODE.OneByteCode;
+                }
+                else if (beforeByte != CP950_BYTECODE.TwoByteBefore && b >= 0x81 && b <= 0xFE)
+                {
+                    // 2バイト文字の1バイト目
+                    currentByteType = CP950_BYTECODE.TwoByteBefore;
+                }
+                else if (beforeByte == CP950_BYTECODE.TwoByteBefore &&
+                        ((b >= 0x40 && b <= 0x7E) || (b >= 0x80 && b <= 0xFE)))
+                {
+                    // 2バイト文字の2バイト目
+                    currentByteType = CP950_BYTECODE.TwoByteAfter;
+                }
+                else if (b == 0x80 || b == 0xFF)
+                {
+                    // 未定義領域
+                    currentByteType = CP950_BYTECODE.OutOfSpec;
+                }
+                else
+                {
+                    currentByteType = CP950_BYTECODE.Unknown;
+                }
+
+                // バイト種別規格判定
+                if (currentByteType == CP950_BYTECODE.OutOfSpec || currentByteType == CP950_BYTECODE.Unknown)
+                {
+                    outOfSpecification = true;
+                    break;
+                }
+
+                if (currentByteType == CP950_BYTECODE.TwoByteBefore)
+                {
+                    if (i == (this.BufferSize - 1))
+                    {
+                        // 最後のバイトで2バイト文字の前半が来たら規格外
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+
+                if (beforeByte == CP950_BYTECODE.TwoByteBefore)
+                {
+                    // 直前が2バイト文字の前半の場合
+                    if (currentByteType != CP950_BYTECODE.TwoByteAfter)
+                    {
+                        outOfSpecification = true;
+                        break;
+                    }
+                }
+
+                // 一つ前のバイト種別の保存
+                beforeByte = currentByteType;
             }
 
             return outOfSpecification;

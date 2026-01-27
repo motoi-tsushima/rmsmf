@@ -429,8 +429,13 @@ namespace txprobe
             }
             else
             {
+                // encInfo.EncodingNameが設定されている場合はそれを優先使用
+                if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingName))
+                {
+                    encodingName = encInfo.EncodingName;
+                }
                 // EncodingVariantが設定されている場合はそれを使用
-                if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingVariant))
+                else if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingVariant))
                 {
                     encodingName = encInfo.EncodingVariant;
                 }
