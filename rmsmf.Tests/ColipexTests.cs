@@ -1,15 +1,39 @@
 using System;
+using System.IO;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using rmsmf;
 
 namespace rmsmf.Tests
 {
     /// <summary>
-    /// Colipex �N���X�̃e�X�g
+    /// Colipex クラスのテスト
     /// </summary>
     [TestClass]
     public class ColipexTests
     {
+        /// <summary>
+        /// Colipexの保護メソッドをテストするためのテストヘルパークラス
+        /// </summary>
+        private class ColipexTestHelper : Colipex
+        {
+            public ColipexTestHelper(string[] args) : base(args) { }
+
+            public string TestConvertEscapeSequences(string input)
+            {
+                return ConvertEscapeSequences(input);
+            }
+
+            public Encoding TestResolveEncoding(string encodingNameOrCodePage, string judgmentKeyword = "Judgment")
+            {
+                return ResolveEncoding(encodingNameOrCodePage, judgmentKeyword);
+            }
+
+            public void TestEnsureEncodingInitialized(ref Encoding encoding, string fileName)
+            {
+                EnsureEncodingInitialized(ref encoding, fileName);
+            }
+        }
         [TestMethod]
         public void Constructor_WithSimpleArguments_ParsesCorrectly()
         {
@@ -157,5 +181,238 @@ namespace rmsmf.Tests
             Assert.AreEqual(0, colipex.Options.Count);
             Assert.AreEqual(0, colipex.Args.Length);
         }
+
+        #region ConvertEscapeSequences Tests
+
+        [TestMethod]
+        public void ConvertEscapeSequences_WithCRLF_ConvertsCorrectly()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string input = "line1\\r\\nline2";
+
+            // Act
+            string result = helper.TestConvertEscapeSequences(input);
+
+            // Assert
+            Assert.AreEqual("line1\r\nline2", result);
+        }
+
+        [TestMethod]
+        public void ConvertEscapeSequences_WithLF_ConvertsCorrectly()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string input = "line1\\nline2";
+
+            // Act
+            string result = helper.TestConvertEscapeSequences(input);
+
+            // Assert
+            Assert.AreEqual("line1\nline2", result);
+        }
+
+        [TestMethod]
+        public void ConvertEscapeSequences_WithCR_ConvertsCorrectly()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string input = "line1\\rline2";
+
+            // Act
+            string result = helper.TestConvertEscapeSequences(input);
+
+            // Assert
+            Assert.AreEqual("line1\rline2", result);
+        }
+
+        [TestMethod]
+        public void ConvertEscapeSequences_WithTab_ConvertsCorrectly()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string input = "col1\\tcol2";
+
+            // Act
+            string result = helper.TestConvertEscapeSequences(input);
+
+            // Assert
+            Assert.AreEqual("col1\tcol2", result);
+        }
+
+        [TestMethod]
+        public void ConvertEscapeSequences_WithBackslash_ConvertsCorrectly()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string input = "path\\\\folder";
+
+            // Act
+            string result = helper.TestConvertEscapeSequences(input);
+
+            // Assert
+            Assert.AreEqual("path\\folder", result);
+        }
+
+        [TestMethod]
+        public void ConvertEscapeSequences_WithMultipleEscapes_ConvertsCorrectly()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string input = "a\\tb\\nc\\rd";
+
+            // Act
+            string result = helper.TestConvertEscapeSequences(input);
+
+            // Assert
+            Assert.AreEqual("a\tb\nc\rd", result);
+        }
+
+        #endregion
+
+        #region ResolveEncoding Tests
+
+        [TestMethod]
+        public void ResolveEncoding_WithJudgmentKeyword_ReturnsNull()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+
+            // Act
+            Encoding result = helper.TestResolveEncoding("Judgment");
+
+            // Assert
+            Assert.IsNull(result);
+        }
+
+        [TestMethod]
+        public void ResolveEncoding_WithEncodingName_ReturnsEncoding()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+
+            // Act
+            Encoding result = helper.TestResolveEncoding("UTF-8");
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual("utf-8", result.WebName);
+        }
+
+        [TestMethod]
+        public void ResolveEncoding_WithCodePage_ReturnsEncoding()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+
+            // Act
+            Encoding result = helper.TestResolveEncoding("65001");
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(65001, result.CodePage);
+        }
+
+        [TestMethod]
+        public void ResolveEncoding_WithShiftJIS_ReturnsEncoding()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+
+            // Act
+            Encoding result = helper.TestResolveEncoding("shift_jis");
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual("shift_jis", result.WebName);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void ResolveEncoding_WithInvalidEncodingName_ThrowsException()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+
+            // Act
+            helper.TestResolveEncoding("InvalidEncoding");
+
+            // Assert - Exception expected
+        }
+
+        #endregion
+
+        #region EnsureEncodingInitialized Tests
+
+        [TestMethod]
+        public void EnsureEncodingInitialized_WithNullEncodingAndValidFile_InitializesEncoding()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string tempFile = Path.GetTempFileName();
+            
+            try
+            {
+                File.WriteAllText(tempFile, "test content", Encoding.UTF8);
+                Encoding encoding = null;
+
+                // Act
+                helper.TestEnsureEncodingInitialized(ref encoding, tempFile);
+
+                // Assert
+                Assert.IsNotNull(encoding);
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(tempFile);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void EnsureEncodingInitialized_WithExistingEncoding_DoesNotChange()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            string tempFile = Path.GetTempFileName();
+            
+            try
+            {
+                File.WriteAllText(tempFile, "test content", Encoding.UTF8);
+                Encoding encoding = Encoding.UTF8;
+                Encoding originalEncoding = encoding;
+
+                // Act
+                helper.TestEnsureEncodingInitialized(ref encoding, tempFile);
+
+                // Assert
+                Assert.AreSame(originalEncoding, encoding);
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(tempFile);
+                }
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(FileNotFoundException))]
+        public void EnsureEncodingInitialized_WithNonExistentFile_ThrowsException()
+        {
+            // Arrange
+            var helper = new ColipexTestHelper(new string[] { });
+            Encoding encoding = null;
+
+            // Act
+            helper.TestEnsureEncodingInitialized(ref encoding, "nonexistent_file.txt");
+
+            // Assert - Exception expected
+        }
+
+        #endregion
     }
 }

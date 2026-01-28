@@ -7,28 +7,28 @@ using rmsmf;
 namespace rmsmf.Tests
 {
     /// <summary>
-    /// CSV��͋@�\�̃e�X�g
+    /// CSV解析機能のテスト
     /// </summary>
     [TestClass]
     public class CsvParsingTests
     {
         /// <summary>
-        /// �e�X�g�p�̈ꎞ�t�@�C���p�X
+        /// テスト用の一時ファイルパス
         /// </summary>
         private string _tempCsvFile;
 
         /// <summary>
-        /// �e�e�X�g�̏�����
+        /// 各テストの初期化
         /// </summary>
         [TestInitialize]
         public void Initialize()
         {
-            // ��΃p�X�� : ���I�v�V�����p�[�T�[�Ƌ������Ȃ��悤�A���΃p�X�ňꎞ�t�@�C�����쐬
+            // 絶対パスの : がオプションパーサーと競合しないよう、相対パスで一時ファイルを作成
             _tempCsvFile = "test_" + Guid.NewGuid().ToString() + ".csv";
         }
 
         /// <summary>
-        /// �e�e�X�g�̃N���[���A�b�v
+        /// 各テストのクリーンアップ
         /// </summary>
         [TestCleanup]
         public void Cleanup()
@@ -39,7 +39,7 @@ namespace rmsmf.Tests
             }
         }
 
-        #region ParseCsvLine ���\�b�h�̃e�X�g
+        #region ParseCsvLine メソッドのテスト
 
         [TestMethod]
         public void ParseCsvLine_SimpleFields_ParsesCorrectly()
@@ -188,7 +188,7 @@ namespace rmsmf.Tests
 
         #endregion
 
-        #region ReadReplaceWords �����e�X�g
+        #region ReadReplaceWords 統合テスト
 
         [TestMethod]
         public void ReadReplaceWords_SimpleCSV_ReadsCorrectly()
@@ -318,7 +318,7 @@ namespace rmsmf.Tests
         public void ReadReplaceWords_LinesWithoutComma_SkipsThoseLines()
         {
             // Arrange
-            // �J���}���Ȃ��s�̓X�L�b�v����A�L���ȍs�݂̂��ǂݍ��܂��
+            // カンマがない行はスキップされ、有効な行のみが読み込まれる
             string csvContent = "noseparator\nvalid,data\nanother invalid line\nsecond,valid";
             File.WriteAllText(_tempCsvFile, csvContent, Encoding.UTF8);
 
@@ -328,7 +328,7 @@ namespace rmsmf.Tests
             // Act
             bool result = options.ReadReplaceWords();
 
-            // Assert - �L����2�s�݂̂��ǂݍ��܂��
+            // Assert - 有効な2行のみが読み込まれる
             Assert.IsTrue(result);
             Assert.AreEqual(2, options.ReplaceWordsCount);
             Assert.AreEqual("valid", options.ReplaceWords[0, 0]);
@@ -342,7 +342,7 @@ namespace rmsmf.Tests
         public void ReadReplaceWords_OnlyInvalidLines_ThrowsException()
         {
             // Arrange
-            // �S�Ă̍s�ɃJ���}���Ȃ��ꍇ�A��t�@�C���Ɠ��������ŗ�O����������
+            // 全ての行にカンマがない場合、空ファイルと同じ扱いで例外が発生する
             string csvContent = "noseparator\nanother invalid line\nno comma here either";
             File.WriteAllText(_tempCsvFile, csvContent, Encoding.UTF8);
 
@@ -357,17 +357,178 @@ namespace rmsmf.Tests
 
         #endregion
 
-        #region �w���p�[���\�b�h
+        #region ReadFileNameList 統合テスト
+
+        [TestMethod]
+        public void ReadFileNameList_WithFileListFile_ReadsCorrectly()
+        {
+            // Arrange
+            string fileListContent = "file1.txt\nfile2.txt";
+            File.WriteAllText(_tempCsvFile, fileListContent, Encoding.UTF8);
+
+            // テスト用ファイルを作成
+            string tempFile1 = "test_file1_" + Guid.NewGuid().ToString() + ".txt";
+            string tempFile2 = "test_file2_" + Guid.NewGuid().ToString() + ".txt";
+            
+            try
+            {
+                File.WriteAllText(tempFile1, "content1", Encoding.UTF8);
+                File.WriteAllText(tempFile2, "content2", Encoding.UTF8);
+
+                // ファイルリストを実際のファイル名で更新
+                File.WriteAllText(_tempCsvFile, $"{tempFile1}\n{tempFile2}", Encoding.UTF8);
+
+                string[] args = { $"/f:{_tempCsvFile}", "/w:UTF-8" };
+                var options = new CommandOptions(args);
+
+                // Act
+                bool result = options.ReadFileNameList();
+
+                // Assert
+                Assert.IsTrue(result);
+                Assert.IsNotNull(options.Files);
+                Assert.AreEqual(2, options.Files.Length);
+            }
+            finally
+            {
+                if (File.Exists(tempFile1)) File.Delete(tempFile1);
+                if (File.Exists(tempFile2)) File.Delete(tempFile2);
+            }
+        }
+
+        [TestMethod]
+        public void ReadFileNameList_WithEmptyLines_SkipsEmptyLines()
+        {
+            // Arrange
+            string tempFile1 = "test_file1_" + Guid.NewGuid().ToString() + ".txt";
+            
+            try
+            {
+                File.WriteAllText(tempFile1, "content1", Encoding.UTF8);
+                
+                string fileListContent = $"{tempFile1}\n\n\n";
+                File.WriteAllText(_tempCsvFile, fileListContent, Encoding.UTF8);
+
+                string[] args = { $"/f:{_tempCsvFile}", "/w:UTF-8" };
+                var options = new CommandOptions(args);
+
+                // Act
+                bool result = options.ReadFileNameList();
+
+                // Assert
+                Assert.IsTrue(result);
+                Assert.AreEqual(1, options.Files.Length);
+            }
+            finally
+            {
+                if (File.Exists(tempFile1)) File.Delete(tempFile1);
+            }
+        }
+
+        [TestMethod]
+        public void ReadFileNameList_WithCSVFormat_UsesFirstColumn()
+        {
+            // Arrange
+            string tempFile1 = "test_file1_" + Guid.NewGuid().ToString() + ".txt";
+            
+            try
+            {
+                File.WriteAllText(tempFile1, "content1", Encoding.UTF8);
+                
+                string fileListContent = $"{tempFile1},extra,data\n";
+                File.WriteAllText(_tempCsvFile, fileListContent, Encoding.UTF8);
+
+                string[] args = { $"/f:{_tempCsvFile}", "/w:UTF-8" };
+                var options = new CommandOptions(args);
+
+                // Act
+                bool result = options.ReadFileNameList();
+
+                // Assert
+                Assert.IsTrue(result);
+                Assert.AreEqual(1, options.Files.Length);
+                Assert.AreEqual(tempFile1, options.Files[0]);
+            }
+            finally
+            {
+                if (File.Exists(tempFile1)) File.Delete(tempFile1);
+            }
+        }
+
+        [TestMethod]
+        public void ReadFileNameList_WithNonExistentFiles_SkipsThem()
+        {
+            // Arrange
+            string tempFile1 = "test_file1_" + Guid.NewGuid().ToString() + ".txt";
+            string nonExistentFile = "nonexistent_" + Guid.NewGuid().ToString() + ".txt";
+            
+            try
+            {
+                File.WriteAllText(tempFile1, "content1", Encoding.UTF8);
+                
+                string fileListContent = $"{tempFile1}\n{nonExistentFile}\n";
+                File.WriteAllText(_tempCsvFile, fileListContent, Encoding.UTF8);
+
+                string[] args = { $"/f:{_tempCsvFile}", "/w:UTF-8" };
+                var options = new CommandOptions(args);
+
+                // Act
+                bool result = options.ReadFileNameList();
+
+                // Assert
+                Assert.IsTrue(result);
+                Assert.AreEqual(1, options.Files.Length);
+                Assert.AreEqual(tempFile1, options.Files[0]);
+            }
+            finally
+            {
+                if (File.Exists(tempFile1)) File.Delete(tempFile1);
+            }
+        }
+
+        [TestMethod]
+        public void ReadFileNameList_WithCommandLineParameter_UsesSearchPattern()
+        {
+            // Arrange
+            string tempFile1 = "test_csv_" + Guid.NewGuid().ToString() + ".csv";
+            string tempFile2 = "test_csv_" + Guid.NewGuid().ToString() + ".csv";
+            
+            try
+            {
+                File.WriteAllText(tempFile1, "content1", Encoding.UTF8);
+                File.WriteAllText(tempFile2, "content2", Encoding.UTF8);
+                
+                string[] args = { "test_csv_*.csv", "/w:UTF-8" };
+                var options = new CommandOptions(args);
+
+                // Act
+                bool result = options.ReadFileNameList();
+
+                // Assert
+                Assert.IsTrue(result);
+                Assert.IsNotNull(options.Files);
+                Assert.IsTrue(options.Files.Length >= 2);
+            }
+            finally
+            {
+                if (File.Exists(tempFile1)) File.Delete(tempFile1);
+                if (File.Exists(tempFile2)) File.Delete(tempFile2);
+            }
+        }
+
+        #endregion
+
+        #region ヘルパーメソッド
 
         /// <summary>
-        /// �e�X�g�p�̃_�~�[�t�@�C��������CommandOptions�C���X�^���X���쐬
-        /// ParseCsvLine���\�b�h���e�X�g���邽�߂̃w���p�[�i�t�@�C���͍폜���Ȃ��j
+        /// テスト用のダミーファイルを持つCommandOptionsインスタンスを作成
+        /// ParseCsvLineメソッドをテストするためのヘルパー（ファイルは削除しない）
         /// </summary>
         private CommandOptions CreateCommandOptionsWithDummyFile()
         {
-            // ParseCsvLine���\�b�h�̓C���X�^���X���\�b�h�Ȃ̂ŁA
-            // CommandOptions�C���X�^���X���K�v�����A�t�@�C���̓ǂݍ��݂͕s�v
-            // �ŏ����̃I�v�V�����ŃC���X�^���X���쐬
+            // ParseCsvLineメソッドはインスタンスメソッドなので、
+            // CommandOptionsインスタンスが必要だが、ファイルの読み込みは不要
+            // 最小限のオプションでインスタンスを作成
             string[] args = { "*.txt", "/w:UTF-8" };
             return new CommandOptions(args);
         }

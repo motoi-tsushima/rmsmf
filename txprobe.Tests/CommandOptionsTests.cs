@@ -1,17 +1,16 @@
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using rmsmf;
 
-namespace rmsmf.Tests
+namespace txprobe.Tests
 {
     /// <summary>
-    /// CommandOptions クラスのテスト
+    /// txprobe CommandOptions クラスのテスト
     /// </summary>
     [TestClass]
     public class CommandOptionsTests
     {
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
         public void Constructor_WithNoParameters_ThrowsException()
         {
             // Arrange
@@ -27,18 +26,18 @@ namespace rmsmf.Tests
         public void Constructor_WithValidFileParameter_CreatesInstance()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8" };
+            string[] args = { "*.txt", "/c:UTF-8" };
 
             // Act
             var options = new CommandOptions(args);
 
             // Assert
             Assert.IsNotNull(options);
-            Assert.IsNotNull(options.WriteEncoding);
+            Assert.IsNotNull(options.ReadEncoding);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
         public void Constructor_WithMissingEncodingName_ThrowsException()
         {
             // Arrange
@@ -51,20 +50,7 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
-        public void Constructor_WithOnlyWriteOptionAndNoConversion_ThrowsException()
-        {
-            // Arrange
-            string[] args = { "*.txt" };  // 変換オプションがない
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert - Exception expected
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
         public void Constructor_WithFileListAndCommandLineFiles_ThrowsException()
         {
             // Arrange
@@ -74,113 +60,6 @@ namespace rmsmf.Tests
             var options = new CommandOptions(args);
 
             // Assert - Exception expected
-        }
-
-        [TestMethod]
-        public void Constructor_WithWriteCharacterSet_SetsEmptyWriteCharacterSetFalse()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/w:UTF-8" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.IsFalse(options.EmptyWriteCharacterSet);
-        }
-
-        [TestMethod]
-        public void Constructor_WithoutWriteCharacterSet_SetsEmptyWriteCharacterSetTrue()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/c:UTF-8", "/b:true" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.IsTrue(options.EmptyWriteCharacterSet);
-        }
-
-        [TestMethod]
-        public void Constructor_WithBomOptionTrue_SetsEnableBOMTrue()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/b:true" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.IsTrue(options.EnableBOM.HasValue);
-            Assert.IsTrue(options.EnableBOM.Value);
-        }
-
-        [TestMethod]
-        public void Constructor_WithBomOptionFalse_SetsEnableBOMFalse()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/b:false" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.IsTrue(options.EnableBOM.HasValue);
-            Assert.IsFalse(options.EnableBOM.Value);
-        }
-
-        [TestMethod]
-        public void Constructor_WithNewLineCRLF_SetsCorrectly()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/nl:crlf" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.AreEqual(CommandOptions.NewLineCRLF, options.WriteNewLine);
-        }
-
-        [TestMethod]
-        public void Constructor_WithNewLineLF_SetsCorrectly()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/nl:lf" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.AreEqual(CommandOptions.NewLineLF, options.WriteNewLine);
-        }
-
-        [TestMethod]
-        public void Constructor_WithNewLineCR_SetsCorrectly()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/nl:cr" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.AreEqual(CommandOptions.NewLineCR, options.WriteNewLine);
-        }
-
-        [TestMethod]
-        public void Constructor_WithAllDirectoriesOption_CreatesInstance()
-        {
-            // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/d" };
-
-            // Act
-            var options = new CommandOptions(args);
-
-            // Assert
-            Assert.IsNotNull(options);
-            Assert.IsNotNull(options.WriteEncoding);
         }
 
         [TestMethod]
@@ -213,7 +92,7 @@ namespace rmsmf.Tests
         public void Constructor_WithCultureInfoOption_DoesNotThrow()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/ci:en-US" };
+            string[] args = { "*.txt", "/c:UTF-8", "/ci:en-US" };
 
             // Act
             var options = new CommandOptions(args);
@@ -224,11 +103,11 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
         public void Constructor_WithInvalidCultureInfo_ThrowsException()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/ci:invalid-culture" };
+            string[] args = { "*.txt", "/c:UTF-8", "/ci:invalid-culture" };
 
             // Act
             var options = new CommandOptions(args);
@@ -237,11 +116,11 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
-        public void Constructor_WithNonExistentReplaceFile_ThrowsException()
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
+        public void Constructor_WithNonExistentSearchFile_ThrowsException()
         {
             // Arrange
-            string[] args = { "*.txt", "/r:nonexistent.csv" };
+            string[] args = { "*.txt", "/s:nonexistent.txt" };
 
             // Act
             var options = new CommandOptions(args);
@@ -250,11 +129,11 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
         public void Constructor_WithNonExistentFileList_ThrowsException()
         {
             // Arrange
-            string[] args = { "/f:nonexistent.txt", "/w:UTF-8" };
+            string[] args = { "/f:nonexistent.txt", "/c:UTF-8" };
 
             // Act
             var options = new CommandOptions(args);
@@ -263,17 +142,17 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
-        public void Constructor_WithReplaceWordsButNoTargetFiles_ThrowsException()
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
+        public void Constructor_WithSearchWordsButNoTargetFiles_ThrowsException()
         {
             // Arrange
-            // 置換単語ファイルは指定されているが、対象ファイルが指定されていない
-            string tempFile = System.IO.Path.GetTempFileName();
+            // 検索単語ファイルは指定されているが、対象ファイルが指定されていない
+            string tempFile = "test_search_" + System.Guid.NewGuid().ToString() + ".txt";
             
             try
             {
-                System.IO.File.WriteAllText(tempFile, "search,replace", System.Text.Encoding.UTF8);
-                string[] args = { $"/r:{tempFile}" };
+                System.IO.File.WriteAllText(tempFile, "search", System.Text.Encoding.UTF8);
+                string[] args = { $"/s:{tempFile}" };
 
                 // Act
                 var options = new CommandOptions(args);
@@ -290,11 +169,11 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
-        public void Constructor_WithReplaceWordsEncodingButNoReplaceFile_ThrowsException()
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
+        public void Constructor_WithSearchWordsEncodingButNoSearchFile_ThrowsException()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/rc:UTF-8" };
+            string[] args = { "*.txt", "/c:UTF-8", "/sc:UTF-8" };
 
             // Act
             var options = new CommandOptions(args);
@@ -303,11 +182,11 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RmsmfException))]
+        [ExpectedException(typeof(rmsmf.RmsmfException))]
         public void Constructor_WithFileListEncodingButNoFileList_ThrowsException()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/fc:UTF-8" };
+            string[] args = { "*.txt", "/c:UTF-8", "/fc:UTF-8" };
 
             // Act
             var options = new CommandOptions(args);
@@ -319,7 +198,7 @@ namespace rmsmf.Tests
         public void Constructor_WithJudgmentModeNormal_SetsCorrectly()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/j" };
+            string[] args = { "*.txt", "/c:UTF-8", "/j" };
 
             // Act
             var options = new CommandOptions(args);
@@ -332,7 +211,7 @@ namespace rmsmf.Tests
         public void Constructor_WithJudgmentModeFirstParty_SetsCorrectly()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/j:1" };
+            string[] args = { "*.txt", "/c:UTF-8", "/j:1" };
 
             // Act
             var options = new CommandOptions(args);
@@ -345,7 +224,7 @@ namespace rmsmf.Tests
         public void Constructor_WithJudgmentModeThirdParty_SetsCorrectly()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/j:3" };
+            string[] args = { "*.txt", "/c:UTF-8", "/j:3" };
 
             // Act
             var options = new CommandOptions(args);
@@ -355,21 +234,47 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        public void Constructor_WithReplaceWordsFile_SetsReplaceWordsFileName()
+        public void Constructor_WithProbeMode_EnablesProbeModeExplicitly()
         {
             // Arrange
-            string tempFile = "test_replace_" + System.Guid.NewGuid().ToString() + ".csv";
+            string[] args = { "*.txt", "/c:UTF-8", "/p" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.IsTrue(options.EnableProbe);
+        }
+
+        [TestMethod]
+        public void Constructor_WithoutSearchWords_EnablesProbeModeImplicitly()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/c:UTF-8" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.IsTrue(options.EnableProbe);
+        }
+
+        [TestMethod]
+        public void Constructor_WithSearchWordsFile_SetsSearchWordsFileName()
+        {
+            // Arrange
+            string tempFile = "test_search_" + System.Guid.NewGuid().ToString() + ".txt";
             
             try
             {
-                System.IO.File.WriteAllText(tempFile, "search,replace", System.Text.Encoding.UTF8);
-                string[] args = { "*.txt", $"/r:{tempFile}" };
+                System.IO.File.WriteAllText(tempFile, "search", System.Text.Encoding.UTF8);
+                string[] args = { "*.txt", $"/s:{tempFile}" };
 
                 // Act
                 var options = new CommandOptions(args);
 
                 // Assert
-                Assert.AreEqual(tempFile, options.ReplaceWordsFileName);
+                Assert.AreEqual(tempFile, options.SearchWordsFileName);
             }
             finally
             {
@@ -389,7 +294,7 @@ namespace rmsmf.Tests
             try
             {
                 System.IO.File.WriteAllText(tempFile, "file1.txt", System.Text.Encoding.UTF8);
-                string[] args = { $"/f:{tempFile}", "/w:UTF-8" };
+                string[] args = { $"/f:{tempFile}", "/c:UTF-8" };
 
                 // Act
                 var options = new CommandOptions(args);
@@ -407,35 +312,71 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        public void Constructor_WithReadAndWriteEncoding_SetsEncodingsCorrectly()
+        public void Constructor_WithOutputFileNameList_SetsOutputFileNameListFileName()
         {
             // Arrange
-            string[] args = { "*.txt", "/c:UTF-8", "/w:shift_jis" };
+            string[] args = { "*.txt", "/c:UTF-8", "/o:output.txt" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.AreEqual("output.txt", options.OutputFileNameListFileName);
+        }
+
+        [TestMethod]
+        public void Constructor_WithOutputFileNameListNoValue_UsesDefaultFileName()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/c:UTF-8", "/o" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.AreEqual("output_filelist.txt", options.OutputFileNameListFileName);
+        }
+
+        [TestMethod]
+        public void Constructor_WithAllDirectoriesOption_CreatesInstance()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/c:UTF-8", "/d" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.IsNotNull(options);
+            Assert.IsNotNull(options.ReadEncoding);
+        }
+
+        [TestMethod]
+        public void Constructor_WithReadEncoding_SetsEncodingsCorrectly()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/c:UTF-8" };
 
             // Act
             var options = new CommandOptions(args);
 
             // Assert
             Assert.IsNotNull(options.ReadEncoding);
-            Assert.IsNotNull(options.WriteEncoding);
             Assert.AreEqual("utf-8", options.ReadEncoding.WebName);
-            Assert.AreEqual("shift_jis", options.WriteEncoding.WebName);
         }
 
         [TestMethod]
         public void Constructor_WithCodePageEncoding_SetsEncodingsCorrectly()
         {
             // Arrange
-            string[] args = { "*.txt", "/c:65001", "/w:932" };
+            string[] args = { "*.txt", "/c:65001" };
 
             // Act
             var options = new CommandOptions(args);
 
             // Assert
             Assert.IsNotNull(options.ReadEncoding);
-            Assert.IsNotNull(options.WriteEncoding);
             Assert.AreEqual(65001, options.ReadEncoding.CodePage);
-            Assert.AreEqual(932, options.WriteEncoding.CodePage);
         }
     }
 }
