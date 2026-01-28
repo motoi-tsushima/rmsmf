@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ColipexTests.cs" />
+    <Compile Include="CsvParsingTests.cs" />
     <Compile Include="OptionValidatorTests.cs" />
     <Compile Include="CommandOptionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -67,7 +68,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>‚±‚ÌƒvƒƒWƒFƒNƒg‚ÍA‚±‚ÌƒRƒ“ƒsƒ…[ƒ^[ã‚É‚È‚¢ NuGet ƒpƒbƒP[ƒW‚ðŽQÆ‚µ‚Ä‚¢‚Ü‚·B‚»‚ê‚ç‚ÌƒpƒbƒP[ƒW‚ðƒ_ƒEƒ“ƒ[ƒh‚·‚é‚É‚ÍA[NuGet ƒpƒbƒP[ƒW‚Ì•œŒ³] ‚ðŽg—p‚µ‚Ü‚·BÚ×‚É‚Â‚¢‚Ä‚ÍAhttp://go.microsoft.com/fwlink/?LinkID=322105 ‚ðŽQÆ‚µ‚Ä‚­‚¾‚³‚¢BŒ©‚Â‚©‚ç‚È‚¢ƒtƒ@ƒCƒ‹‚Í {0} ‚Å‚·B</ErrorText>
+      <ErrorText>ï¿½ï¿½ï¿½Ìƒvï¿½ï¿½ï¿½Wï¿½Fï¿½Nï¿½gï¿½ÍAï¿½ï¿½ï¿½ÌƒRï¿½ï¿½ï¿½sï¿½ï¿½ï¿½[ï¿½^ï¿½[ï¿½ï¿½É‚È‚ï¿½ NuGet ï¿½pï¿½bï¿½Pï¿½[ï¿½Wï¿½ï¿½Qï¿½Æ‚ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½Bï¿½ï¿½ï¿½ï¿½ï¿½Ìƒpï¿½bï¿½Pï¿½[ï¿½Wï¿½ï¿½_ï¿½Eï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½É‚ÍA[NuGet ï¿½pï¿½bï¿½Pï¿½[ï¿½Wï¿½Ì•ï¿½ï¿½ï¿½] ï¿½ï¿½gï¿½pï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Bï¿½Ú×‚É‚Â‚ï¿½ï¿½Ä‚ÍAhttp://go.microsoft.com/fwlink/?LinkID=322105 ï¿½ï¿½Qï¿½Æ‚ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Bï¿½ï¿½ï¿½Â‚ï¿½ï¿½ï¿½È‚ï¿½ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ {0} ï¿½Å‚ï¿½ï¿½B</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\MSTest.TestAdapter.2.2.10\build\net46\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.2.2.10\build\net46\MSTest.TestAdapter.props'))" />
     <Error Condition="!Exists('..\packages\MSTest.TestAdapter.2.2.10\build\net46\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.2.2.10\build\net46\MSTest.TestAdapter.targets'))" />

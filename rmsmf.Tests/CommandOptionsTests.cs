@@ -20,7 +20,7 @@ namespace rmsmf.Tests
             // Act
             var options = new CommandOptions(args);
 
-            // Assert - Exception expected
+            // Assert - Exception expected (MissingTargetFileName)
         }
 
         [TestMethod]
@@ -181,6 +181,138 @@ namespace rmsmf.Tests
             // Assert
             Assert.IsNotNull(options);
             Assert.IsNotNull(options.WriteEncoding);
+        }
+
+        [TestMethod]
+        public void Constructor_WithHelpOption_SetsHelpOrVersionDisplayed()
+        {
+            // Arrange
+            string[] args = { "/h" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.IsTrue(options.HelpOrVersionDisplayed);
+        }
+
+        [TestMethod]
+        public void Constructor_WithVersionOption_SetsHelpOrVersionDisplayed()
+        {
+            // Arrange
+            string[] args = { "/v" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.IsTrue(options.HelpOrVersionDisplayed);
+        }
+
+        [TestMethod]
+        public void Constructor_WithCultureInfoOption_DoesNotThrow()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/w:UTF-8", "/ci:en-US" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert
+            Assert.IsNotNull(options);
+            Assert.AreEqual("en-US", options.CultureInfo);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(RmsmfException))]
+        public void Constructor_WithInvalidCultureInfo_ThrowsException()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/w:UTF-8", "/ci:invalid-culture" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert - Exception expected
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(RmsmfException))]
+        public void Constructor_WithNonExistentReplaceFile_ThrowsException()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/r:nonexistent.csv" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert - Exception expected
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(RmsmfException))]
+        public void Constructor_WithNonExistentFileList_ThrowsException()
+        {
+            // Arrange
+            string[] args = { "/f:nonexistent.txt", "/w:UTF-8" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert - Exception expected
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(RmsmfException))]
+        public void Constructor_WithReplaceWordsButNoTargetFiles_ThrowsException()
+        {
+            // Arrange
+            // 置換単語ファイルは指定されているが、対象ファイルが指定されていない
+            string tempFile = System.IO.Path.GetTempFileName();
+            
+            try
+            {
+                System.IO.File.WriteAllText(tempFile, "search,replace", System.Text.Encoding.UTF8);
+                string[] args = { $"/r:{tempFile}" };
+
+                // Act
+                var options = new CommandOptions(args);
+
+                // Assert - Exception expected
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempFile))
+                {
+                    System.IO.File.Delete(tempFile);
+                }
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(RmsmfException))]
+        public void Constructor_WithReplaceWordsEncodingButNoReplaceFile_ThrowsException()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/w:UTF-8", "/rc:UTF-8" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert - Exception expected
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(RmsmfException))]
+        public void Constructor_WithFileListEncodingButNoFileList_ThrowsException()
+        {
+            // Arrange
+            string[] args = { "*.txt", "/w:UTF-8", "/fc:UTF-8" };
+
+            // Act
+            var options = new CommandOptions(args);
+
+            // Assert - Exception expected
         }
     }
 }

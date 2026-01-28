@@ -144,7 +144,7 @@ namespace rmsmf
                 readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (readCharacterSet == Colipex.NonValue)
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingName, "c"));
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/c)");
                 }
             }
             else
@@ -159,7 +159,7 @@ namespace rmsmf
                 writeCharacterSet = this.Options[OptionWriteCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (writeCharacterSet == Colipex.NonValue)
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingName, "w"));
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/w)");
                 }
                 this.EmptyWriteCharacterSet = false;
             }
@@ -176,7 +176,7 @@ namespace rmsmf
                 replaceWordsCharacterSet = this.Options[OptionReplaceWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (replaceWordsCharacterSet == Colipex.NonValue)
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingName, "rc"));
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/rc)");
                 }
             }
             else
@@ -191,7 +191,7 @@ namespace rmsmf
                 filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (filesCharacterSet == Colipex.NonValue)
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingName, "fc"));
+                    throw new RmsmfException("文字エンコーディング名を指定してください。 (/fc)");
                 }
             }
             else
@@ -340,14 +340,14 @@ namespace rmsmf
             {
                 if (this.Options[OptionReplaceWords] == Colipex.NonValue)
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.MissingOptionFileName, "r"));
+                    throw new RmsmfException("/r オプションのファイル名を指定してください。");
                 }
 
                 this._replaceWordsFileName = this.Options[OptionReplaceWords].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._replaceWordsFileName))
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.FileNotFound, this._replaceWordsFileName));
+                    throw new RmsmfException(this._replaceWordsFileName + " が存在しません。");
                 }
             }
 
@@ -356,14 +356,14 @@ namespace rmsmf
             {
                 if (this.Options[OptionFileNameList] == Colipex.NonValue)
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.MissingOptionFileName, "f"));
+                    throw new RmsmfException("/f オプションのファイル名を指定してください。");
                 }
 
                 this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.FileNotFound, this._fileNameListFileName));
+                    throw new RmsmfException(this._fileNameListFileName + " が存在しません。");
                 }
             }
         }
@@ -468,11 +468,18 @@ namespace rmsmf
                 return false;
             }
 
+            // ファイルサイズのチェック（空ファイルの早期検出）
+            // UTF-8 BOMのみのファイル（3バイト以下）も空とみなす
+            FileInfo fileInfo = new FileInfo(this._replaceWordsFileName);
+            if (fileInfo.Length <= 3)
+            {
+                throw new RmsmfException(this._replaceWordsFileName + "の置換単語がゼロ件です。");
+            }
+
             // エンコーディングの判定と設定
             EnsureEncodingInitialized(
                 ref this._replaceEncoding, 
-                this._replaceWordsFileName, 
-                ValidationMessages.UnknownEncoding);
+                this._replaceWordsFileName);
 
             // ファイルから行を読み込み
             List<string> lines = LoadReplaceWordsFromFile();
@@ -480,7 +487,7 @@ namespace rmsmf
             // 空チェック
             if (lines.Count == 0)
             {
-                throw new RmsmfException(string.Format(ValidationMessages.EmptyReplaceWords, this._replaceWordsFileName));
+                throw new RmsmfException(this._replaceWordsFileName + "の置換単語がゼロ件です。");
             }
 
             // 置換単語テーブルへ登録
@@ -531,7 +538,7 @@ namespace rmsmf
                 // 入力検証: カンマ区切りで2つの要素が必要
                 if (columns.Length < 2)
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.InvalidReplaceWordFormat, i + 1));
+                    throw new RmsmfException("置換単語ファイルの" + (i + 1) + "行目が不正です。カンマ区切りで「検索文字列,置換文字列」の形式で指定してください。");
                 }
 
                 this._replaceWords[0, i] = columns[0];
@@ -546,7 +553,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="line">CSV行</param>
         /// <returns>フィールドの配列</returns>
-        private string[] ParseCsvLine(string line)
+        internal string[] ParseCsvLine(string line)
         {
             List<string> fields = new List<string>();
             StringBuilder currentField = new StringBuilder();
@@ -663,7 +670,7 @@ namespace rmsmf
                 }
                 else
                 {
-                    throw new RmsmfException(string.Format(ValidationMessages.UnknownEncoding, this._fileNameListFileName));
+                    throw new RmsmfException(this._fileNameListFileName + "の文字エンコーディングが分かりません。");
                 }
             }
 

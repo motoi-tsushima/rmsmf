@@ -421,8 +421,7 @@ namespace txprobe
             // エンコーディングの判定と設定
             EnsureEncodingInitialized(
                 ref this._replaceEncoding, 
-                this._searchWordsFileName, 
-                rmsmf.ValidationMessages.UnknownEncoding);
+                this._searchWordsFileName);
 
             // ファイルから行を読み込み
             List<string> lines = LoadSearchWordsFromFile();

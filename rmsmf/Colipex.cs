@@ -140,8 +140,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="encoding">エンコーディング（参照渡し）</param>
         /// <param name="fileName">判定対象のファイル名</param>
-        /// <param name="errorMessage">エラーメッセージのフォーマット</param>
-        protected void EnsureEncodingInitialized(ref Encoding encoding, string fileName, string errorMessage)
+        protected void EnsureEncodingInitialized(ref Encoding encoding, string fileName)
         {
             if (encoding == null)
             {
@@ -154,7 +153,8 @@ namespace rmsmf
                 }
                 else
                 {
-                    throw new RmsmfException(string.Format(errorMessage, fileName));
+                    // string.Formatを使わず、直接文字列連結
+                    throw new RmsmfException(fileName + "の文字エンコーディングが分かりません。");
                 }
             }
         }
