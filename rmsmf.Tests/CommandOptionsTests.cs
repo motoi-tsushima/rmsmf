@@ -319,7 +319,7 @@ namespace rmsmf.Tests
         public void Constructor_WithDetectionModeNormal_SetsCorrectly()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/j" };
+            string[] args = { "*.txt", "/w:UTF-8", "/det" };
 
             // Act
             var options = new CommandOptions(args);
@@ -332,7 +332,7 @@ namespace rmsmf.Tests
         public void Constructor_WithDetectionModeFirstParty_SetsCorrectly()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/j:1" };
+            string[] args = { "*.txt", "/w:UTF-8", "/det:1" };
 
             // Act
             var options = new CommandOptions(args);
@@ -345,7 +345,7 @@ namespace rmsmf.Tests
         public void Constructor_WithDetectionModeThirdParty_SetsCorrectly()
         {
             // Arrange
-            string[] args = { "*.txt", "/w:UTF-8", "/j:3" };
+            string[] args = { "*.txt", "/w:UTF-8", "/det:3" };
 
             // Act
             var options = new CommandOptions(args);
