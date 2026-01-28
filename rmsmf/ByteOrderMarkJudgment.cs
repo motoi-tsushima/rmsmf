@@ -8,7 +8,7 @@ namespace rmsmf
     /// <summary>
     /// BOM（Byte Order Mark）の判定を行うクラス
     /// </summary>
-    public class ByteOrderMarkJudgment
+    public class ByteOrderMarkDetection
     {
         /// <summary>UTF-8のBOM</summary>
         private static readonly byte[] _bomUtf8 = { 0xEF, 0xBB, 0xBF };
@@ -76,7 +76,7 @@ namespace rmsmf
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public ByteOrderMarkJudgment()
+        public ByteOrderMarkDetection()
         {
 
         }

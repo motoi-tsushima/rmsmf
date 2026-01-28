@@ -96,7 +96,7 @@
     <Compile Include="ByteOrderMarkJudgment.cs" />
     <Compile Include="Colipex.cs" />
     <Compile Include="CommandOptions.cs" />
-    <Compile Include="EncodingJudgment.cs" />
+    <Compile Include="EncodingDetector.cs" />
     <Compile Include="ExecutionState.cs" />
     <Compile Include="Help.cs" />
     <Compile Include="HelpMessages.cs" />

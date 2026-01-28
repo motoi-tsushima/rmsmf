@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -7,7 +7,7 @@ namespace rmsmf
 {
     public class CommandOptions : Colipex
     {
-        private const string CharacterSetJudgment = "Judgment";
+        private const string CharacterSetDetection = "Detection";
         private const string OptionHelp = "h";
         private const string OptionCharacterSet = "c";
         private const string OptionWriteCharacterSet = "w";
@@ -18,7 +18,7 @@ namespace rmsmf
         private const string OptionWriteByteOrderMark = "b";
         private const string OptionAllDirectories = "d";
         private const string OptionNewLine = "nl";
-        private const string OptionJudgmentMode = "j";
+        private const string OptionDetectionMode = "j";
         private const string OptionCultureInfo = "ci";
 
         public static readonly string NewLineCRLF = "CRLF";
@@ -149,7 +149,7 @@ namespace rmsmf
             }
             else
             {
-                readCharacterSet = CharacterSetJudgment;
+                readCharacterSet = CharacterSetDetection;
             }
 
             //Setting Write CharacterSet 
@@ -199,35 +199,35 @@ namespace rmsmf
                 filesCharacterSet = readCharacterSet;
             }
 
-            //Setting Encoding Judgment Mode
+            //Setting Encoding Detection Mode
             //文字エンコーディング自動判定モードを設定する。
-            if (this.IsOption(OptionJudgmentMode))
+            if (this.IsOption(OptionDetectionMode))
             {
                 string encJMode = string.Empty;
-                encJMode = this.Options[OptionJudgmentMode].TrimEnd(new char[] { '\x0a', '\x0d' });
+                encJMode = this.Options[OptionDetectionMode].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (encJMode == Colipex.NonValue)
                 {
-                    _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                    _encodingDetectionMode = EncodingDetectionType.Normal;
                 }
                 else
                 {
                     if (encJMode == "1")
                     {
-                        _encodingJudgmentMode = EncodingJudgmentType.FirstParty;
+                        _encodingDetectionMode = EncodingDetectionType.FirstParty;
                     }
                     else if (encJMode == "3")
                     {
-                        _encodingJudgmentMode = EncodingJudgmentType.ThirdParty;
+                        _encodingDetectionMode = EncodingDetectionType.ThirdParty;
                     }
                     else
                     {
-                        _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                        _encodingDetectionMode = EncodingDetectionType.Normal;
                     }
                 }
             }
             else
             {
-                _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                _encodingDetectionMode = EncodingDetectionType.Normal;
             }
 
         }
@@ -315,10 +315,10 @@ namespace rmsmf
         {
             try
             {
-                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetJudgment);
-                this.WriteEncoding = ResolveEncoding(writeCharacterSet, CharacterSetJudgment);
-                this.ReplaceEncoding = ResolveEncoding(replaceWordsCharacterSet, CharacterSetJudgment);
-                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetJudgment);
+                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetDetection);
+                this.WriteEncoding = ResolveEncoding(writeCharacterSet, CharacterSetDetection);
+                this.ReplaceEncoding = ResolveEncoding(replaceWordsCharacterSet, CharacterSetDetection);
+                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetDetection);
             }
             catch (ArgumentException ex)
             {
@@ -661,8 +661,8 @@ namespace rmsmf
             if (this.FilesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
-                EncodingJudgment encJudg = new EncodingJudgment(0);
-                EncodingInfomation encInfo = encJudg.Judgment(this._fileNameListFileName);
+                EncodingDetector encDetec = new EncodingDetector(0);
+                EncodingInfomation encInfo = encDetec.Detection(this._fileNameListFileName);
 
                 if (encInfo.CodePage > 0)
                 {
@@ -901,20 +901,20 @@ namespace rmsmf
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        private EncodingJudgmentType _encodingJudgmentMode = EncodingJudgmentType.Normal;
+        private EncodingDetectionType _encodingDetectionMode = EncodingDetectionType.Normal;
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        public EncodingJudgmentType EncodingJudgmentMode
+        public EncodingDetectionType EncodingDetectionMode
         {
-            get { return _encodingJudgmentMode; }
-            private set { _encodingJudgmentMode = value; }
+            get { return _encodingDetectionMode; }
+            private set { _encodingDetectionMode = value; }
         }
 
         /// <summary>
         /// 文字エンコーディングの自動判定モードタイプ
         /// </summary>
-        public enum EncodingJudgmentType
+        public enum EncodingDetectionType
         {
             Normal = 0,
             FirstParty = 1,

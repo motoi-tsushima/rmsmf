@@ -24,7 +24,7 @@ namespace rmsmf.Tests
                 return ConvertEscapeSequences(input);
             }
 
-            public Encoding TestResolveEncoding(string encodingNameOrCodePage, string judgmentKeyword = "Judgment")
+            public Encoding TestResolveEncoding(string encodingNameOrCodePage, string judgmentKeyword = "Detection")
             {
                 return ResolveEncoding(encodingNameOrCodePage, judgmentKeyword);
             }
@@ -273,13 +273,13 @@ namespace rmsmf.Tests
         #region ResolveEncoding Tests
 
         [TestMethod]
-        public void ResolveEncoding_WithJudgmentKeyword_ReturnsNull()
+        public void ResolveEncoding_WithDetectionKeyword_ReturnsNull()
         {
             // Arrange
             var helper = new ColipexTestHelper(new string[] { });
 
             // Act
-            Encoding result = helper.TestResolveEncoding("Judgment");
+            Encoding result = helper.TestResolveEncoding("Detection");
 
             // Assert
             Assert.IsNull(result);

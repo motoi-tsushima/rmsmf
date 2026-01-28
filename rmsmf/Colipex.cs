@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -119,8 +119,8 @@ namespace rmsmf
         /// エンコーディング名またはコードページからEncodingオブジェクトを取得
         /// </summary>
         /// <param name="encodingNameOrCodePage">エンコーディング名またはコードページ</param>
-        /// <returns>Encodingオブジェクト、"Judgment"の場合はnull</returns>
-        protected Encoding ResolveEncoding(string encodingNameOrCodePage, string judgmentKeyword = "Judgment")
+        /// <returns>Encodingオブジェクト、"Detection"の場合はnull</returns>
+        protected Encoding ResolveEncoding(string encodingNameOrCodePage, string judgmentKeyword = "Detection")
         {
             if (encodingNameOrCodePage == judgmentKeyword)
             {
@@ -144,8 +144,8 @@ namespace rmsmf
         {
             if (encoding == null)
             {
-                EncodingJudgment encJudg = new EncodingJudgment(0);
-                EncodingInfomation encInfo = encJudg.Judgment(fileName);
+                EncodingDetector encDetec = new EncodingDetector(0);
+                EncodingInfomation encInfo = encDetec.Detection(fileName);
 
                 if (encInfo.CodePage > 0)
                 {

@@ -30,16 +30,16 @@ namespace rmsmf
         public string EncodingVariant { get; set; }
     }
 
-    public static class EncodingJudgmentControl
+    public static class EncodingDetectorControl
     {
-        public static EncodingInfomation JudgeEncoding(byte[] buffer)
+        public static EncodingInfomation DetectEncoding(byte[] buffer)
         {
             EncodingInfomation encInfo;
-            EncodingJudgment encJudg = new EncodingJudgment(buffer);
-            encInfo = encJudg.Judgment();
+            EncodingDetector encDetec = new EncodingDetector(buffer);
+            encInfo = encDetec.Detection();
             return encInfo;
         }
-        public static EncodingInfomation JudgeUtfUnknown(byte[] buffer)
+        public static EncodingInfomation DetectUtfUnknown(byte[] buffer)
         {
             EncodingInfomation encInfo = new EncodingInfomation();
 
@@ -78,14 +78,14 @@ namespace rmsmf
             return encInfo;
         }
 
-        public static EncodingInfomation NormalJudgeEncoding(byte[] buffer)
+        public static EncodingInfomation NormalDetectEncoding(byte[] buffer)
         {
             EncodingInfomation encInfo;
 
-            encInfo = JudgeEncoding(buffer);
+            encInfo = DetectEncoding(buffer);
             if (encInfo.CodePage < 0)
             {
-                encInfo = JudgeUtfUnknown(buffer);
+                encInfo = DetectUtfUnknown(buffer);
             }
             return encInfo;
         }
@@ -94,7 +94,7 @@ namespace rmsmf
     /// <summary>
     /// 文字エンコーディング判定
     /// </summary>
-    public class EncodingJudgment
+    public class EncodingDetector
     {
         /// <summary>コードページ：US-ASCII</summary>
         private const int CodePageAscii = 20127;
@@ -173,7 +173,7 @@ namespace rmsmf
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public EncodingJudgment(int filesize)
+        public EncodingDetector(int filesize)
         {
             if(filesize <= 0)
             {
@@ -190,7 +190,7 @@ namespace rmsmf
         /// バッファを呼び主が与えるコンストラクタ
         /// </summary>
         /// <param name="buffer"></param>
-        public EncodingJudgment(byte[] buffer)
+        public EncodingDetector(byte[] buffer)
         {
             this._buffer = buffer;
             this.BufferSize = buffer.Length;
@@ -296,7 +296,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="fileName">ファイル名</param>
         /// <returns>文字エンコーディング判定情報</returns>
-        public EncodingInfomation Judgment(string fileName)
+        public EncodingInfomation Detection(string fileName)
         {
             EncodingInfomation encInfo = null;
 
@@ -319,9 +319,9 @@ namespace rmsmf
 
                 int readCount = fs.Read(this._buffer, 0, this.BufferSize);
 
-                encInfo = Judgment();
+                encInfo = Detection();
 
-                //Console.WriteLine("EncodingJudgment : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
+                //Console.WriteLine("EncodingDetector : Encoding = {0} , Codepage = {1} , BOM = {2}", encInfo.encodingName, encInfo.codePage, encInfo.bom);
             }
 
             return encInfo;
@@ -331,11 +331,11 @@ namespace rmsmf
         /// 判定実行
         /// </summary>
         /// <returns>文字エンコーディング判定情報</returns>
-        public EncodingInfomation Judgment()
+        public EncodingInfomation Detection()
         {
             bool outOfSpecification;
             EncodingInfomation encInfo = new EncodingInfomation();
-            ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
+            ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
 
             // BOMチェック
             if (bomJudg.IsBOM(this._buffer))
@@ -354,7 +354,7 @@ namespace rmsmf
             // ISO-2022 または ASCII 判定
             bool isISO2022;
             int iso2022CodePage;
-            outOfSpecification = ISO2022_Judgment(out isISO2022, out iso2022CodePage);
+            outOfSpecification = ISO2022_Detection(out isISO2022, out iso2022CodePage);
 
             if (outOfSpecification == false)
             {
@@ -376,7 +376,7 @@ namespace rmsmf
 
             // UTF-32 判定（UTF-16より先に判定）
             bool isLittleEndian32;
-            outOfSpecification = Utf32_Judgment(out isLittleEndian32);
+            outOfSpecification = Utf32_Detection(out isLittleEndian32);
 
             if (outOfSpecification == false)
             {
@@ -396,7 +396,7 @@ namespace rmsmf
 
             // UTF-16 判定
             bool isLittleEndian16;
-            outOfSpecification = Utf16_Judgment(out isLittleEndian16);
+            outOfSpecification = Utf16_Detection(out isLittleEndian16);
 
             if (outOfSpecification == false)
             {
@@ -415,7 +415,7 @@ namespace rmsmf
             }
 
             // UTF-8 判定
-            outOfSpecification = Utf8_Judgment();
+            outOfSpecification = Utf8_Detection();
 
             if (outOfSpecification == false)
             {
@@ -435,7 +435,7 @@ namespace rmsmf
                 
                 // CP936/GB18030 判定
                 int cpxxxCodePage;
-                outOfSpecification = CPxxx_Judgment(out cpxxxCodePage);
+                outOfSpecification = CPxxx_Detection(out cpxxxCodePage);
 
                 if (outOfSpecification == false)
                 {
@@ -451,7 +451,7 @@ namespace rmsmf
                 
                 // EUC 判定 (EUC-JP/KR/TW)
                 int eucCodePage;
-                outOfSpecification = EUCxx_Judgment(out eucCodePage);
+                outOfSpecification = EUCxx_Detection(out eucCodePage);
 
                 if (outOfSpecification == false)
                 {
@@ -464,7 +464,7 @@ namespace rmsmf
 
                 // CPxxx 判定（カルチャー別）
                 int cpxxxCodePage;
-                outOfSpecification = CPxxx_Judgment(out cpxxxCodePage);
+                outOfSpecification = CPxxx_Detection(out cpxxxCodePage);
 
                 if (outOfSpecification == false)
                 {
@@ -513,7 +513,7 @@ namespace rmsmf
         /// <param name="isISO2022">true=ISO-2022である(出力引数)</param>
         /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
         /// <returns>true=ISO-2022又はASCIIでは無い</returns>
-        public bool ISO2022_Judgment(out bool isISO2022, out int codePage)
+        public bool ISO2022_Detection(out bool isISO2022, out int codePage)
         {
             codePage = -1;
             isISO2022 = false;
@@ -697,7 +697,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="isLittleEndian">true=Little Endian、false=Big Endian(出力引数)</param>
         /// <returns>true=UTF-16では無い</returns>
-        public bool Utf16_Judgment(out bool isLittleEndian)
+        public bool Utf16_Detection(out bool isLittleEndian)
         {
             isLittleEndian = true;
             bool outOfSpecification = false;
@@ -887,7 +887,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="isLittleEndian">true=Little Endian、false=Big Endian(出力引数)</param>
         /// <returns>true=UTF-32では無い</returns>
-        public bool Utf32_Judgment(out bool isLittleEndian)
+        public bool Utf32_Detection(out bool isLittleEndian)
         {
             isLittleEndian = true;
             bool outOfSpecification = false;
@@ -1063,7 +1063,7 @@ namespace rmsmf
         /// UTF8であるか判定する
         /// </summary>
         /// <returns>true=UTF8では無い</returns>
-        public bool Utf8_Judgment()
+        public bool Utf8_Detection()
         {
             bool outOfSpecification;
 
@@ -1234,7 +1234,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
         /// <returns>true=EUCでは無い</returns>
-        public bool EUCxx_Judgment(out int codePage)
+        public bool EUCxx_Detection(out int codePage)
         {
             // カルチャー情報から判定対象のEUCを決定
             int targetEucCodePage = GetEucCodePageFromCulture();
@@ -1443,7 +1443,7 @@ namespace rmsmf
         /// Shift-JIS であるか判定する
         /// </summary>
         /// <returns>true=Shift-JISでは無い</returns>
-        public bool SJIS_Judgment()
+        public bool SJIS_Detection()
         {
             bool outOfSpecification = false; ;
             SJIS_BYTECODE beforeSjisByte = SJIS_BYTECODE.OneByteCode;
@@ -1547,7 +1547,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="codePage">判別した文字エンコーディングのコードページ（判別できない場合は-1）</param>
         /// <returns>true=CPxxxでは無い</returns>
-        public bool CPxxx_Judgment(out int codePage)
+        public bool CPxxx_Detection(out int codePage)
         {
             codePage = -1;
             bool outOfSpecification = true;
@@ -1561,7 +1561,7 @@ namespace rmsmf
                 if (cultureName.StartsWith("ja", StringComparison.OrdinalIgnoreCase))
                 {
                     // 日本 -> CP932 (Shift_JIS)
-                    outOfSpecification = SJIS_Judgment();
+                    outOfSpecification = SJIS_Detection();
                     if (!outOfSpecification)
                     {
                         codePage = CodePageShiftJis;
@@ -1570,7 +1570,7 @@ namespace rmsmf
                 else if (cultureName.StartsWith("ko", StringComparison.OrdinalIgnoreCase))
                 {
                     // 韓国 -> CP949
-                    outOfSpecification = CP949_Judgment();
+                    outOfSpecification = CP949_Detection();
                     if (!outOfSpecification)
                     {
                         codePage = CodePageCp949;
@@ -1582,7 +1582,7 @@ namespace rmsmf
                 {
                     // 中国（簡体字） -> CP936 / GB18030
                     int cp936CodePage;
-                    outOfSpecification = CP936_Judgment(out cp936CodePage);
+                    outOfSpecification = CP936_Detection(out cp936CodePage);
                     if (!outOfSpecification)
                     {
                         codePage = cp936CodePage;
@@ -1592,7 +1592,7 @@ namespace rmsmf
                          cultureName.Equals("zh-Hant", StringComparison.OrdinalIgnoreCase))
                 {
                     // 台湾（繁体字） -> CP950
-                    outOfSpecification = CP950_Judgment();
+                    outOfSpecification = CP950_Detection();
                     if (!outOfSpecification)
                     {
                         codePage = CodePageCp950;
@@ -1602,7 +1602,7 @@ namespace rmsmf
                          cultureName.Equals("zh-MO", StringComparison.OrdinalIgnoreCase))
                 {
                     // 香港（繁体字） -> CP950
-                    outOfSpecification = CP950_Judgment();
+                    outOfSpecification = CP950_Detection();
                     if (!outOfSpecification)
                     {
                         codePage = CodePageCp950;
@@ -1631,7 +1631,7 @@ namespace rmsmf
         /// CP949 (韓国) であるか判定する
         /// </summary>
         /// <returns>true=CP949では無い</returns>
-        public bool CP949_Judgment()
+        public bool CP949_Detection()
         {
             bool outOfSpecification = false;
             CP949_BYTECODE beforeByte = CP949_BYTECODE.OneByteCode;
@@ -1712,7 +1712,7 @@ namespace rmsmf
         /// </summary>
         /// <param name="codePage">CP936 or GB18030</param>
         /// <returns>true=CP936/GB18030では無い</returns>
-        public bool CP936_Judgment(out int codePage)
+        public bool CP936_Detection(out int codePage)
         {
             codePage = -1;
             bool outOfSpecification = false;
@@ -1829,7 +1829,7 @@ namespace rmsmf
         /// CP950 (Big5, 台湾・香港) であるか判定する
         /// </summary>
         /// <returns>true=CP950では無い</returns>
-        public bool CP950_Judgment()
+        public bool CP950_Detection()
         {
             bool outOfSpecification = false;
             CP950_BYTECODE beforeByte = CP950_BYTECODE.OneByteCode;

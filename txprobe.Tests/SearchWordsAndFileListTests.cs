@@ -101,7 +101,7 @@ namespace txprobe.Tests
             }
             catch (IndexOutOfRangeException)
             {
-                // EncodingJudgment may throw IndexOutOfRangeException for empty files
+                // EncodingDetector may throw IndexOutOfRangeException for empty files
                 // This is also acceptable
             }
         }

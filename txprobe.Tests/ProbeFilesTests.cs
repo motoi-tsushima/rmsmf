@@ -169,7 +169,7 @@ namespace txprobe.Tests
         }
 
         [TestMethod]
-        public void EncodingJudgmentMode_CanBeSetAndGet()
+        public void EncodingDetectionMode_CanBeSetAndGet()
         {
             // Arrange
             string[] searchWords = { "test" };
@@ -177,10 +177,10 @@ namespace txprobe.Tests
             var probeFiles = new ProbeFiles(searchWords, files, true, null, Encoding.UTF8);
 
             // Act
-            probeFiles.EncodingJudgmentMode = CommandOptions.EncodingJudgmentType.FirstParty;
+            probeFiles.EncodingDetectionMode = CommandOptions.EncodingDetectionType.FirstParty;
 
             // Assert
-            Assert.AreEqual(CommandOptions.EncodingJudgmentType.FirstParty, probeFiles.EncodingJudgmentMode);
+            Assert.AreEqual(CommandOptions.EncodingDetectionType.FirstParty, probeFiles.EncodingDetectionMode);
         }
 
         [TestMethod]

@@ -39,14 +39,14 @@ namespace txprobe
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        private CommandOptions.EncodingJudgmentType _encodingJudgmentMode = CommandOptions.EncodingJudgmentType.Normal;
+        private CommandOptions.EncodingDetectionType _encodingDetectionMode = CommandOptions.EncodingDetectionType.Normal;
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        public CommandOptions.EncodingJudgmentType EncodingJudgmentMode
+        public CommandOptions.EncodingDetectionType EncodingDetectionMode
         {
-            get { return _encodingJudgmentMode; }
-            set { this._encodingJudgmentMode = value; }
+            get { return _encodingDetectionMode; }
+            set { this._encodingDetectionMode = value; }
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace txprobe
                 }
 
                 //ファイル単位のマルチスレッド作成
-                Parallel.ForEach(this._files, (fileName) =>
+                Parallel.ForEach(this._files, (Action<string>)((fileName) =>
                 {
                     if (File.Exists(fileName))
                     {
@@ -125,7 +125,7 @@ namespace txprobe
                                 // ファイルポジションを先頭に戻す（StreamReaderが正しく読めるようにする）
                                 fs.Position = 0;
 
-                                ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
+                                ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
 
                                 if (bomJudg.IsBOM(buffer))
                                 {
@@ -142,31 +142,31 @@ namespace txprobe
                                 {
                                     bomExist = false;
 
-                                    if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.Normal)
-                                    {
-                                        encInfo = 
-                                        EncodingJudgmentControl.NormalJudgeEncoding(buffer);
-
-                                        codePage = encInfo.CodePage;
-                                    }
-                                    else if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.FirstParty)
-                                    {
-                                        encInfo = 
-                                        EncodingJudgmentControl.JudgeEncoding(buffer);
-
-                                        codePage = encInfo.CodePage;
-                                    }
-                                    else if(this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.ThirdParty)
+                                    if (this._encodingDetectionMode == CommandOptions.EncodingDetectionType.Normal)
                                     {
                                         encInfo =
-                                        EncodingJudgmentControl.JudgeUtfUnknown(buffer);
+                                        EncodingDetectorControl.NormalDetectEncoding(buffer);
+
+                                        codePage = encInfo.CodePage;
+                                    }
+                                    else if (this._encodingDetectionMode == CommandOptions.EncodingDetectionType.FirstParty)
+                                    {
+                                        encInfo =
+                                        EncodingDetectorControl.DetectEncoding(buffer);
+
+                                        codePage = encInfo.CodePage;
+                                    }
+                                    else if(this._encodingDetectionMode == CommandOptions.EncodingDetectionType.ThirdParty)
+                                    {
+                                        encInfo =
+                                        EncodingDetectorControl.DetectUtfUnknown(buffer);
 
                                         codePage = encInfo.CodePage;
                                     }
                                     else
                                     {
                                         encInfo =
-                                        EncodingJudgmentControl.NormalJudgeEncoding(buffer);
+                                        EncodingDetectorControl.NormalDetectEncoding(buffer);
 
                                         codePage = encInfo.CodePage;
                                     }
@@ -206,7 +206,7 @@ namespace txprobe
                                 fs.Read(bomBuffer, 0, 4);
                                 fs.Position = 0;
 
-                                ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
+                                ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
 
                                 if (bomJudg.IsBOM(bomBuffer))
                                 {
@@ -242,8 +242,8 @@ namespace txprobe
                                 }
                                 else if (codePage > 0)
                                 {
-                                    // EncodingJudgmentからエンコーディング名を取得
-                                    EncodingJudgment ej = new EncodingJudgment(0);
+                                    // EncodingDetectionからエンコーディング名を取得
+                                    EncodingDetector ej = new rmsmf.EncodingDetector(0);
                                     encodingName = ej.EncodingName(codePage);
                                 }
 
@@ -269,7 +269,7 @@ namespace txprobe
                             }
                         }
                     }
-                });
+                }));
 
                 // キューへの追加完了を通知
                 _outputQueue.CompleteAdding();

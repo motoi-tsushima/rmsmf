@@ -28,14 +28,14 @@ namespace rmsmf
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        private CommandOptions.EncodingJudgmentType _encodingJudgmentMode = CommandOptions.EncodingJudgmentType.Normal;
+        private CommandOptions.EncodingDetectionType _encodingDetectionMode = CommandOptions.EncodingDetectionType.Normal;
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        public CommandOptions.EncodingJudgmentType EncodingJudgmentMode
+        public CommandOptions.EncodingDetectionType EncodingDetectionMode
         {
-            get { return _encodingJudgmentMode; }
-            set { this._encodingJudgmentMode = value; }
+            get { return _encodingDetectionMode; }
+            set { this._encodingDetectionMode = value; }
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace rmsmf
                                     // ファイルポジションを先頭に戻す（StreamReaderが正しく読めるようにする）
                                     fs.Position = 0;
 
-                                    ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
+                                    ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
 
                                     if (bomJudg.IsBOM(buffer))
                                     {
@@ -117,31 +117,31 @@ namespace rmsmf
                                     {
                                         bomExist = false;
 
-                                        if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.Normal)
+                                        if (this._encodingDetectionMode == CommandOptions.EncodingDetectionType.Normal)
                                         {
                                             EncodingInfomation encInfo =
-                                            EncodingJudgmentControl.NormalJudgeEncoding(buffer);
+                                            EncodingDetectorControl.NormalDetectEncoding(buffer);
 
                                             codePage = encInfo.CodePage;
                                         }
-                                        else if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.FirstParty)
+                                        else if (this._encodingDetectionMode == CommandOptions.EncodingDetectionType.FirstParty)
                                         {
                                             EncodingInfomation encInfo =
-                                            EncodingJudgmentControl.JudgeEncoding(buffer);
+                                            EncodingDetectorControl.DetectEncoding(buffer);
 
                                             codePage = encInfo.CodePage;
                                         }
-                                        else if (this._encodingJudgmentMode == CommandOptions.EncodingJudgmentType.ThirdParty)
+                                        else if (this._encodingDetectionMode == CommandOptions.EncodingDetectionType.ThirdParty)
                                         {
                                             EncodingInfomation encInfo =
-                                            EncodingJudgmentControl.JudgeUtfUnknown(buffer);
+                                            EncodingDetectorControl.DetectUtfUnknown(buffer);
 
                                             codePage = encInfo.CodePage;
                                         }
                                         else
                                         {
                                             EncodingInfomation encInfo =
-                                            EncodingJudgmentControl.NormalJudgeEncoding(buffer);
+                                            EncodingDetectorControl.NormalDetectEncoding(buffer);
 
                                             codePage = encInfo.CodePage;
                                         }
@@ -181,7 +181,7 @@ namespace rmsmf
                                     fs.Read(bomBuffer, 0, 4);
                                     fs.Position = 0;
 
-                                    ByteOrderMarkJudgment bomJudg = new ByteOrderMarkJudgment();
+                                    ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
 
                                     if (bomJudg.IsBOM(bomBuffer))
                                     {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,7 @@ namespace txprobe
     /// </summary>
     public class CommandOptions : Colipex
     {
-        private const string CharacterSetJudgment = "Judgment";
+        private const string CharacterSetDetection = "Detection";
         private const string OptionHelp = "h";
         private const string OptionCharacterSet = "c";
         private const string OptionFileNameList = "f";
@@ -22,7 +22,7 @@ namespace txprobe
         private const string OptionProbeMode = "p";
         private const string OptionAllDirectories = "d";
         private const string OptionOutputFileNamelist = "o";
-        private const string OptionJudgmentMode = "j";
+        private const string OptionDetectionMode = "j";
         private const string OptionCultureInfo = "ci";
 
         private bool searchOptionAllDirectories = false; // AllDirectories オプション
@@ -146,7 +146,7 @@ namespace txprobe
             }
             else
             {
-                readCharacterSet = CharacterSetJudgment;
+                readCharacterSet = CharacterSetDetection;
             }
 
             //Setting SearchWords CharacterSet 
@@ -179,35 +179,35 @@ namespace txprobe
                 filesCharacterSet = readCharacterSet;
             }
 
-            //Setting Encoding Judgment Mode
+            //Setting Encoding Detection Mode
             //文字エンコーディング自動判定モードを設定する。
-            if (this.IsOption(OptionJudgmentMode))
+            if (this.IsOption(OptionDetectionMode))
             {
                 string encJMode = string.Empty;
-                encJMode = this.Options[OptionJudgmentMode].TrimEnd(new char[] { '\x0a', '\x0d' });
+                encJMode = this.Options[OptionDetectionMode].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (encJMode == Colipex.NonValue)
                 {
-                    _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                    _encodingDetectionMode = EncodingDetectionType.Normal;
                 }
                 else
                 {
                     if(encJMode == "1")
                     {
-                        _encodingJudgmentMode = EncodingJudgmentType.FirstParty;
+                        _encodingDetectionMode = EncodingDetectionType.FirstParty;
                     }
                     else if(encJMode == "3")
                     {
-                        _encodingJudgmentMode = EncodingJudgmentType.ThirdParty;
+                        _encodingDetectionMode = EncodingDetectionType.ThirdParty;
                     }
                     else
                     {
-                        _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                        _encodingDetectionMode = EncodingDetectionType.Normal;
                     }
                 }
             }
             else
             {
-                _encodingJudgmentMode = EncodingJudgmentType.Normal;
+                _encodingDetectionMode = EncodingDetectionType.Normal;
             }
         }
 
@@ -286,9 +286,9 @@ namespace txprobe
         {
             try
             {
-                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetJudgment);
-                this.ReplaceEncoding = ResolveEncoding(searchWordsCharacterSet, CharacterSetJudgment);
-                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetJudgment);
+                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetDetection);
+                this.ReplaceEncoding = ResolveEncoding(searchWordsCharacterSet, CharacterSetDetection);
+                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetDetection);
             }
             catch (ArgumentException ex)
             {
@@ -545,8 +545,8 @@ namespace txprobe
             if(this.FilesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
-                EncodingJudgment encJudg = new EncodingJudgment(0);
-                EncodingInfomation encInfo = encJudg.Judgment(this._fileNameListFileName);
+                EncodingDetector encDetec = new EncodingDetector(0);
+                EncodingInfomation encInfo = encDetec.Detection(this._fileNameListFileName);
 
                 if (encInfo.CodePage > 0)
                 {
@@ -785,20 +785,20 @@ namespace txprobe
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        private EncodingJudgmentType _encodingJudgmentMode = EncodingJudgmentType.Normal;
+        private EncodingDetectionType _encodingDetectionMode = EncodingDetectionType.Normal;
         /// <summary>
         /// 文字エンコーディングの自動判定モード
         /// </summary>
-        public EncodingJudgmentType EncodingJudgmentMode
+        public EncodingDetectionType EncodingDetectionMode
         {
-            get { return _encodingJudgmentMode; }
-            private set { _encodingJudgmentMode = value; }
+            get { return _encodingDetectionMode; }
+            private set { _encodingDetectionMode = value; }
         }
 
         /// <summary>
         /// 文字エンコーディングの自動判定モードタイプ
         /// </summary>
-        public enum EncodingJudgmentType
+        public enum EncodingDetectionType
         {
             Normal = 0,
             FirstParty = 1,

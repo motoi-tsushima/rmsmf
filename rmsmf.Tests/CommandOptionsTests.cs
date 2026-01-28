@@ -316,7 +316,7 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        public void Constructor_WithJudgmentModeNormal_SetsCorrectly()
+        public void Constructor_WithDetectionModeNormal_SetsCorrectly()
         {
             // Arrange
             string[] args = { "*.txt", "/w:UTF-8", "/j" };
@@ -325,11 +325,11 @@ namespace rmsmf.Tests
             var options = new CommandOptions(args);
 
             // Assert
-            Assert.AreEqual(CommandOptions.EncodingJudgmentType.Normal, options.EncodingJudgmentMode);
+            Assert.AreEqual(CommandOptions.EncodingDetectionType.Normal, options.EncodingDetectionMode);
         }
 
         [TestMethod]
-        public void Constructor_WithJudgmentModeFirstParty_SetsCorrectly()
+        public void Constructor_WithDetectionModeFirstParty_SetsCorrectly()
         {
             // Arrange
             string[] args = { "*.txt", "/w:UTF-8", "/j:1" };
@@ -338,11 +338,11 @@ namespace rmsmf.Tests
             var options = new CommandOptions(args);
 
             // Assert
-            Assert.AreEqual(CommandOptions.EncodingJudgmentType.FirstParty, options.EncodingJudgmentMode);
+            Assert.AreEqual(CommandOptions.EncodingDetectionType.FirstParty, options.EncodingDetectionMode);
         }
 
         [TestMethod]
-        public void Constructor_WithJudgmentModeThirdParty_SetsCorrectly()
+        public void Constructor_WithDetectionModeThirdParty_SetsCorrectly()
         {
             // Arrange
             string[] args = { "*.txt", "/w:UTF-8", "/j:3" };
@@ -351,7 +351,7 @@ namespace rmsmf.Tests
             var options = new CommandOptions(args);
 
             // Assert
-            Assert.AreEqual(CommandOptions.EncodingJudgmentType.ThirdParty, options.EncodingJudgmentMode);
+            Assert.AreEqual(CommandOptions.EncodingDetectionType.ThirdParty, options.EncodingDetectionMode);
         }
 
         [TestMethod]
