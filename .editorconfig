@@ -1,0 +1,19 @@
+# これが最上位の設定ファイルであることを示す
+root = true
+
+# すべてのファイルに対するデフォルト設定
+[*]
+indent_style = space
+indent_size = 4
+# 基本はBOMなしUTF-8（モダンな環境用）
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# 【重要】CSVファイルだけは Excel のために BOM付き UTF-8 にする
+[*.csv]
+charset = utf-8-bom
+
+# もし特定のテキストファイルもExcelや古いツールで開くなら
+[*.txt]
+charset = utf-8-bom

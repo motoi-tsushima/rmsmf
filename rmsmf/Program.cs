@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,6 +24,11 @@ namespace rmsmf
         /// <param name="args"></param>
         static void Main(string[] args)
         {
+            // System.Text.Encoding.CodePagesパッケージのエンコーディングプロバイダーを登録
+            // これにより、EUC-KR (51949), Shift_JIS (932), GB18030など
+            // .NET Frameworkでデフォルトでサポートされていないエンコーディングが使用可能になる
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             #region Change culture for testing
             //// テスト用にカルチャーを変更
             //Console.OutputEncoding = System.Text.Encoding.UTF8;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -174,7 +174,22 @@ namespace txprobe
 
                                 if (codePage > 0)
                                 {
-                                    inEncoding = Encoding.GetEncoding(codePage);
+                                    try
+                                    {
+                                        inEncoding = Encoding.GetEncoding(codePage);
+                                    }
+                                    catch (ArgumentException)
+                                    {
+                                        // サポートされていないコードページの場合はnullを設定
+                                        // （例: EUC-TW (51950) は System.Text.Encoding.CodePages 4.7.1 でサポートされていない）
+                                        inEncoding = null;
+                                        Console.WriteLine($"Warning: Code page {codePage} is not supported. Skipping {fileName}");
+                                    }
+                                    catch (NotSupportedException)
+                                    {
+                                        inEncoding = null;
+                                        Console.WriteLine($"Warning: Code page {codePage} is not supported. Skipping {fileName}");
+                                    }
                                 }
                                 else
                                 {
@@ -214,10 +229,23 @@ namespace txprobe
 
                             if(inEncoding == null)
                             {
-                                // エンコーディングが不明な場合、処理をスキップする
+                                // エンコーディングオブジェクトが作成できない場合でも、
+                                // 判定結果（encInfo）から情報を取得して表示
                                 string dispBOM;
                                 string lineBreakType = "EOL Unknown";
                                 string encodingName = "encoding Unknown";
+
+                                // encInfoにエンコーディング情報があれば使用
+                                if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingName))
+                                {
+                                    encodingName = encInfo.EncodingName;
+                                }
+                                else if (codePage > 0)
+                                {
+                                    // EncodingJudgmentからエンコーディング名を取得
+                                    EncodingJudgment ej = new EncodingJudgment(0);
+                                    encodingName = ej.EncodingName(codePage);
+                                }
 
                                 if (bomExist == true)
                                 {
@@ -265,7 +293,9 @@ namespace txprobe
                     Console.WriteLine(ie.Message);
                 }
 
-                throw new RmsmfException(errorCount + "件のエラーが発生しました。他のファイルは正常に処理しました。", ae);
+                string errorMessage = string.Format(rmsmf.ValidationMessages.ErrorsOccurred, errorCount) + 
+                                      " " + rmsmf.ValidationMessages.OtherFilesProcessedSuccessfully;
+                throw new RmsmfException(errorMessage, ae);
             }
             finally
             {

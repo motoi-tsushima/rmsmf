@@ -45,11 +45,11 @@ namespace txprobe
                 }
                 catch (System.Globalization.CultureNotFoundException ex)
                 {
-                    throw new RmsmfException("無効なカルチャー情報が指定されました: " + this._cultureInfo + "\n" + ex.Message, ex);
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.InvalidCultureInfo, this._cultureInfo) + "\n" + ex.Message, ex);
                 }
                 catch (ArgumentException ex)
                 {
-                    throw new RmsmfException("無効なカルチャー情報が指定されました: " + this._cultureInfo + "\n" + ex.Message, ex);
+                    throw new RmsmfException(string.Format(rmsmf.ValidationMessages.InvalidCultureInfo, this._cultureInfo) + "\n" + ex.Message, ex);
                 }
             }
 

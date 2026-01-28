@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -149,7 +149,22 @@ namespace rmsmf
 
                                     if (codePage > 0)
                                     {
-                                        inEncoding = Encoding.GetEncoding(codePage);
+                                        try
+                                        {
+                                            inEncoding = Encoding.GetEncoding(codePage);
+                                        }
+                                        catch (ArgumentException)
+                                        {
+                                            // サポートされていないコードページの場合はnullを設定
+                                            // （例: EUC-TW (51950) は .NET Framework 4.8/4.8.1 でサポートされていない）
+                                            inEncoding = null;
+                                            Console.WriteLine($"Warning: Code page {codePage} is not supported. Skipping {fileName}");
+                                        }
+                                        catch (NotSupportedException)
+                                        {
+                                            inEncoding = null;
+                                            Console.WriteLine($"Warning: Code page {codePage} is not supported. Skipping {fileName}");
+                                        }
                                     }
                                     else
                                     {

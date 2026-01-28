@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -48,8 +48,23 @@ namespace rmsmf
             {
                 if (result.Detected.Confidence > 0.5)
                 {
-                    encInfo.EncodingName = result.Detected.EncodingName;
-                    encInfo.CodePage = result.Detected.Encoding.CodePage;
+                    try
+                    {
+                        encInfo.EncodingName = result.Detected.EncodingName;
+                        encInfo.CodePage = result.Detected.Encoding.CodePage;
+                    }
+                    catch (ArgumentException)
+                    {
+                        // UtfUnknownが検出したエンコーディングが.NETでサポートされていない場合
+                        // エンコーディング名だけを保存し、CodePageは-1にする
+                        encInfo.EncodingName = result.Detected.EncodingName;
+                        encInfo.CodePage = -1;
+                    }
+                    catch (NotSupportedException)
+                    {
+                        encInfo.EncodingName = result.Detected.EncodingName;
+                        encInfo.CodePage = -1;
+                    }
                 }
                 else
                 {

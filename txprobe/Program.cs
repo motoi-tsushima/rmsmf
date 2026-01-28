@@ -1,4 +1,4 @@
-﻿using rmsmf;
+using rmsmf;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,6 +21,11 @@ namespace txprobe
     {
         static void Main(string[] args)
         {
+            // System.Text.Encoding.CodePagesパッケージのエンコーディングプロバイダーを登録
+            // これにより、EUC-KR (51949), Shift_JIS (932), GB18030など
+            // .NET Frameworkでデフォルトでサポートされていないエンコーディングが使用可能になる
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             //Show version
             Assembly thisAssem = typeof(Program).Assembly;
             AssemblyName thisAssemName = thisAssem.GetName();
@@ -70,7 +75,7 @@ namespace txprobe
 
                 //正常に処理を完了した。
                 Console.WriteLine("");
-                Console.WriteLine("Search complete.");
+                Console.WriteLine(rmsmf.ValidationMessages.SearchComplete);
             }
             catch (RmsmfException ex)
             {
@@ -83,7 +88,7 @@ namespace txprobe
             }
             catch (Exception ex)
             {
-                Console.WriteLine("予期しないエラーが発生しました: " + ex.Message);
+                Console.WriteLine(string.Format(rmsmf.ValidationMessages.UnexpectedErrorOccurred, ex.Message));
                 Console.WriteLine(ex.ToString());
 #if DEBUG
                 Console.WriteLine("\nPress any key to exit...");
