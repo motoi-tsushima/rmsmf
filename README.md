@@ -118,6 +118,8 @@ rmsmf <オプション> <対象ファイル名>
 | `/fc:<エンコーディング>` | ファイルリストのエンコーディング | `/fc:UTF-8` |
 | `/nl:<改行コード>` | 改行コード (crlf/lf/cr) | `/nl:lf` |
 | `/h` | ヘルプ表示 | `/h` |
+| /det:<0\|1\|3> | 文字エンコーディング判定処理の指定 | /det:3 |
+| /ci:<カルチャー情報> | カルチャー情報(国・言語識別コード) | /ci:en-US |
 
 #### 置換単語リストCSVの書式
 
@@ -150,6 +152,12 @@ rmsmf /r:words.csv *.txt /c:shift_jis /w:UTF-8 /b:true
 
 # UTF-8 → Shift_JIS
 rmsmf /r:words.csv *.txt /c:UTF-8 /w:shift_jis
+
+# Shift_JIS → UTF-8 (BOM付き)  :文字エンコーディング自動判定任せ
+rmsmf /r:words.csv *.txt /w:UTF-8 /b:true
+
+# UTF-8 → Shift_JIS  :文字エンコーディング自動判定任せ
+rmsmf /r:words.csv *.txt /w:shift_jis
 ```
 
 **3. エンコーディング変換のみ（置換なし）**
@@ -158,8 +166,11 @@ rmsmf /r:words.csv *.txt /c:UTF-8 /w:shift_jis
 # Shift_JIS → UTF-8 (BOM付き)
 rmsmf *.txt /c:shift_jis /w:UTF-8 /b:true
 
-# UTF-8 → UTF-8 (BOM削除)
-rmsmf *.txt /c:UTF-8 /w:UTF-8 /b:false
+# UTF-8 → Shift_JIS 
+rmsmf *.txt /c:UTF-8 /w:shift_jis 
+
+# Shift_JIS → UTF-8 (BOM付き)  :文字エンコーディング自動判定任せ
+rmsmf *.txt /w:UTF-8 /b:true
 ```
 
 **4. サブディレクトリも含めて処理**
@@ -189,6 +200,9 @@ rmsmf *.txt /c:UTF-8 /w:UTF-8 /nl:lf
 
 # LF → CRLF
 rmsmf *.txt /c:UTF-8 /w:UTF-8 /nl:crlf
+
+# LF → CRLF  :文字エンコーディング自動判定任せ
+rmsmf *.txt /nl:crlf
 ```
 
 /c:  /w:  などの文字エンコーディング指定は省略可能です。
@@ -222,6 +236,8 @@ txprobe <オプション> <対象ファイル名>
 | `/fc:<エンコーディング>` | ファイルリストのエンコーディング | `/fc:UTF-8` |
 | `/p` | プローブモード（検索単語を含むファイルのみ表示） | `/p` |
 | `/h` | ヘルプ表示 | `/h` |
+| /det:<0\|1\|3> | 文字エンコーディング判定処理の指定 | /det:3 |
+| /ci:<カルチャー情報> | カルチャー情報(国・言語識別コード) | /ci:en-US |
 
 #### 検索単語リストの書式
 
