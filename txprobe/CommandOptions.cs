@@ -22,7 +22,7 @@ namespace txprobe
         private const string OptionProbeMode = "p";
         private const string OptionAllDirectories = "d";
         private const string OptionOutputFileNamelist = "o";
-        private const string OptionDetectionMode = "j";
+        private const string OptionDetectionMode = "det";
         private const string OptionCultureInfo = "ci";
 
         private bool searchOptionAllDirectories = false; // AllDirectories オプション

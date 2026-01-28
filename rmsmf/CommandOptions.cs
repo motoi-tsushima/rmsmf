@@ -18,7 +18,7 @@ namespace rmsmf
         private const string OptionWriteByteOrderMark = "b";
         private const string OptionAllDirectories = "d";
         private const string OptionNewLine = "nl";
-        private const string OptionDetectionMode = "j";
+        private const string OptionDetectionMode = "det";
         private const string OptionCultureInfo = "ci";
 
         public static readonly string NewLineCRLF = "CRLF";
