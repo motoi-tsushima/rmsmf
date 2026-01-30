@@ -12,20 +12,7 @@ namespace txprobe
     /// </summary>
     public class CommandOptions : Colipex
     {
-        private const string CharacterSetDetection = "Detection";
-        private const string OptionHelp = "h";
-        private const string OptionCharacterSet = "c";
-        private const string OptionFileNameList = "f";
-        private const string OptionFileNameListCharacterSet = "fc";
-        private const string OptionSearchWords = "s";
-        private const string OptionSearchWordsCharacterSet = "sc";
-        private const string OptionProbeMode = "p";
-        private const string OptionAllDirectories = "d";
-        private const string OptionOutputFileNamelist = "o";
-        private const string OptionDetectionMode = "det";
-        private const string OptionCultureInfo = "ci";
-
-        private bool searchOptionAllDirectories = false; // AllDirectories オプション
+        private bool _searchOptionAllDirectories = false; // AllDirectories オプション
         private string _cultureInfo = null; // CultureInfo オプション
         private bool _helpOrVersionDisplayed = false; // ヘルプまたはバージョンが表示されたかどうか
 
@@ -68,7 +55,7 @@ namespace txprobe
                 out string filesCharacterSet);
 
             this._enableProbe = ParseProbeModeOption();
-            this.searchOptionAllDirectories = ParseAllDirectoriesOption();
+            this._searchOptionAllDirectories = ParseAllDirectoriesOption();
             this._outputFileNameListFileName = ParseOutputFileNameListOption();
 
             InitializeEncodings(
@@ -85,7 +72,7 @@ namespace txprobe
         /// </summary>
         private void ValidateRequiredParameters()
         {
-            if (this.IsOption(OptionFileNameList) == false)
+            if (this.IsOption(rmsmf.OptionConstants.OptionFileNameList) == false)
             {
                 if (this.Parameters.Count == 0 && this.Options.Count == 0)
                 {
@@ -116,9 +103,9 @@ namespace txprobe
             }
 
             // ヘルプオプションのチェック
-            if (this.IsOption(OptionHelp))
+            if (this.IsOption(rmsmf.OptionConstants.OptionHelp))
             {
-                string helpOption = this.Options[OptionHelp];
+                string helpOption = this.Options[rmsmf.OptionConstants.OptionHelp];
                 
                 // /h:cul - カルチャー情報の一覧を表示
                 if (helpOption != null && helpOption.Trim().ToLower() == "cul")
@@ -156,9 +143,9 @@ namespace txprobe
         {
             //Setting Read CharacterSet 
             //読み取り文字エンコーディング名を設定する。
-            if (this.IsOption(OptionCharacterSet))
+            if (this.IsOption(rmsmf.OptionConstants.OptionCharacterSet))
             {
-                readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                readCharacterSet = this.Options[rmsmf.OptionConstants.OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (readCharacterSet == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingEncodingName, "c"));
@@ -166,14 +153,14 @@ namespace txprobe
             }
             else
             {
-                readCharacterSet = CharacterSetDetection;
+                readCharacterSet = rmsmf.OptionConstants.CharacterSetDetection;
             }
 
             //Setting SearchWords CharacterSet 
             //検索単語リストの文字エンコーディングの設定する。
-            if (this.IsOption(OptionSearchWordsCharacterSet))
+            if (this.IsOption(rmsmf.OptionConstants.OptionSearchWordsCharacterSet))
             {
-                searchWordsCharacterSet = this.Options[OptionSearchWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                searchWordsCharacterSet = this.Options[rmsmf.OptionConstants.OptionSearchWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (searchWordsCharacterSet == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingEncodingName, "sc"));
@@ -186,9 +173,9 @@ namespace txprobe
 
             //Setting FileNameList CharacterSet 
             //ファイルリストの文字エンコーディングを設定する。
-            if (this.IsOption(OptionFileNameListCharacterSet))
+            if (this.IsOption(rmsmf.OptionConstants.OptionFileNameListCharacterSet))
             {
-                filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                filesCharacterSet = this.Options[rmsmf.OptionConstants.OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (filesCharacterSet == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingEncodingName, "fc"));
@@ -201,10 +188,10 @@ namespace txprobe
 
             //Setting Encoding Detection Mode
             //文字エンコーディング自動判定モードを設定する。
-            if (this.IsOption(OptionDetectionMode))
+            if (this.IsOption(rmsmf.OptionConstants.OptionDetectionMode))
             {
                 string encJMode = string.Empty;
-                encJMode = this.Options[OptionDetectionMode].TrimEnd(new char[] { '\x0a', '\x0d' });
+                encJMode = this.Options[rmsmf.OptionConstants.OptionDetectionMode].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (encJMode == Colipex.NonValue)
                 {
                     _encodingDetectionMode = EncodingDetectionType.Normal;
@@ -237,14 +224,14 @@ namespace txprobe
         /// <returns>Probemodeが有効かどうか</returns>
         private bool ParseProbeModeOption()
         {
-            if (this.IsOption(OptionProbeMode))
+            if (this.IsOption(rmsmf.OptionConstants.OptionProbeMode))
             {
                 return true;
             }
             else
             {
                 // 検索文字列が無い場合は Probe Mode を有効にする
-                return this.IsOption(OptionSearchWords) == false;
+                return this.IsOption(rmsmf.OptionConstants.OptionSearchWords) == false;
             }
         }
 
@@ -254,7 +241,7 @@ namespace txprobe
         /// <returns>AllDirectoriesが有効かどうか</returns>
         private bool ParseAllDirectoriesOption()
         {
-            return this.IsOption(OptionAllDirectories);
+            return this.IsOption(rmsmf.OptionConstants.OptionAllDirectories);
         }
 
         /// <summary>
@@ -263,15 +250,15 @@ namespace txprobe
         /// <returns>出力ファイルリストのファイル名（null=指定なし）</returns>
         private string ParseOutputFileNameListOption()
         {
-            if (this.IsOption(OptionOutputFileNamelist))
+            if (this.IsOption(rmsmf.OptionConstants.OptionOutputFileNamelist))
             {
-                if (this.Options[OptionOutputFileNamelist] == Colipex.NonValue)
+                if (this.Options[rmsmf.OptionConstants.OptionOutputFileNamelist] == Colipex.NonValue)
                 {
                     return "output_filelist.txt";
                 }
                 else
                 {
-                    return this.Options[OptionOutputFileNamelist].TrimEnd(new char[] { '\x0a', '\x0d' });
+                    return this.Options[rmsmf.OptionConstants.OptionOutputFileNamelist].TrimEnd(new char[] { '\x0a', '\x0d' });
                 }
             }
 
@@ -284,9 +271,9 @@ namespace txprobe
         /// <returns>カルチャー情報文字列（null=指定なし）</returns>
         private string ParseCultureInfoOption()
         {
-            if (this.IsOption(OptionCultureInfo))
+            if (this.IsOption(rmsmf.OptionConstants.OptionCultureInfo))
             {
-                string cultureInfo = this.Options[OptionCultureInfo].TrimEnd(new char[] { '\x0a', '\x0d' });
+                string cultureInfo = this.Options[rmsmf.OptionConstants.OptionCultureInfo].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (cultureInfo != Colipex.NonValue && !string.IsNullOrWhiteSpace(cultureInfo))
                 {
                     return cultureInfo;
@@ -306,9 +293,9 @@ namespace txprobe
         {
             try
             {
-                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetDetection);
-                this.ReplaceEncoding = ResolveEncoding(searchWordsCharacterSet, CharacterSetDetection);
-                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetDetection);
+                this.ReadEncoding = ResolveEncoding(readCharacterSet, rmsmf.OptionConstants.CharacterSetDetection);
+                this.ReplaceEncoding = ResolveEncoding(searchWordsCharacterSet, rmsmf.OptionConstants.CharacterSetDetection);
+                this.FilesEncoding = ResolveEncoding(filesCharacterSet, rmsmf.OptionConstants.CharacterSetDetection);
             }
             catch (ArgumentException ex)
             {
@@ -326,14 +313,14 @@ namespace txprobe
         private void ValidateAndSetFileOptions()
         {
             // 検索単語リストファイルオプションの設定
-            if (this.IsOption(OptionSearchWords))
+            if (this.IsOption(rmsmf.OptionConstants.OptionSearchWords))
             {
-                if (this.Options[OptionSearchWords] == Colipex.NonValue)
+                if (this.Options[rmsmf.OptionConstants.OptionSearchWords] == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingOptionFileName, "s"));
                 }
 
-                this._searchWordsFileName = this.Options[OptionSearchWords].TrimEnd(new char[] { '\x0a', '\x0d' });
+                this._searchWordsFileName = this.Options[rmsmf.OptionConstants.OptionSearchWords].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._searchWordsFileName))
                 {
@@ -342,14 +329,14 @@ namespace txprobe
             }
 
             // ファイルリストファイルオプションの設定
-            if (this.IsOption(OptionFileNameList))
+            if (this.IsOption(rmsmf.OptionConstants.OptionFileNameList))
             {
-                if (this.Options[OptionFileNameList] == Colipex.NonValue)
+                if (this.Options[rmsmf.OptionConstants.OptionFileNameList] == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(rmsmf.ValidationMessages.MissingOptionFileName, "f"));
                 }
 
-                this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
+                this._fileNameListFileName = this.Options[rmsmf.OptionConstants.OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
@@ -375,8 +362,8 @@ namespace txprobe
         private void ValidateRequiredParametersProvided()
         {
             rmsmf.OptionValidator.ValidateAtLeastOneCondition(
-                this.IsOption(OptionSearchWords),
-                this.IsOption(OptionFileNameList),
+                this.IsOption(rmsmf.OptionConstants.OptionSearchWords),
+                this.IsOption(rmsmf.OptionConstants.OptionFileNameList),
                 this.Parameters.Count > 0
             );
         }
@@ -387,7 +374,7 @@ namespace txprobe
         private void ValidateFileSpecificationMethod()
         {
             rmsmf.OptionValidator.ValidateFileSpecificationNotConflicting(
-                this.IsOption(OptionFileNameList),
+                this.IsOption(rmsmf.OptionConstants.OptionFileNameList),
                 this.Parameters.Count
             );
         }
@@ -397,8 +384,8 @@ namespace txprobe
         /// </summary>
         private void ValidateSearchWordsHasTargetFiles()
         {
-            if (this.IsOption(OptionSearchWords) && 
-                this.IsOption(OptionFileNameList) == false && 
+            if (this.IsOption(rmsmf.OptionConstants.OptionSearchWords) && 
+                this.IsOption(rmsmf.OptionConstants.OptionFileNameList) == false && 
                 this.Parameters.Count == 0)
             {
                 throw new RmsmfException(rmsmf.ValidationMessages.SearchWordsRequiresTargetFiles);
@@ -412,15 +399,16 @@ namespace txprobe
         {
             // 検索単語ファイルのエンコーディングは、検索単語ファイルオプションが必要
             rmsmf.OptionValidator.ValidateEncodingOptionDependency(
-                this.IsOption(OptionSearchWords),
-                this.IsOption(OptionSearchWordsCharacterSet),
+                this.IsOption(rmsmf.OptionConstants.OptionSearchWords),
+                this.IsOption(rmsmf.OptionConstants.OptionSearchWordsCharacterSet),
                 rmsmf.ValidationMessages.SearchWordsEncodingWithoutSearchWords
             );
 
             // ファイルリストのエンコーディングは、ファイルリスト(/f)または出力ファイルリスト(/o)オプションが必要
-            if (this.IsOption(OptionFileNameListCharacterSet))
+            if (this.IsOption(rmsmf.OptionConstants.OptionFileNameListCharacterSet))
             {
-                if (!this.IsOption(OptionFileNameList) && !this.IsOption(OptionOutputFileNamelist))
+                if (!this.IsOption(rmsmf.OptionConstants.OptionFileNameList) && 
+                    !this.IsOption(rmsmf.OptionConstants.OptionOutputFileNamelist))
                 {
                     throw new RmsmfException(rmsmf.ValidationMessages.FileListEncodingWithoutFileList);
                 }
@@ -544,7 +532,7 @@ namespace txprobe
                 try
                 {
                     System.IO.SearchOption searchOption = System.IO.SearchOption.TopDirectoryOnly;
-                    if (this.searchOptionAllDirectories == true)
+                    if (this._searchOptionAllDirectories == true)
                     {
                         searchOption = System.IO.SearchOption.AllDirectories;
                     }

@@ -97,9 +97,12 @@
     <Compile Include="Colipex.cs" />
     <Compile Include="CommandOptions.cs" />
     <Compile Include="EncodingDetector.cs" />
+    <Compile Include="EncodingHelper.cs" />
     <Compile Include="ExecutionState.cs" />
+    <Compile Include="FileConstants.cs" />
     <Compile Include="Help.cs" />
     <Compile Include="HelpMessages.cs" />
+    <Compile Include="OptionConstants.cs" />
     <Compile Include="OptionValidator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

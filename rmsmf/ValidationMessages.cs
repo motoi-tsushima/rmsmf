@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace rmsmf
 {
@@ -49,6 +49,15 @@ namespace rmsmf
         
         // オプション用エンコーディング名
         public static string MissingEncodingNameForOption => GetMessage("MissingEncodingNameForOption");
+
+        // 処理完了・エラー関連
+        public static string ProcessingSuccessful => GetMessage("ProcessingSuccessful");
+        public static string UnexpectedErrorOccurred => GetMessage("UnexpectedErrorOccurred");
+        public static string ErrorsOccurred => GetMessage("ErrorsOccurred");
+        public static string OtherFilesProcessedSuccessfully => GetMessage("OtherFilesProcessedSuccessfully");
+        public static string SearchComplete => GetMessage("SearchComplete");
+        public static string FileTooLarge => GetMessage("FileTooLarge");
+        public static string FileWriteError => GetMessage("FileWriteError");
 
         /// <summary>
         /// メッセージを取得
@@ -257,6 +266,76 @@ namespace rmsmf
                         case "zh-CN": return "请指定字符编码名称。 (/{0})";
                         case "zh-TW": return "請指定字元編碼名稱。 (/{0})";
                         default: return "Please specify the character encoding name. (/{0})";
+                    }
+
+                case "ProcessingSuccessful":
+                    switch (lang)
+                    {
+                        case "ja": return "正常に処理が完了しました。";
+                        case "ko": return "처리가 정상적으로 완료되었습니다.";
+                        case "zh-CN": return "处理已成功完成。";
+                        case "zh-TW": return "處理已成功完成。";
+                        default: return "Processing completed successfully.";
+                    }
+
+                case "UnexpectedErrorOccurred":
+                    switch (lang)
+                    {
+                        case "ja": return "予期しないエラーが発生しました: {0}";
+                        case "ko": return "예기치 않은 오류가 발생했습니다: {0}";
+                        case "zh-CN": return "发生了意外错误: {0}";
+                        case "zh-TW": return "發生了意外錯誤: {0}";
+                        default: return "An unexpected error occurred: {0}";
+                    }
+
+                case "ErrorsOccurred":
+                    switch (lang)
+                    {
+                        case "ja": return "{0}件のエラーが発生しました。";
+                        case "ko": return "{0}개의 오류가 발생했습니다.";
+                        case "zh-CN": return "发生了 {0} 个错误。";
+                        case "zh-TW": return "發生了 {0} 個錯誤。";
+                        default: return "{0} errors occurred.";
+                    }
+
+                case "OtherFilesProcessedSuccessfully":
+                    switch (lang)
+                    {
+                        case "ja": return "他のファイルは正常に処理されました。";
+                        case "ko": return "다른 파일은 정상적으로 처리되었습니다.";
+                        case "zh-CN": return "其他文件已成功处理。";
+                        case "zh-TW": return "其他檔案已成功處理。";
+                        default: return "Other files were processed successfully.";
+                    }
+
+                case "SearchComplete":
+                    switch (lang)
+                    {
+                        case "ja": return "検索が完了しました。";
+                        case "ko": return "검색이 완료되었습니다.";
+                        case "zh-CN": return "搜索已完成。";
+                        case "zh-TW": return "搜尋已完成。";
+                        default: return "Search completed.";
+                    }
+
+                case "FileTooLarge":
+                    switch (lang)
+                    {
+                        case "ja": return "ファイル {0} が大きすぎます（最大 2GB）。";
+                        case "ko": return "파일 {0}이(가) 너무 큽니다(최대 2GB).";
+                        case "zh-CN": return "文件 {0} 太大（最大 2GB）。";
+                        case "zh-TW": return "檔案 {0} 太大（最大 2GB）。";
+                        default: return "File {0} is too large (maximum 2GB).";
+                    }
+
+                case "FileWriteError":
+                    switch (lang)
+                    {
+                        case "ja": return "ファイル書き込みエラー: {0}";
+                        case "ko": return "파일 쓰기 오류: {0}";
+                        case "zh-CN": return "文件写入错误: {0}";
+                        case "zh-TW": return "檔案寫入錯誤: {0}";
+                        default: return "File write error: {0}";
                     }
 
                 default:

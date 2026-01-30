@@ -29,21 +29,7 @@ namespace rmsmf
             // .NET Frameworkでデフォルトでサポートされていないエンコーディングが使用可能になる
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            #region Change culture for testing
-            //// テスト用にカルチャーを変更
-            //Console.OutputEncoding = System.Text.Encoding.UTF8;
-            //string testCulture = "en-US";
-            ////string testCulture = "ko";
-
-            ////string testCulture = "zh-CN";
-            ////string testCulture = "zh-Hans";
-
-            ////string testCulture = "zh-TW";
-            ////string testCulture = "zh-HK";
-            //System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(testCulture);
-            #endregion
-
-            //Show version
+            // バージョン情報の表示
             Assembly thisAssem = typeof(Program).Assembly;
             AssemblyName thisAssemName = thisAssem.GetName();
             AssemblyCopyrightAttribute[] copyrightAttributes = (AssemblyCopyrightAttribute[])thisAssem.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
@@ -67,7 +53,7 @@ namespace rmsmf
                     return;
                 }
 
-                //コマンドオプション取得（カルチャー設定、ヘルプ・バージョン表示を含む）
+                // コマンドオプション取得（カルチャー設定、ヘルプ・バージョン表示を含む）
                 commandOptions = new CommandOptions(args);
 
                 // ヘルプまたはバージョンが表示された場合は終了
@@ -83,13 +69,13 @@ namespace rmsmf
                 commandOptions.ReadReplaceWords();
                 commandOptions.ReadFileNameList();
 
-                //ファイルの文字列置換処理の実行
+                // ファイルの文字列置換処理の実行
                 ReplaceStringsInFiles replace = new ReplaceStringsInFiles(commandOptions.ReplaceWords, commandOptions.Files, commandOptions.EnableBOM);
 
                 replace.Replace(commandOptions.ReadEncoding, commandOptions.WriteEncoding, commandOptions.WriteNewLine);
 
-                //正常に処理を完了した。
-                Console.WriteLine("Successful.");
+                // 正常に処理を完了した
+                Console.WriteLine(ValidationMessages.ProcessingSuccessful);
             }
             catch (RmsmfException ex)
             {
@@ -98,7 +84,7 @@ namespace rmsmf
             }
             catch (Exception ex)
             {
-                Console.WriteLine("予期しないエラーが発生しました: " + ex.Message);
+                Console.WriteLine(string.Format(ValidationMessages.UnexpectedErrorOccurred, ex.Message));
                 Console.WriteLine(ex.ToString());
                 return;
             }

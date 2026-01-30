@@ -67,6 +67,7 @@
       <Link>ExecutionState.cs</Link>
     </Compile>
     <Compile Include="CommandOptions.cs" />
+    <Compile Include="FileConstants.cs" />
     <Compile Include="Help.cs" />
     <Compile Include="OptionValidator.cs" />
     <Compile Include="ProbeFiles.cs" />

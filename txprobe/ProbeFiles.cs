@@ -64,214 +64,24 @@ namespace txprobe
         }
 
         /// <summary>
-        /// _files に記載されたファイルの内容を探索する。
+        /// _files に記載されたファイルの内容を探索する
         /// </summary>
         /// <param name="encoding">読み取りファイルの文字エンコーディング</param>
-        /// <returns>true = 探索成功 , false = 異常終了.</returns>
+        /// <returns>true = 探索成功, false = 異常終了</returns>
         public bool Probe(Encoding encoding)
         {
-            Encoding inEncoding;
-
             try
             {
-                // 出力コレクションの初期化
-                if (this._output_filelist_filename != null)
-                {
-                    _outputCollection = new ConcurrentBag<string>();
+                InitializeOutputCollection();
 
-                    // 出力ファイルのフルパスを取得
-                    string outputFullPath = Path.GetFullPath(this._output_filelist_filename);
-                   
-                    // 入力ファイルリストから出力ファイルを除外
-                    this._files = this._files.Where(f => 
-                        !string.Equals(Path.GetFullPath(f), outputFullPath, StringComparison.OrdinalIgnoreCase))
-                        .ToArray();
-                }
-
-                //ファイル単位のマルチスレッド作成
-                Parallel.ForEach(this._files, (Action<string>)((fileName) =>
-                {
-                    if (File.Exists(fileName))
-                    {
-                        // 読み取りファイルを開く
-                        using (FileStream fs = new FileStream(fileName, FileMode.Open))
-                        {
-                            bool bomExist = false;
-                            int codePage;
-                            EncodingInfomation encInfo = null;
-
-                            // 読み込みエンコーディングの有無で分岐
-                            if (encoding == null)
-                            {
-                                // エンコーディング指定が無い場合
-
-                                // 読み取りファイルの文字エンコーディングを判定する
-                                long fileLength = fs.Length;
-                                
-                                // ファイルサイズ検証：2GB以上のファイルはエラー
-                                if (fileLength > int.MaxValue)
-                                {
-                                    throw new RmsmfException($"ファイル {fileName} が大きすぎます（最大 2GB）。");
-                                }
-                                
-                                int fileSize = (int)fileLength;
-                                byte[] buffer = new byte[fileSize];
-                                int readCount = fs.Read(buffer, 0, fileSize);
-                                
-                                // ファイルポジションを先頭に戻す（StreamReaderが正しく読めるようにする）
-                                fs.Position = 0;
-
-                                ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
-
-                                if (bomJudg.IsBOM(buffer))
-                                {
-                                    bomExist = true;
-                                    codePage = bomJudg.CodePage;
-                                    // BOMありの場合、簡略的なencInfoを作成
-                                    encInfo = new EncodingInfomation
-                                    {
-                                        CodePage = codePage,
-                                        Bom = true
-                                    };
-                                }
-                                else
-                                {
-                                    bomExist = false;
-
-                                    if (this._encodingDetectionMode == CommandOptions.EncodingDetectionType.Normal)
-                                    {
-                                        encInfo =
-                                        EncodingDetectorControl.NormalDetectEncoding(buffer);
-
-                                        codePage = encInfo.CodePage;
-                                    }
-                                    else if (this._encodingDetectionMode == CommandOptions.EncodingDetectionType.FirstParty)
-                                    {
-                                        encInfo =
-                                        EncodingDetectorControl.DetectEncoding(buffer);
-
-                                        codePage = encInfo.CodePage;
-                                    }
-                                    else if(this._encodingDetectionMode == CommandOptions.EncodingDetectionType.ThirdParty)
-                                    {
-                                        encInfo =
-                                        EncodingDetectorControl.DetectUtfUnknown(buffer);
-
-                                        codePage = encInfo.CodePage;
-                                    }
-                                    else
-                                    {
-                                        encInfo =
-                                        EncodingDetectorControl.NormalDetectEncoding(buffer);
-
-                                        codePage = encInfo.CodePage;
-                                    }
-                                }
-
-                                if (codePage > 0)
-                                {
-                                    try
-                                    {
-                                        inEncoding = Encoding.GetEncoding(codePage);
-                                    }
-                                    catch (ArgumentException)
-                                    {
-                                        // サポートされていないコードページの場合はnullを設定
-                                        // （例: EUC-TW (51950) は System.Text.Encoding.CodePages 4.7.1 でサポートされていない）
-                                        inEncoding = null;
-                                        Console.WriteLine($"Warning: Code page {codePage} is not supported. Skipping {fileName}");
-                                    }
-                                    catch (NotSupportedException)
-                                    {
-                                        inEncoding = null;
-                                        Console.WriteLine($"Warning: Code page {codePage} is not supported. Skipping {fileName}");
-                                    }
-                                }
-                                else
-                                {
-                                    inEncoding = null;
-                                }
-                            }
-                            else
-                            {
-                                // エンコーディング指定が有る場合
-
-                                inEncoding = encoding;
-
-                                byte[] bomBuffer = new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF };
-                                fs.Read(bomBuffer, 0, 4);
-                                fs.Position = 0;
-
-                                ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
-
-                                if (bomJudg.IsBOM(bomBuffer))
-                                {
-                                    bomExist = true;
-                                    codePage = encoding.CodePage;
-                                }
-                                else
-                                {
-                                    bomExist = false;
-                                    codePage = encoding.CodePage;
-                                }
-                                
-                                // エンコーディング指定がある場合も簡略的なencInfoを作成
-                                encInfo = new EncodingInfomation
-                                {
-                                    CodePage = codePage,
-                                    Bom = bomExist
-                                };
-                            }
-
-                            if(inEncoding == null)
-                            {
-                                // エンコーディングオブジェクトが作成できない場合でも、
-                                // 判定結果（encInfo）から情報を取得して表示
-                                string dispBOM;
-                                string lineBreakType = "EOL Unknown";
-                                string encodingName = "encoding Unknown";
-
-                                // encInfoにエンコーディング情報があれば使用
-                                if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingName))
-                                {
-                                    encodingName = encInfo.EncodingName;
-                                }
-                                else if (codePage > 0)
-                                {
-                                    // EncodingDetectionからエンコーディング名を取得
-                                    EncodingDetector ej = new rmsmf.EncodingDetector(0);
-                                    encodingName = ej.EncodingName(codePage);
-                                }
-
-                                if (bomExist == true)
-                                {
-                                    dispBOM = "BOM exists";
-                                }
-                                else
-                                {
-                                    dispBOM = "No BOM";
-                                }
-
-                                string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
-                                Console.WriteLine("{0}", dispLine);
-                                return; // Parallel.ForEachではcontinueの代わりにreturn
-                            }
-
-                            // エンコーディングを指定してテキストストリームを開く
-                            using (var reader = new StreamReader(fs, inEncoding, true))
-                            {
-                                // 検索メイン処理
-                                ReadForSearch(fileName, reader, inEncoding, bomExist, encInfo);
-                            }
-                        }
-                    }
-                }));
+                // ファイル単位でマルチスレッド処理を実行
+                Parallel.ForEach(this._files, fileName =>
+                    ProcessSingleFile(fileName, encoding));
 
                 // すべてのデータ収集が完了したら、ソートして書き込み
-                if (this._output_filelist_filename != null && _outputCollection != null)
-                {
-                    WriteSortedOutput();
-                }
+                FinalizeOutputCollection();
+
+                return true;
             }
             catch (UnauthorizedAccessException uae)
             {
@@ -279,27 +89,217 @@ namespace txprobe
             }
             catch (AggregateException ae)
             {
-                int errorCount = 0;
-                foreach (var ie in ae.InnerExceptions)
-                {
-                    errorCount++;
-                    Console.WriteLine(ie.Message);
-                }
-
-                string errorMessage = string.Format(rmsmf.ValidationMessages.ErrorsOccurred, errorCount) + 
-                                      " " + rmsmf.ValidationMessages.OtherFilesProcessedSuccessfully;
-                throw new RmsmfException(errorMessage, ae);
+                HandleAggregateException(ae);
+                return false;
             }
-            finally
+        }
+
+        /// <summary>
+        /// 出力コレクションの初期化
+        /// </summary>
+        private void InitializeOutputCollection()
+        {
+            if (this._output_filelist_filename == null)
             {
-                // リソース解放
-                if (_outputCollection != null)
+                return;
+            }
+
+            _outputCollection = new ConcurrentBag<string>();
+
+            // 出力ファイルのフルパスを取得
+            string outputFullPath = Path.GetFullPath(this._output_filelist_filename);
+
+            // 入力ファイルリストから出力ファイルを除外
+            this._files = this._files.Where(f =>
+                !string.Equals(Path.GetFullPath(f), outputFullPath, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        /// <summary>
+        /// 出力コレクションのファイナライズ（ソートして出力）
+        /// </summary>
+        private void FinalizeOutputCollection()
+        {
+            if (this._output_filelist_filename != null && _outputCollection != null)
+            {
+                WriteSortedOutput();
+            }
+        }
+
+        /// <summary>
+        /// 単一ファイルの検索処理を実行
+        /// </summary>
+        /// <param name="fileName">処理対象ファイル名</param>
+        /// <param name="encoding">読み取りエンコーディング</param>
+        private void ProcessSingleFile(string fileName, Encoding encoding)
+        {
+            if (!File.Exists(fileName))
+            {
+                return;
+            }
+
+            using (FileStream fs = new FileStream(fileName, FileMode.Open))
+            {
+                // エンコーディングを判定または取得
+                var encodingResult = rmsmf.EncodingHelper.DetectOrUseSpecifiedEncoding(
+                    fs, fileName, encoding, 
+                    (rmsmf.CommandOptions.EncodingDetectionType)this._encodingDetectionMode);
+
+                if (encodingResult.Encoding == null)
                 {
-                    _outputCollection = null;
+                    // エンコーディング不明の場合
+                    HandleUnknownEncoding(fileName, encodingResult);
+                    return;
+                }
+
+                // 検索処理を実行
+                using (var reader = new StreamReader(fs, encodingResult.Encoding, true))
+                {
+                    ReadForSearch(fileName, reader, encodingResult.Encoding, 
+                        encodingResult.BomExists, encodingResult.EncodingInfo);
+                }
+            }
+        }
+
+        /// <summary>
+        /// エンコーディング不明時の処理
+        /// </summary>
+        /// <param name="fileName">ファイル名</param>
+        /// <param name="encodingResult">エンコーディング判定結果</param>
+        private void HandleUnknownEncoding(string fileName, rmsmf.EncodingDetectionResult encodingResult)
+        {
+            string encodingName = "encoding Unknown";
+
+            // エンコーディング情報があれば使用
+            if (encodingResult.EncodingInfo != null &&
+                !string.IsNullOrEmpty(encodingResult.EncodingInfo.EncodingName))
+            {
+                encodingName = encodingResult.EncodingInfo.EncodingName;
+            }
+            else if (encodingResult.CodePage > 0)
+            {
+                // EncodingDetectionからエンコーディング名を取得
+                rmsmf.EncodingDetector ej = new rmsmf.EncodingDetector(0);
+                encodingName = ej.EncodingName(encodingResult.CodePage);
+            }
+
+            string dispBOM = rmsmf.EncodingHelper.GetBomDisplayString(encodingResult.BomExists);
+            string lineBreakType = "EOL Unknown";
+            string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
+            Console.WriteLine("{0}", dispLine);
+        }
+
+        /// <summary>
+        /// 集約例外を処理
+        /// </summary>
+        /// <param name="ae">集約例外</param>
+        private void HandleAggregateException(AggregateException ae)
+        {
+            // エラー詳細情報を収集
+            var errorDetails = ae.InnerExceptions
+                .Select((ex, index) => new
+                {
+                    Index = index + 1,
+                    FileName = ExtractFileNameFromException(ex),
+                    ErrorType = ex.GetType().Name,
+                    Message = ex.Message
+                })
+                .ToList();
+
+            // 各エラーの詳細を表示
+            Console.WriteLine();
+            Console.WriteLine("=== エラー詳細 ===");
+            foreach (var error in errorDetails)
+            {
+                Console.WriteLine($"エラー {error.Index}:");
+
+                if (!string.IsNullOrEmpty(error.FileName))
+                {
+                    Console.WriteLine($"  ファイル: {error.FileName}");
+                }
+
+                Console.WriteLine($"  種類: {error.ErrorType}");
+                Console.WriteLine($"  メッセージ: {error.Message}");
+                Console.WriteLine();
+            }
+
+            // サマリー情報を表示
+            string errorMessage = string.Format(rmsmf.ValidationMessages.ErrorsOccurred, errorDetails.Count) +
+                                  " " + rmsmf.ValidationMessages.OtherFilesProcessedSuccessfully;
+            throw new RmsmfException(errorMessage, ae);
+        }
+
+        /// <summary>
+        /// 例外からファイル名を抽出
+        /// </summary>
+        /// <param name="ex">例外</param>
+        /// <returns>ファイル名（抽出できない場合はnull）</returns>
+        private string ExtractFileNameFromException(Exception ex)
+        {
+            // RmsmfException からファイル名を抽出
+            if (ex is RmsmfException rmsmfEx)
+            {
+                // "ファイル ファイル名 が大きすぎます" のパターン
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    rmsmfEx.Message,
+                    @"(?:ファイル|File)\s+(.+?)\s+(?:が|is)");
+
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    return match.Groups[1].Value.Trim();
+                }
+
+                // 一般的なパターン: "メッセージ: ファイル名"
+                match = System.Text.RegularExpressions.Regex.Match(
+                    rmsmfEx.Message,
+                    @":\s*(.+)$");
+
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    var possibleFileName = match.Groups[1].Value.Trim();
+                    // ファイルパスっぽいかチェック（拡張子があるか、パス区切り文字があるか）
+                    if (possibleFileName.Contains("\\") || possibleFileName.Contains("/") ||
+                        possibleFileName.Contains("."))
+                    {
+                        return possibleFileName;
+                    }
                 }
             }
 
-            return true;
+            // IOException や UnauthorizedAccessException からファイル名を抽出
+            if (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                // メッセージから一般的なパターンでファイルパスを抽出
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    ex.Message,
+                    @"'([^']+)'|""([^""]+)""|:\s*([^\s,]+)");
+
+                if (match.Success)
+                {
+                    for (int i = 1; i < match.Groups.Count; i++)
+                    {
+                        if (!string.IsNullOrEmpty(match.Groups[i].Value))
+                        {
+                            return match.Groups[i].Value;
+                        }
+                    }
+                }
+            }
+
+            // スタックトレースからファイル情報を取得（最終手段）
+            if (!string.IsNullOrEmpty(ex.StackTrace))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    ex.StackTrace,
+                    @"fileName[^:]*:\s*([^\r\n]+)");
+
+                if (match.Success && match.Groups.Count > 1)
+                {
+                    return match.Groups[1].Value.Trim();
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -325,7 +325,7 @@ namespace txprobe
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ファイル書き込みエラー: " + ex.Message);
+                Console.WriteLine(string.Format(rmsmf.ValidationMessages.FileWriteError, ex.Message));
                 throw;
             }
         }
@@ -417,51 +417,22 @@ namespace txprobe
         }
 
         /// <summary>
-        /// Main processing For Replace
-        /// 置換メイン処理
+        /// 検索メイン処理
         /// </summary>
-        /// <param name="fileName">Read File Name. 読み取りファイル名。</param>
-        /// <param name="reader">Read File Stream. 読み取りファイルストリーム。</param>
-        /// <param name="encoding">Read File Encoding. 読み取りファイルの文字エンコーディング。</param>
-        /// <param name="bomExist">Read File BOM Existence Flag. 読み取りファイルのBOM有無フラグ。</param>
-        /// <param name="encInfo">Encoding Information. エンコーディング判定情報。</param>
+        /// <param name="fileName">読み取りファイル名</param>
+        /// <param name="reader">読み取りファイルストリーム</param>
+        /// <param name="encoding">読み取りファイルの文字エンコーディング</param>
+        /// <param name="bomExist">読み取りファイルのBOM有無フラグ</param>
+        /// <param name="encInfo">エンコーディング判定情報（未使用：互換性のため残す）</param>
         /// <returns>正常終了=true</returns>
-        public bool ReadForSearch(string fileName, StreamReader reader, Encoding encoding, bool bomExist, EncodingInfomation encInfo = null)
+        public bool ReadForSearch(string fileName, StreamReader reader, Encoding encoding, bool bomExist, object encInfo = null)
         {
             bool rc = true;
-            string dispBOM;
-            string encodingName = "";
 
-            if (bomExist == true)
-            {
-                dispBOM = "BOM exists";
-            }
-            else
-            {
-                dispBOM = "No BOM";
-            }
-
-            if(encoding == null)
-            {
-                encodingName = "encoding Unknown";
-            }
-            else
-            {
-                // encInfo.EncodingNameが設定されている場合はそれを優先使用
-                if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingName))
-                {
-                    encodingName = encInfo.EncodingName;
-                }
-                // EncodingVariantが設定されている場合はそれを使用
-                else if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingVariant))
-                {
-                    encodingName = encInfo.EncodingVariant;
-                }
-                else
-                {
-                    encodingName = encoding.WebName;
-                }
-            }
+            // EncodingHelperを使用してBOMと名前を取得
+            string dispBOM = rmsmf.EncodingHelper.GetBomDisplayString(bomExist);
+            // encInfoの型が異なるアセンブリのため、encodingのみから名前を取得
+            string encodingName = encoding != null ? encoding.WebName : "encoding Unknown";
 
             // 読み取りファイルを全て読み込む
             string readLine = reader.ReadToEnd();
@@ -476,8 +447,7 @@ namespace txprobe
 
             if (this._searchWords != null)
             {
-                //検索を実施します。
-                //int searchWordsCount = this._searchWords.GetLength(1);
+                // 検索を実施する
                 int searchWordsCount = this._searchWords.GetLength(0);
                 bool wordFound = false;
 
@@ -488,16 +458,16 @@ namespace txprobe
                         // 検索単語の探索
                         if (this._enableProbe == true)
                         {
-                            // プローブ機能が有効の場合、検索単語を探索する。
-                            // 検索単語が見つかった場合、結果を表示する。
-                            string dispLine = fileName + "," + this._searchWords[i];
-                            Console.WriteLine("{0}", dispLine);
-                            wordFound = true;
-                        }
-                        else
-                        {
-                            // プローブ機能が無効の場合、検索結果のみ表示する。検索単語も表示する。
-                            wordFound = true;
+                        // プローブ機能が有効の場合、検索単語を探索する
+                        // 検索単語が見つかった場合、結果を表示する
+                        string dispLine = fileName + "," + this._searchWords[i];
+                        Console.WriteLine("{0}", dispLine);
+                        wordFound = true;
+                    }
+                    else
+                    {
+                        // プローブ機能が無効の場合、検索結果のみ表示する
+                        wordFound = true;
                         }
                     }
                 }
@@ -513,7 +483,7 @@ namespace txprobe
             }
             else
             {
-                //検索単語が指定されていない場合、ファイル探索結果のみ表示する。
+                // 検索単語が指定されていない場合、ファイル探索結果のみ表示する
                 string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
                 Console.WriteLine("{0}", dispLine);
 

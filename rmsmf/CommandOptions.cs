@@ -7,25 +7,12 @@ namespace rmsmf
 {
     public class CommandOptions : Colipex
     {
-        private const string CharacterSetDetection = "Detection";
-        private const string OptionHelp = "h";
-        private const string OptionCharacterSet = "c";
-        private const string OptionWriteCharacterSet = "w";
-        private const string OptionFileNameList = "f";
-        private const string OptionFileNameListCharacterSet = "fc";
-        private const string OptionReplaceWords = "r";
-        private const string OptionReplaceWordsCharacterSet = "rc";
-        private const string OptionWriteByteOrderMark = "b";
-        private const string OptionAllDirectories = "d";
-        private const string OptionNewLine = "nl";
-        private const string OptionDetectionMode = "det";
-        private const string OptionCultureInfo = "ci";
-
+        // 改行コード定数（このクラス固有）
         public static readonly string NewLineCRLF = "CRLF";
         public static readonly string NewLineLF = "LF";
         public static readonly string NewLineCR = "CR";
 
-        private bool searchOptionAllDirectories = false; // AllDirectories オプション
+        private bool _searchOptionAllDirectories = false; // AllDirectories オプション
         private string _cultureInfo = null; // CultureInfo オプション
         private bool _helpOrVersionDisplayed = false; // ヘルプまたはバージョンが表示されたかどうか
 
@@ -69,7 +56,7 @@ namespace rmsmf
                 out string filesCharacterSet);
 
             this._enableBOM = ParseBomOption();
-            this.searchOptionAllDirectories = ParseAllDirectoriesOption();
+            this._searchOptionAllDirectories = ParseAllDirectoriesOption();
             this._writeNewLine = ParseNewLineOption();
 
             InitializeEncodings(
@@ -87,7 +74,7 @@ namespace rmsmf
         /// </summary>
         private void ValidateRequiredParameters()
         {
-            if (this.IsOption(OptionFileNameList) == false)
+            if (this.IsOption(OptionConstants.OptionFileNameList) == false)
             {
                 if (this.Parameters.Count == 0 && this.Options.Count == 0)
                 {
@@ -118,9 +105,9 @@ namespace rmsmf
             }
 
             // ヘルプオプションのチェック
-            if (this.IsOption(OptionHelp))
+            if (this.IsOption(OptionConstants.OptionHelp))
             {
-                string helpOption = this.Options[OptionHelp];
+                string helpOption = this.Options[OptionConstants.OptionHelp];
                 
                 // /h:cul - カルチャー情報の一覧を表示
                 if (helpOption != null && helpOption.Trim().ToLower() == "cul")
@@ -159,9 +146,9 @@ namespace rmsmf
         {
             //Setting Read CharacterSet 
             //読み取り文字エンコーディング名を設定する。
-            if (this.IsOption(OptionCharacterSet))
+            if (this.IsOption(OptionConstants.OptionCharacterSet))
             {
-                readCharacterSet = this.Options[OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                readCharacterSet = this.Options[OptionConstants.OptionCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (readCharacterSet == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingNameForOption, "c"));
@@ -169,14 +156,14 @@ namespace rmsmf
             }
             else
             {
-                readCharacterSet = CharacterSetDetection;
+                readCharacterSet = OptionConstants.CharacterSetDetection;
             }
 
             //Setting Write CharacterSet 
             //書き込み文字エンコーディング名の設定する。
-            if (this.IsOption(OptionWriteCharacterSet))
+            if (this.IsOption(OptionConstants.OptionWriteCharacterSet))
             {
-                writeCharacterSet = this.Options[OptionWriteCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                writeCharacterSet = this.Options[OptionConstants.OptionWriteCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (writeCharacterSet == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingNameForOption, "w"));
@@ -191,9 +178,9 @@ namespace rmsmf
 
             //Setting ReplaceWords CharacterSet 
             //置換単語リストの文字エンコーディングの設定する。
-            if (this.IsOption(OptionReplaceWordsCharacterSet))
+            if (this.IsOption(OptionConstants.OptionReplaceWordsCharacterSet))
             {
-                replaceWordsCharacterSet = this.Options[OptionReplaceWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                replaceWordsCharacterSet = this.Options[OptionConstants.OptionReplaceWordsCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (replaceWordsCharacterSet == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingNameForOption, "rc"));
@@ -206,9 +193,9 @@ namespace rmsmf
 
             //Setting FileNameList CharacterSet 
             //ファイルリストの文字エンコーディングを設定する。
-            if (this.IsOption(OptionFileNameListCharacterSet))
+            if (this.IsOption(OptionConstants.OptionFileNameListCharacterSet))
             {
-                filesCharacterSet = this.Options[OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
+                filesCharacterSet = this.Options[OptionConstants.OptionFileNameListCharacterSet].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (filesCharacterSet == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(ValidationMessages.MissingEncodingNameForOption, "fc"));
@@ -221,10 +208,10 @@ namespace rmsmf
 
             //Setting Encoding Detection Mode
             //文字エンコーディング自動判定モードを設定する。
-            if (this.IsOption(OptionDetectionMode))
+            if (this.IsOption(OptionConstants.OptionDetectionMode))
             {
                 string encJMode = string.Empty;
-                encJMode = this.Options[OptionDetectionMode].TrimEnd(new char[] { '\x0a', '\x0d' });
+                encJMode = this.Options[OptionConstants.OptionDetectionMode].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (encJMode == Colipex.NonValue)
                 {
                     _encodingDetectionMode = EncodingDetectionType.Normal;
@@ -258,9 +245,9 @@ namespace rmsmf
         /// <returns>BOM設定（null=指定なし、true=有効、false=無効）</returns>
         private bool? ParseBomOption()
         {
-            if (this.IsOption(OptionWriteByteOrderMark))
+            if (this.IsOption(OptionConstants.OptionWriteByteOrderMark))
             {
-                string optionBOM = this.Options[OptionWriteByteOrderMark].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
+                string optionBOM = this.Options[OptionConstants.OptionWriteByteOrderMark].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
 
                 if (optionBOM == "false" || optionBOM == "no" || optionBOM == "n")
                     return false;
@@ -277,7 +264,7 @@ namespace rmsmf
         /// <returns>AllDirectoriesが有効かどうか</returns>
         private bool ParseAllDirectoriesOption()
         {
-            return this.IsOption(OptionAllDirectories);
+            return this.IsOption(OptionConstants.OptionAllDirectories);
         }
 
         /// <summary>
@@ -286,9 +273,9 @@ namespace rmsmf
         /// <returns>改行コード設定（null=指定なし）</returns>
         private string ParseNewLineOption()
         {
-            if (this.IsOption(OptionNewLine))
+            if (this.IsOption(OptionConstants.OptionNewLine))
             {
-                string optionNewLine = this.Options[OptionNewLine].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
+                string optionNewLine = this.Options[OptionConstants.OptionNewLine].TrimEnd(new char[] { '\x0a', '\x0d' }).ToLower();
 
                 if (optionNewLine == "win" || optionNewLine == "windows" || optionNewLine == "w" || optionNewLine == "crlf")
                     return NewLineCRLF;
@@ -312,9 +299,9 @@ namespace rmsmf
         /// <returns>カルチャー情報文字列（null=指定なし）</returns>
         private string ParseCultureInfoOption()
         {
-            if (this.IsOption(OptionCultureInfo))
+            if (this.IsOption(OptionConstants.OptionCultureInfo))
             {
-                string cultureInfo = this.Options[OptionCultureInfo].TrimEnd(new char[] { '\x0a', '\x0d' });
+                string cultureInfo = this.Options[OptionConstants.OptionCultureInfo].TrimEnd(new char[] { '\x0a', '\x0d' });
                 if (cultureInfo != Colipex.NonValue && !string.IsNullOrWhiteSpace(cultureInfo))
                 {
                     return cultureInfo;
@@ -335,10 +322,10 @@ namespace rmsmf
         {
             try
             {
-                this.ReadEncoding = ResolveEncoding(readCharacterSet, CharacterSetDetection);
-                this.WriteEncoding = ResolveEncoding(writeCharacterSet, CharacterSetDetection);
-                this.ReplaceEncoding = ResolveEncoding(replaceWordsCharacterSet, CharacterSetDetection);
-                this.FilesEncoding = ResolveEncoding(filesCharacterSet, CharacterSetDetection);
+                this.ReadEncoding = ResolveEncoding(readCharacterSet, OptionConstants.CharacterSetDetection);
+                this.WriteEncoding = ResolveEncoding(writeCharacterSet, OptionConstants.CharacterSetDetection);
+                this.ReplaceEncoding = ResolveEncoding(replaceWordsCharacterSet, OptionConstants.CharacterSetDetection);
+                this.FilesEncoding = ResolveEncoding(filesCharacterSet, OptionConstants.CharacterSetDetection);
             }
             catch (ArgumentException ex)
             {
@@ -356,14 +343,14 @@ namespace rmsmf
         private void ValidateAndSetFileOptions()
         {
             // 置換単語リストファイルオプションの設定
-            if (this.IsOption(OptionReplaceWords))
+            if (this.IsOption(OptionConstants.OptionReplaceWords))
             {
-                if (this.Options[OptionReplaceWords] == Colipex.NonValue)
+                if (this.Options[OptionConstants.OptionReplaceWords] == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(ValidationMessages.MissingOptionFileName, "r"));
                 }
 
-                this._replaceWordsFileName = this.Options[OptionReplaceWords].TrimEnd(new char[] { '\x0a', '\x0d' });
+                this._replaceWordsFileName = this.Options[OptionConstants.OptionReplaceWords].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._replaceWordsFileName))
                 {
@@ -372,14 +359,14 @@ namespace rmsmf
             }
 
             // ファイルリストファイルオプションの設定
-            if (this.IsOption(OptionFileNameList))
+            if (this.IsOption(OptionConstants.OptionFileNameList))
             {
-                if (this.Options[OptionFileNameList] == Colipex.NonValue)
+                if (this.Options[OptionConstants.OptionFileNameList] == Colipex.NonValue)
                 {
                     throw new RmsmfException(string.Format(ValidationMessages.MissingOptionFileName, "f"));
                 }
 
-                this._fileNameListFileName = this.Options[OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
+                this._fileNameListFileName = this.Options[OptionConstants.OptionFileNameList].TrimEnd(new char[] { '\x0a', '\x0d' });
 
                 if (!File.Exists(this._fileNameListFileName))
                 {
@@ -406,8 +393,8 @@ namespace rmsmf
         private void ValidateRequiredParametersProvided()
         {
             OptionValidator.ValidateAtLeastOneCondition(
-                this.IsOption(OptionReplaceWords),
-                this.IsOption(OptionFileNameList),
+                this.IsOption(OptionConstants.OptionReplaceWords),
+                this.IsOption(OptionConstants.OptionFileNameList),
                 this.Parameters.Count > 0
             );
         }
@@ -418,7 +405,7 @@ namespace rmsmf
         private void ValidateFileSpecificationMethod()
         {
             OptionValidator.ValidateFileSpecificationNotConflicting(
-                this.IsOption(OptionFileNameList),
+                this.IsOption(OptionConstants.OptionFileNameList),
                 this.Parameters.Count
             );
         }
@@ -428,8 +415,8 @@ namespace rmsmf
         /// </summary>
         private void ValidateReplaceWordsHasTargetFiles()
         {
-            if (this.IsOption(OptionReplaceWords) && 
-                this.IsOption(OptionFileNameList) == false && 
+            if (this.IsOption(OptionConstants.OptionReplaceWords) && 
+                this.IsOption(OptionConstants.OptionFileNameList) == false && 
                 this.Parameters.Count == 0)
             {
                 throw new RmsmfException(ValidationMessages.ReplaceWordsRequiresTargetFiles);
@@ -443,15 +430,15 @@ namespace rmsmf
         {
             // 置換単語ファイルのエンコーディングは、置換単語ファイルオプションが必要
             OptionValidator.ValidateEncodingOptionDependency(
-                this.IsOption(OptionReplaceWords),
-                this.IsOption(OptionReplaceWordsCharacterSet),
+                this.IsOption(OptionConstants.OptionReplaceWords),
+                this.IsOption(OptionConstants.OptionReplaceWordsCharacterSet),
                 ValidationMessages.ReplaceWordsEncodingWithoutReplaceWords
             );
 
             // ファイルリストのエンコーディングは、ファイルリストオプションが必要
             OptionValidator.ValidateEncodingOptionDependency(
-                this.IsOption(OptionFileNameList),
-                this.IsOption(OptionFileNameListCharacterSet),
+                this.IsOption(OptionConstants.OptionFileNameList),
+                this.IsOption(OptionConstants.OptionFileNameListCharacterSet),
                 ValidationMessages.FileListEncodingWithoutFileList
             );
         }
@@ -462,13 +449,13 @@ namespace rmsmf
         private void ValidateConversionModeRequirements()
         {
             // 置換単語オプションが無い場合、少なくとも1つの変換オプションが必要
-            if (this.IsOption(OptionReplaceWords) == false)
+            if (this.IsOption(OptionConstants.OptionReplaceWords) == false)
             {
                 bool hasConversionOption = 
-                    this.IsOption(OptionCharacterSet) ||
-                    this.IsOption(OptionWriteCharacterSet) ||
-                    this.IsOption(OptionWriteByteOrderMark) ||
-                    this.IsOption(OptionNewLine);
+                    this.IsOption(OptionConstants.OptionCharacterSet) ||
+                    this.IsOption(OptionConstants.OptionWriteCharacterSet) ||
+                    this.IsOption(OptionConstants.OptionWriteByteOrderMark) ||
+                    this.IsOption(OptionConstants.OptionNewLine);
 
                 if (!hasConversionOption)
                 {
@@ -662,7 +649,7 @@ namespace rmsmf
                 try
                 {
                     System.IO.SearchOption searchOption = System.IO.SearchOption.TopDirectoryOnly;
-                    if (this.searchOptionAllDirectories == true)
+                    if (this._searchOptionAllDirectories == true)
                         searchOption = System.IO.SearchOption.AllDirectories;
 
                     this._files = Directory.GetFileSystemEntries(directoryName, searchWord, searchOption);

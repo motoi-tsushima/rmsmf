@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace rmsmf
 {
@@ -55,6 +55,8 @@ namespace rmsmf
         public static string OtherFilesProcessedSuccessfully => GetMessage("OtherFilesProcessedSuccessfully");
         public static string SearchComplete => GetMessage("SearchComplete");
         public static string UnexpectedErrorOccurred => GetMessage("UnexpectedErrorOccurred");
+        public static string FileTooLarge => GetMessage("FileTooLarge");
+        public static string FileWriteError => GetMessage("FileWriteError");
 
         /// <summary>
         /// メッセージを取得
@@ -303,6 +305,26 @@ namespace rmsmf
                         case "zh-CN": return "发生了意外错误: {0}";
                         case "zh-TW": return "發生了意外錯誤: {0}";
                         default: return "An unexpected error occurred: {0}";
+                    }
+
+                case "FileTooLarge":
+                    switch (lang)
+                    {
+                        case "ja": return "ファイル {0} が大きすぎます（最大 2GB）。";
+                        case "ko": return "파일 {0}이(가) 너무 큽니다(최대 2GB).";
+                        case "zh-CN": return "文件 {0} 太大（最大 2GB）。";
+                        case "zh-TW": return "檔案 {0} 太大（最大 2GB）。";
+                        default: return "File {0} is too large (maximum 2GB).";
+                    }
+
+                case "FileWriteError":
+                    switch (lang)
+                    {
+                        case "ja": return "ファイル書き込みエラー: {0}";
+                        case "ko": return "파일 쓰기 오류: {0}";
+                        case "zh-CN": return "文件写入错误: {0}";
+                        case "zh-TW": return "檔案寫入錯誤: {0}";
+                        default: return "File write error: {0}";
                     }
 
                 default:

@@ -7,7 +7,7 @@ using System.Text;
 namespace rmsmf
 {
     /// <summary>
-    /// Command line parameter extraction. (Co li p ex)
+    /// コマンドラインパラメータ抽出 (Command Line Parameter Extraction: Colipex)
     /// </summary>
     public class Colipex
     {

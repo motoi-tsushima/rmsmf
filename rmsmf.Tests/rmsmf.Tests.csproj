@@ -50,6 +50,9 @@
   <ItemGroup>
     <Compile Include="ColipexTests.cs" />
     <Compile Include="CsvParsingTests.cs" />
+    <Compile Include="EncodingHelperTests.cs" />
+    <Compile Include="FileConstantsTests.cs" />
+    <Compile Include="OptionConstantsTests.cs" />
     <Compile Include="OptionValidatorTests.cs" />
     <Compile Include="CommandOptionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
