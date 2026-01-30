@@ -50,9 +50,9 @@ namespace txprobe
         }
 
         /// <summary>
-        /// 出力データキュー（マルチスレッド対応）
+        /// 出力データコレクション（マルチスレッド対応）
         /// </summary>
-        private BlockingCollection<string> _outputQueue = null;
+        private ConcurrentBag<string> _outputCollection = null;
 
         public ProbeFiles(string[] searchWords, string[] files, bool enableProbe, string outputFileListName, Encoding filesEncoding) 
         { 
@@ -74,22 +74,18 @@ namespace txprobe
 
             try
             {
-                // 出力キューの初期化
-                _outputQueue = new BlockingCollection<string>();
-
-                // 専用の書き込みスレッドを開始
-                Task writerTask = null;
+                // 出力コレクションの初期化
                 if (this._output_filelist_filename != null)
                 {
-                   // 出力ファイルのフルパスを取得
-                   string outputFullPath = Path.GetFullPath(this._output_filelist_filename);
+                    _outputCollection = new ConcurrentBag<string>();
+
+                    // 出力ファイルのフルパスを取得
+                    string outputFullPath = Path.GetFullPath(this._output_filelist_filename);
                    
-                   // 入力ファイルリストから出力ファイルを除外
-                   this._files = this._files.Where(f => 
-                       !string.Equals(Path.GetFullPath(f), outputFullPath, StringComparison.OrdinalIgnoreCase))
-                       .ToArray();
-                   
-                    writerTask = Task.Run(() => FileWriterThread());
+                    // 入力ファイルリストから出力ファイルを除外
+                    this._files = this._files.Where(f => 
+                        !string.Equals(Path.GetFullPath(f), outputFullPath, StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
                 }
 
                 //ファイル単位のマルチスレッド作成
@@ -271,13 +267,10 @@ namespace txprobe
                     }
                 }));
 
-                // キューへの追加完了を通知
-                _outputQueue.CompleteAdding();
-
-                // 書き込みスレッドの完了を待機
-                if (writerTask != null)
+                // すべてのデータ収集が完了したら、ソートして書き込み
+                if (this._output_filelist_filename != null && _outputCollection != null)
                 {
-                    writerTask.Wait();
+                    WriteSortedOutput();
                 }
             }
             catch (UnauthorizedAccessException uae)
@@ -300,10 +293,9 @@ namespace txprobe
             finally
             {
                 // リソース解放
-                if (_outputQueue != null)
+                if (_outputCollection != null)
                 {
-                    _outputQueue.Dispose();
-                    _outputQueue = null;
+                    _outputCollection = null;
                 }
             }
 
@@ -311,18 +303,21 @@ namespace txprobe
         }
 
         /// <summary>
-        /// 専用の書き込みスレッド（Producer-Consumerパターンの消費者）
+        /// 収集したデータをソートしてファイルに書き込む
         /// </summary>
-        private void FileWriterThread()
+        private void WriteSortedOutput()
         {
             try
             {
+                // ConcurrentBagからリストに変換してソート
+                // StringComparer.OrdinalIgnoreCaseを使用してファイルパスをソート
+                // （Windowsファイルシステムと同じ動作、カルチャー非依存）
+                var sortedLines = _outputCollection.OrderBy(line => line, StringComparer.OrdinalIgnoreCase).ToList();
+
+                // ソート済みデータをファイルに書き込み
                 using (var ofs = new StreamWriter(this._output_filelist_filename, false, this._filesEncoding))
                 {
-                    // キューからデータを取得して書き込み
-                    // GetConsumingEnumerable()はキューが空の場合は待機し、
-                    // CompleteAdding()後にキューが空になるとループを抜ける
-                    foreach (var line in _outputQueue.GetConsumingEnumerable())
+                    foreach (var line in sortedLines)
                     {
                         ofs.WriteLine(line);
                     }
@@ -336,21 +331,14 @@ namespace txprobe
         }
 
         /// <summary>
-        /// キューにデータを追加（Producer-Consumerパターンの生産者）
+        /// コレクションにデータを追加（スレッドセーフ）
         /// </summary>
         /// <param name="line">追加する行</param>
-        private void EnqueueOutput(string line)
+        private void AddToOutputCollection(string line)
         {
-            if (_outputQueue != null)
+            if (_outputCollection != null)
             {
-                try
-                {
-                    _outputQueue.Add(line);
-                }
-                catch (InvalidOperationException)
-                {
-                    // CompleteAdding()後の追加は無視
-                }
+                _outputCollection.Add(line);
             }
         }
 
@@ -519,8 +507,8 @@ namespace txprobe
                     string dispLine = fileName + "," + encodingName + "," + lineBreakType + "," + dispBOM;
                     Console.WriteLine("{0}", dispLine);
 
-                    // スレッドセーフなキューへの追加
-                    EnqueueOutput(dispLine);
+                    // スレッドセーフなコレクションへの追加
+                    AddToOutputCollection(dispLine);
                 }
             }
             else
@@ -529,8 +517,8 @@ namespace txprobe
                 string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
                 Console.WriteLine("{0}", dispLine);
 
-                // スレッドセーフなキューへの追加
-                EnqueueOutput(dispLine);
+                // スレッドセーフなコレクションへの追加
+                AddToOutputCollection(dispLine);
             }
 
             return rc;

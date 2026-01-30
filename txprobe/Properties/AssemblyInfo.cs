@@ -1,3 +1,4 @@
+using System.Resources;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -29,5 +30,9 @@ using System.Runtime.InteropServices;
 //      ビルド番号
 //      リビジョン
 //
-[assembly: AssemblyVersion("1.0.3.18")]
-[assembly: AssemblyFileVersion("1.0.3.18")]
+[assembly: AssemblyVersion("1.0.3.19")]
+[assembly: AssemblyFileVersion("1.0.3.19")]
+[assembly: NeutralResourcesLanguage("ja")]
+
+// テストアセンブリからinternalメンバーへのアクセスを許可
+[assembly: InternalsVisibleTo("txprobe.Tests")]

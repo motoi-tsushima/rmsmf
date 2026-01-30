@@ -1,4 +1,4 @@
-﻿# rmsmf - Replace Multiple Strings in Multiple Files
+# rmsmf - Replace Multiple Strings in Multiple Files
 
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -56,6 +56,8 @@ rmsmf/
 - ✅ **改行コード変換**: CRLF / LF / CR の相互変換
 - ✅ **ファイルリスト対応**: テキストファイルで処理対象ファイルを指定可能
 - ✅ **エスケープシーケンス対応**: `\r\n`, `\t` などをCSV内で使用可能
+- ✅ **多言語対応**: 日本語、英語、韓国語、中国語（簡体字・繁体字）のヘルプ表示
+- ✅ **拡張ヘルプ**: `/h:cul` でカルチャー情報一覧、`/h:enc` でエンコーディング情報一覧を表示
 
 ### txprobe の機能
 
@@ -64,6 +66,8 @@ rmsmf/
 - ✅ **改行コード判定**: CRLF / LF / CR を判定・表示
 - ✅ **BOM検出**: BOMの有無を検出・表示
 - ✅ **プローブモード**: 検索単語を含むファイルのみ表示
+- ✅ **多言語対応**: 日本語、英語、韓国語、中国語（簡体字・繁体字）のヘルプ表示
+- ✅ **拡張ヘルプ**: `/h:cul` でカルチャー情報一覧、`/h:enc` でエンコーディング情報一覧を表示
 
 ---
 
@@ -118,6 +122,8 @@ rmsmf <オプション> <対象ファイル名>
 | `/fc:<エンコーディング>` | ファイルリストのエンコーディング | `/fc:UTF-8` |
 | `/nl:<改行コード>` | 改行コード (crlf/lf/cr) | `/nl:lf` |
 | `/h` | ヘルプ表示 | `/h` |
+| `/h:cul` | 使用可能なカルチャー情報の一覧表示 | `/h:cul` |
+| `/h:enc` | 使用可能なエンコーディング情報の一覧表示 | `/h:enc` |
 | /det:<0\|1\|3> | 文字エンコーディング判定処理の指定 | /det:3 |
 | /ci:<カルチャー情報> | カルチャー情報(国・言語識別コード) | /ci:en-US |
 
@@ -214,6 +220,19 @@ rmsmf *.txt /nl:crlf
 rmsmf *.txt /nl:lf
 ```
 
+**7. ヘルプオプション**
+
+```powershell
+# 通常のヘルプを表示
+rmsmf /h
+
+# 使用可能なカルチャー情報の一覧を表示（/ci: オプションで使用可能な値）
+rmsmf /h:cul
+
+# 使用可能なエンコーディング情報の一覧を表示（/c: と /w: オプションで使用可能な値）
+rmsmf /h:enc
+```
+
 ---
 
 ### txprobe - テキストファイル検索ツール
@@ -236,6 +255,8 @@ txprobe <オプション> <対象ファイル名>
 | `/fc:<エンコーディング>` | ファイルリストのエンコーディング | `/fc:UTF-8` |
 | `/p` | プローブモード（検索単語を含むファイルのみ表示） | `/p` |
 | `/h` | ヘルプ表示 | `/h` |
+| `/h:cul` | 使用可能なカルチャー情報の一覧表示 | `/h:cul` |
+| `/h:enc` | 使用可能なエンコーディング情報の一覧表示 | `/h:enc` |
 | /det:<0\|1\|3> | 文字エンコーディング判定処理の指定 | /det:3 |
 | /ci:<カルチャー情報> | カルチャー情報(国・言語識別コード) | /ci:en-US |
 
@@ -285,6 +306,19 @@ txprobe /d *.txt
 
 ```powershell
 txprobe /c:UTF-8 *.txt
+```
+
+**6. ヘルプオプション**
+
+```powershell
+# 通常のヘルプを表示
+txprobe /h
+
+# 使用可能なカルチャー情報の一覧を表示（/ci: オプションで使用可能な値）
+txprobe /h:cul
+
+# 使用可能なエンコーディング情報の一覧を表示（/c: オプションで使用可能な値）
+txprobe /h:enc
 ```
 
 ---

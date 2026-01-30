@@ -120,9 +120,29 @@ namespace rmsmf
             // ヘルプオプションのチェック
             if (this.IsOption(OptionHelp))
             {
-                Help help = new Help();
-                help.Show();
-                return true;
+                string helpOption = this.Options[OptionHelp];
+                
+                // /h:cul - カルチャー情報の一覧を表示
+                if (helpOption != null && helpOption.Trim().ToLower() == "cul")
+                {
+                    Help help = new Help();
+                    help.ShowAvailableCultures();
+                    return true;
+                }
+                // /h:enc - エンコーディング情報の一覧を表示
+                else if (helpOption != null && helpOption.Trim().ToLower() == "enc")
+                {
+                    Help help = new Help();
+                    help.ShowAvailableEncodings();
+                    return true;
+                }
+                // /h - 通常のヘルプを表示
+                else
+                {
+                    Help help = new Help();
+                    help.Show();
+                    return true;
+                }
             }
 
             return false;
