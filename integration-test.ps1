@@ -155,7 +155,8 @@ function Assert-FileHasBOM {
         [string]$Message
     )
     
-    $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+    $fullPath = if ([System.IO.Path]::IsPathRooted($FilePath)) { $FilePath } else { Join-Path (Get-Location) $FilePath }
+    $bytes = [System.IO.File]::ReadAllBytes($fullPath)
     if ($bytes.Length -lt 3 -or $bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF) {
         throw "$Message`nBOMが見つかりませんでした"
     }
@@ -169,7 +170,8 @@ function Assert-FileNoBOM {
         [string]$Message
     )
     
-    $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+    $fullPath = if ([System.IO.Path]::IsPathRooted($FilePath)) { $FilePath } else { Join-Path (Get-Location) $FilePath }
+    $bytes = [System.IO.File]::ReadAllBytes($fullPath)
     if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
         throw "$Message`nBOMが見つかりました（期待は BOM なし）"
     }
@@ -303,7 +305,8 @@ function Test-Scenario2-EncodingAndBOM {
 Write-TestStep "Shift-JIS (BOMなし) のファイルを作成"
 $content = "日本語のテストファイルです。`r`nShift-JIS エンコーディングで保存されています。"
 $sjis = [System.Text.Encoding]::GetEncoding("shift_jis")
-[System.IO.File]::WriteAllText("encoding-test.txt", $content, $sjis)
+$filePath = Join-Path (Get-Location) "encoding-test.txt"
+[System.IO.File]::WriteAllText($filePath, $content, $sjis)
     
 # txprobe でエンコーディングを確認
 Write-TestStep "txprobe でエンコーディングを確認"
@@ -480,11 +483,12 @@ password123,SecureP@ssw0rd!
 }
 
 function Test-Scenario5-BOMControl {
-    # シナリオ5: BOM の追加と削除
+# シナリオ5: BOM の追加と削除
     
-    Write-TestStep "UTF-8 (BOM なし) のファイルを作成"
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    [System.IO.File]::WriteAllText("bom-test.txt", "UTF-8 without BOM", $utf8NoBom)
+Write-TestStep "UTF-8 (BOM なし) のファイルを作成"
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+$filePath = Join-Path (Get-Location) "bom-test.txt"
+[System.IO.File]::WriteAllText($filePath, "UTF-8 without BOM", $utf8NoBom)
     
     # BOM がないことを確認
     Assert-FileNoBOM -FilePath "bom-test.txt" -Message "初期状態で BOM がない"
