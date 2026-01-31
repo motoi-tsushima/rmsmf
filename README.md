@@ -172,8 +172,8 @@ rmsmf /r:words.csv *.txt /w:shift_jis
 # Shift_JIS → UTF-8 (BOM付き)
 rmsmf *.txt /c:shift_jis /w:UTF-8 /b:true
 
-# UTF-8 → Shift_JIS 
-rmsmf *.txt /c:UTF-8 /w:shift_jis 
+# UTF-8 → Shift_JIS
+rmsmf *.txt /c:UTF-8 /w:shift_jis
 
 # Shift_JIS → UTF-8 (BOM付き)  :文字エンコーディング自動判定任せ
 rmsmf *.txt /w:UTF-8 /b:true
@@ -323,223 +323,6 @@ txprobe /h:enc
 
 ---
 
-## 🏗️ アーキテクチャ
-
-### クラス構成図
-
-```
-┌─────────────────────────────────────────────────────┐
-│                    Colipex                          │
-│  (コマンドライン解析基底クラス)                        │
-│                                                     │
-│  + Options: Dictionary<string, string>              │
-│  + Parameters: List<string>                         │
-│  + IsOption(name): bool                             │
-│  # ConvertEscapeSequences(input): string            │
-│  # ResolveEncoding(name): Encoding                  │
-│  # EnsureEncodingInitialized(...)                   │
-│  # LoadLinesFromFile(...): List<string>             │
-└─────────────────────────────────────────────────────┘
-                        ▲
-                        │
-        ┌───────────────┴───────────────┐
-        │                               │
-┌───────┴────────┐            ┌─────────┴────────┐
-│ CommandOptions │            │ CommandOptions   │
-│    (rmsmf)     │            │   (txprobe)      │
-└────────────────┘            └──────────────────┘
-```
-
-### 主要クラス
-
-#### **Colipex (基底クラス)**
-
-コマンドライン解析の基底機能を提供します。
-
-**責務:**
-- コマンドライン引数の解析
-- オプションとパラメータの管理
-- 共通ユーティリティメソッド（エスケープシーケンス変換、エンコーディング解決）
-
-**主要メソッド:**
-- `ConvertEscapeSequences(string)` - `\r\n`, `\t` などの変換
-- `ResolveEncoding(string)` - エンコーディング名またはコードページからEncodingオブジェクトを取得
-- `EnsureEncodingInitialized(...)` - エンコーディング自動判定と設定
-- `LoadLinesFromFile(...)` - ファイル読み込みとエスケープシーケンス変換
-
----
-
-#### **OptionValidator (ユーティリティクラス)**
-
-コマンドオプションの検証ロジックを提供します。
-
-**責務:**
-- オプションの組み合わせ検証
-- 依存関係のチェック
-- 共通検証ロジックの提供
-
-**主要メソッド:**
-- `ValidateFileSpecificationNotConflicting(...)` - ファイル指定方法の競合チェック
-- `ValidateEncodingOptionDependency(...)` - エンコーディングオプションの依存関係チェック
-- `ValidateAtLeastOneCondition(...)` - 必須パラメータのチェック
-
----
-
-#### **ValidationMessages (定数クラス)**
-
-すべてのエラーメッセージを一元管理します。
-
-**メリット:**
-- メッセージの一貫性
-- 変更が容易
-- 多言語対応の準備
-
-**定数例:**
-```csharp
-public const string MissingRequiredParameters = "必須パラメータが入力されていません。";
-public const string ConflictingFileSpecificationMethods = "...";
-public const string InvalidEncodingName = "エンコーディング名が不正です。";
-```
-
----
-
-#### **CommandOptions (rmsmf / txprobe)**
-
-各ツール固有のコマンドオプション処理を担当します。
-
-**rmsmf の主要メソッド:**
-- `ReadReplaceWords()` - 置換単語CSVの読み込み
-- `ReadFileNameList()` - ファイルリストの読み込み
-- `ParseEncodingOptions(...)` - エンコーディングオプションの解析
-- `ValidateOptionConsistency()` - オプション整合性の検証
-
-**txprobe の主要メソッド:**
-- `ReadSearchWords()` - 検索単語リストの読み込み
-- `ReadFileNameList()` - ファイルリストの読み込み
-- `ParseEncodingOptions(...)` - エンコーディングオプションの解析
-- `ValidateOptionConsistency()` - オプション整合性の検証
-
----
-
-### データフロー
-
-#### rmsmf の処理フロー
-
-```
-┌──────────────────┐
-│ コマンドライン引数 │
-└────────┬─────────┘
-         │
-         ▼
-┌────────────────────┐
-│ Program.Main()      │
-│ - ヘルプチェック     │
-└────────┬───────────┘
-         │
-         ▼
-┌──────────────────────┐
-│ CommandOptions()      │
-│ - 引数解析            │
-│ - エンコーディング設定 │
-│ - 検証                │
-└────────┬─────────────┘
-         │
-         ▼
-┌──────────────────────┐
-│ ReadReplaceWords()    │
-│ - CSV読み込み         │
-│ - パース              │
-└────────┬─────────────┘
-         │
-         ▼
-┌──────────────────────┐
-│ ReadFileNameList()    │
-│ - ファイルリスト取得   │
-└────────┬─────────────┘
-         │
-         ▼
-┌──────────────────────┐
-│ ReplaceStringsInFiles │
-│ - ファイル置換処理     │
-└──────────────────────┘
-```
-
----
-
-## 🔄 リファクタリング内容
-
-このプロジェクトは、2026年1月に大規模なリファクタリングを実施しました。
-
-### 実施した改善
-
-| # | 改善項目 | 詳細 | 効果 |
-|---|---------|------|------|
-| 1 | スペルミス修正 | `repleaseEncoding` → `ReplaceEncoding` | 可読性向上 |
-| 2 | フィールドのプロパティ化 | public フィールド → プロパティ | カプセル化 |
-| 3 | エラーハンドリング統一 | `ExecutionState` → `RmsmfException` | 一貫性 |
-| 4 | 共通メソッド抽出 | 重複コード削除 | DRY原則 |
-| 5 | コンストラクタ分割 | 200行 → 25行 (10メソッド) | 可読性 |
-| 6 | ヘルプチェック外部化 | 早期return削除 | 設計改善 |
-| 7 | 検証ロジック整理 | 5個のメソッドに分離 | 単一責任 |
-| 8 | エラーメッセージ定数化 | `ValidationMessages` クラス | 保守性 |
-| 9 | 検証ユーティリティ | `OptionValidator` クラス | 再利用性 |
-| 10 | 基底クラス整理 | `ConvertEscapeSequences` 統合 | DRY原則 |
-| 11 | メソッド分割 | `ReadReplaceWords` など | 可読性 |
-| 12 | **単体テスト追加** | **33テスト (全合格)** | **品質保証** |
-
-### Before / After
-
-#### Before: 長大なコンストラクタ（200行）
-
-```csharp
-public CommandOptions(string[] args) : base(args)
-{
-    // 200行以上のコード
-    // - 検証
-    // - エンコーディング設定
-    // - オプション解析
-    // - ファイル存在確認
-    // すべてが1つのメソッドに...
-}
-```
-
-#### After: 分割されたコンストラクタ（25行）
-
-```csharp
-public CommandOptions(string[] args) : base(args)
-{
-    ValidateRequiredParameters();
-    
-    ParseEncodingOptions(
-        out string readCharacterSet,
-        out string writeCharacterSet,
-        out string replaceWordsCharacterSet,
-        out string filesCharacterSet);
-    
-    this._enableBOM = ParseBomOption();
-    this.searchOptionAllDirectories = ParseAllDirectoriesOption();
-    this._writeNewLine = ParseNewLineOption();
-    
-    InitializeEncodings(
-        readCharacterSet,
-        writeCharacterSet,
-        replaceWordsCharacterSet,
-        filesCharacterSet);
-    
-    ValidateAndSetFileOptions();
-    ValidateOptionConsistency();
-}
-```
-
-### 定量的な改善
-
-- **コード削減**: 約150行以上の重複コード削除
-- **メソッド平均行数**: 100行超 → 20行以下
-- **循環的複雑度**: 大幅に低減
-- **テストカバレッジ**: 0% → 主要クラス高カバレッジ
-
----
-
 ## 🔨 ビルド方法
 
 ### Visual Studio でビルド
@@ -566,54 +349,78 @@ txprobe/bin/Release/txprobe.exe
 
 ## 🧪 テスト
 
-### テストプロジェクト構成
+### 単体テスト
 
-```
-rmsmf.Tests/
-├── ColipexTests.cs          # 11テスト
-├── OptionValidatorTests.cs  # 10テスト
-└── CommandOptionsTests.cs   # 12テスト
-```
+rmsmf.Tests プロジェクトには 33 の単体テストが含まれています。
 
-**合計: 33テスト、全合格 ?**
+#### Visual Studio でテストを実行
 
-### テスト実行方法
+1. Visual Studio で `rmsmf.sln` を開く
+2. メニュー → 「テスト」→「すべてのテストを実行」
 
-#### Visual Studio のテストエクスプローラー
-
-1. メニュー → 「テスト」→「テスト エクスプローラー」
-2. 「すべて実行」をクリック
-
-#### コマンドラインから
+#### コマンドラインでテストを実行
 
 ```powershell
-# MSTestを使用
+# MSTest を使用
 vstest.console.exe rmsmf.Tests\bin\Debug\rmsmf.Tests.dll
 ```
 
-### テスト内容
+### 結合テスト
 
-#### ColipexTests (11テスト)
+rmsmf と txprobe の連携動作を検証する結合テストスクリプトを用意しています。
 
-- ? コマンドライン引数の解析
-- ? オプションとパラメータの分離
-- ? コロン・等号セパレータのサポート
-- ? 重複オプションの検出
-- ? 空の引数の処理
+#### 実行方法
 
-#### OptionValidatorTests (10テスト)
+```powershell
+# Debug ビルドでテスト実行
+.\integration-test.ps1
 
-- ? ファイル指定方法の競合検証
-- ? エンコーディングオプションの依存関係検証
-- ? 必須パラメータの検証
-- ? エラーメッセージの正確性
+# Release ビルドでテスト実行
+.\integration-test.ps1 -Configuration Release
+```
 
-#### CommandOptionsTests (12テスト)
+#### テストシナリオ
 
-- ? エンコーディングオプションの設定
-- ? BOMオプションの設定
-- ? 改行コードオプションの設定
-- ? 例外の適切なスロー
+結合テストでは以下のシナリオをカバーしています：
+
+1. **txprobe 検索 → rmsmf 置換**
+   - txprobe で特定の文字列を含むファイルを検索
+   - 検索結果を元に rmsmf で文字列を置換
+   - 置換結果の検証
+
+2. **エンコーディング変換とBOM制御**
+   - Shift-JIS ファイルを作成
+   - txprobe でエンコーディングを確認
+   - rmsmf で UTF-8 (BOM付き) に変換
+   - BOM の有無を検証
+
+3. **複数ファイルの一括処理**
+   - 複数のテストファイルを作成
+   - txprobe で検索
+   - rmsmf で一括置換
+   - すべてのファイルで置換が成功したことを検証
+
+4. **CSV ファイルを使った複数文字列置換**
+   - 設定ファイル (XML) を作成
+   - CSV で複数の置換ルールを定義
+   - rmsmf で一括置換
+   - すべての設定値が正しく置換されたことを検証
+
+5. **BOM の追加と削除**
+   - BOM なしのファイルを作成
+   - rmsmf で BOM を追加
+   - rmsmf で BOM を削除
+   - 各操作後に BOM の状態を検証
+
+#### 結合テストの実装詳細
+
+結合テストは以下の特徴を持っています：
+
+- ✅ 実際の `.exe` ファイルを使用
+- ✅ 実ファイルシステムで動作検証
+- ✅ 複数のシナリオを自動実行
+- ✅ 詳細なアサーションとエラーレポート
+- ✅ テスト環境の自動セットアップとクリーンアップ
 
 ---
 
