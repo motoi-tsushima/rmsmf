@@ -30,8 +30,8 @@ using System.Runtime.InteropServices;
 //      ビルド番号
 //      リビジョン
 //
-[assembly: AssemblyVersion("1.0.4.3")]
-[assembly: AssemblyFileVersion("1.0.4.3")]
+[assembly: AssemblyVersion("1.0.4.4")]
+[assembly: AssemblyFileVersion("1.0.4.4")]
 [assembly: NeutralResourcesLanguage("ja")]
 
 // テストアセンブリからinternalメンバーへのアクセスを許可
