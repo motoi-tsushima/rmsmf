@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.5] - 2026-05-09
 
-### 今後の予定
-- CI/CD パイプラインの構築（GitHub Actions）
-- パフォーマンス最適化
-- 追加のエンコーディング対応（UTF-16 など）
+#### Changed（変更）
+
+日本語環境において、文字エンコーディングの判定処理で EUC-JP と Shift-JIS の両方に該当する場合、Shift-JIS と判定するように修正した。
+
+このコマンドは .NET Framework 4.8 で起動するため、Windowsでしか起動しないため、 Shift-JIS を使用する確率が圧倒的に高いため、このように修正した。
 
 ## [1.0.0] - 2026-01-17
 
