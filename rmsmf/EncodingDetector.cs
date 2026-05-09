@@ -455,6 +455,20 @@ namespace rmsmf
 
                 if (outOfSpecification == false)
                 {
+                    // 日本語カルチャーの場合、EUC-JP と Shift-JIS の両方に該当する可能性がある
+                    // Windows環境では Shift-JIS に遭遇する確率が高いため、両方に該当する場合は Shift-JIS を優先する
+                    if (eucCodePage == CodePageEucJp && IsJapaneseCulture())
+                    {
+                        bool sjisOutOfSpec = SJIS_Detection();
+                        if (sjisOutOfSpec == false)
+                        {
+                            encInfo.CodePage = CodePageShiftJis;
+                            encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
+                            encInfo.Bom = false;
+                            return encInfo;
+                        }
+                    }
+
                     encInfo.CodePage = eucCodePage;
                     encInfo.EncodingName = this.EncodingName(encInfo.CodePage);
                     encInfo.Bom = false;
@@ -477,6 +491,23 @@ namespace rmsmf
 
             // 不明
             return encInfo;
+        }
+
+        /// <summary>
+        /// 現在のカルチャーが日本語かどうかを判定
+        /// </summary>
+        /// <returns>true=日本語、false=それ以外</returns>
+        private bool IsJapaneseCulture()
+        {
+            try
+            {
+                CultureInfo currentCulture = CultureInfo.CurrentCulture;
+                return currentCulture.Name.StartsWith("ja", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
