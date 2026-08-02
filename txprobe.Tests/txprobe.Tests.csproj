@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="CommandOptionsTests.cs" />
     <Compile Include="ProbeFilesTests.cs" />
+    <Compile Include="ProgramEncodingDetectionModeTests.cs" />
     <Compile Include="SearchWordsAndFileListTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

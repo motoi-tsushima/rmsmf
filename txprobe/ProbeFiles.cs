@@ -155,8 +155,7 @@ namespace txprobe
                 // 検索処理を実行
                 using (var reader = new StreamReader(fs, encodingResult.Encoding, true))
                 {
-                    ReadForSearch(fileName, reader, encodingResult.Encoding, 
-                        encodingResult.BomExists, encodingResult.EncodingInfo);
+                    ReadForSearch(fileName, reader, encodingResult);
                 }
             }
         }
@@ -168,24 +167,7 @@ namespace txprobe
         /// <param name="encodingResult">エンコーディング判定結果</param>
         private void HandleUnknownEncoding(string fileName, rmsmf.EncodingDetectionResult encodingResult)
         {
-            string encodingName = "encoding Unknown";
-
-            // エンコーディング情報があれば使用
-            if (encodingResult.EncodingInfo != null &&
-                !string.IsNullOrEmpty(encodingResult.EncodingInfo.EncodingName))
-            {
-                encodingName = encodingResult.EncodingInfo.EncodingName;
-            }
-            else if (encodingResult.CodePage > 0)
-            {
-                // EncodingDetectionからエンコーディング名を取得
-                rmsmf.EncodingDetector ej = new rmsmf.EncodingDetector(0);
-                encodingName = ej.EncodingName(encodingResult.CodePage);
-            }
-
-            string dispBOM = rmsmf.EncodingHelper.GetBomDisplayString(encodingResult.BomExists);
-            string lineBreakType = "EOL Unknown";
-            string dispLine = fileName + "\t," + encodingName + "\t," + lineBreakType + "\t," + dispBOM;
+            string dispLine = rmsmf.EncodingHelper.CreateUnknownEncodingDisplayLine(fileName, encodingResult);
             Console.WriteLine("{0}", dispLine);
         }
 
@@ -343,107 +325,22 @@ namespace txprobe
         }
 
         /// <summary>
-        /// 文字列内の指定された部分文字列の出現回数をカウントする
-        /// </summary>
-        /// <param name="text">検索対象の文字列</param>
-        /// <param name="searchString">検索する部分文字列</param>
-        /// <returns>出現回数</returns>
-        private int CountSubstring(string text, string searchString)
-        {
-            int count = 0;
-            int index = 0;
-            int searchLength = searchString.Length;
-
-            do
-            {
-                if (text.Length - index < searchLength)
-                {
-                    break;
-                }
-
-                index = text.IndexOf(searchString, index, text.Length - index);
-                if (index >= 0)
-                {
-                    count++;
-                    index += searchLength;
-                }
-
-            } while (index >= 0);
-
-            return count;
-        }
-
-        /// <summary>
-        /// 改行コードの種類を判定する
-        /// </summary>
-        /// <param name="countCRLF">CR-LFの出現回数</param>
-        /// <param name="countLF">LFの出現回数</param>
-        /// <param name="countCR">CRの出現回数</param>
-        /// <returns>改行コードの種類を示す文字列</returns>
-        private string DetermineLineBreakType(int countCRLF, int countLF, int countCR)
-        {
-            if (countLF == 0 && countCR == 0 && countCRLF == 0)
-            {
-                return "No";
-            }
-            else if (countCRLF == countLF && countCRLF == countCR)
-            {
-                return "CR-LF";
-            }
-            else if (countLF > 0 && countCR == 0 && countCRLF == 0)
-            {
-                return "LF";
-            }
-            else if (countCR > 0 && countLF == 0 && countCRLF == 0)
-            {
-                return "CR";
-            }
-            else if (countLF > 0 && countCRLF > 0 && countLF != countCRLF && countCR == 0)
-            {
-                return "LF & CR-LF";
-            }
-            else if (countCR > 0 && countCRLF > 0 && countCR != countCRLF && countLF == 0)
-            {
-                return "CR & CR-LF";
-            }
-            else if (countCRLF == 0 && countCR > 0 && countLF > 0)
-            {
-                return "LF & CR";
-            }
-            else
-            {
-                return "LF & CR & CR-LF";
-            }
-        }
-
-        /// <summary>
         /// 検索メイン処理
         /// </summary>
         /// <param name="fileName">読み取りファイル名</param>
         /// <param name="reader">読み取りファイルストリーム</param>
-        /// <param name="encoding">読み取りファイルの文字エンコーディング</param>
-        /// <param name="bomExist">読み取りファイルのBOM有無フラグ</param>
-        /// <param name="encInfo">エンコーディング判定情報（未使用：互換性のため残す）</param>
+        /// <param name="encodingResult">エンコーディング判定結果（BOM有無・改行コードの種類を含む）</param>
         /// <returns>正常終了=true</returns>
-        public bool ReadForSearch(string fileName, StreamReader reader, Encoding encoding, bool bomExist, object encInfo = null)
+        public bool ReadForSearch(string fileName, StreamReader reader, rmsmf.EncodingDetectionResult encodingResult)
         {
             bool rc = true;
 
-            // EncodingHelperを使用してBOMと名前を取得
-            string dispBOM = rmsmf.EncodingHelper.GetBomDisplayString(bomExist);
-            // encInfoの型が異なるアセンブリのため、encodingのみから名前を取得
-            string encodingName = encoding != null ? encoding.WebName : "encoding Unknown";
+            string dispBOM = rmsmf.EncodingHelper.GetBomDisplayString(encodingResult.BomExists);
+            string encodingName = rmsmf.EncodingHelper.GetEncodingName(encodingResult.Encoding, encodingResult.EncodingInfo);
+            string lineBreakType = rmsmf.EncodingHelper.GetLineBreakDisplayString(encodingResult.LineBreak);
 
             // 読み取りファイルを全て読み込む
             string readLine = reader.ReadToEnd();
-
-            // 改行コードのカウント
-            int countCRLF = CountSubstring(readLine, "\r\n");
-            int countLF = CountSubstring(readLine, "\n");
-            int countCR = CountSubstring(readLine, "\r");
-
-            // 改行コードの種類を判定
-            string lineBreakType = DetermineLineBreakType(countCRLF, countLF, countCR);
 
             if (this._searchWords != null)
             {
@@ -458,16 +355,16 @@ namespace txprobe
                         // 検索単語の探索
                         if (this._enableProbe == true)
                         {
-                        // プローブ機能が有効の場合、検索単語を探索する
-                        // 検索単語が見つかった場合、結果を表示する
-                        string dispLine = fileName + "," + this._searchWords[i];
-                        Console.WriteLine("{0}", dispLine);
-                        wordFound = true;
-                    }
-                    else
-                    {
-                        // プローブ機能が無効の場合、検索結果のみ表示する
-                        wordFound = true;
+                            // プローブ機能が有効の場合、検索単語を探索する
+                            // 検索単語が見つかった場合、結果を表示する
+                            string dispLine = fileName + "," + this._searchWords[i];
+                            Console.WriteLine("{0}", dispLine);
+                            wordFound = true;
+                        }
+                        else
+                        {
+                            // プローブ機能が無効の場合、検索結果のみ表示する
+                            wordFound = true;
                         }
                     }
                 }

@@ -62,16 +62,7 @@ namespace txprobe
                     return;
                 }
 
-                commandOptions.ReadSearchWords();
-                commandOptions.ReadFileNameList();
-
-                //ファイルのプローブ実行
-                ProbeFiles probe = new ProbeFiles(
-                    commandOptions.SearchWords, commandOptions.Files, 
-                    commandOptions.EnableProbe, commandOptions.OutputFileNameListFileName,
-                    commandOptions.FilesEncoding);
-
-                probe.Probe(commandOptions.ReadEncoding);
+                Run(commandOptions);
 
                 //正常に処理を完了した。
                 Console.WriteLine("");
@@ -101,6 +92,28 @@ namespace txprobe
             Console.WriteLine("\nPress any key to exit...");
             Console.ReadKey();
 #endif
+        }
+
+        /// <summary>
+        /// 検索単語リスト・ファイルリストの読み込みからファイル探索までの本処理。
+        /// CommandOptionsで解析したオプション（エンコーディング自動判定モードを含む）を
+        /// ProbeFilesへ正しく連携できているかをテストできるように、Mainから分離している。
+        /// </summary>
+        /// <param name="commandOptions">解析済みのコマンドオプション</param>
+        /// <returns>探索処理が正常終了した場合はtrue</returns>
+        internal static bool Run(CommandOptions commandOptions)
+        {
+            commandOptions.ReadSearchWords();
+            commandOptions.ReadFileNameList();
+
+            //ファイルのプローブ実行
+            ProbeFiles probe = new ProbeFiles(
+                commandOptions.SearchWords, commandOptions.Files,
+                commandOptions.EnableProbe, commandOptions.OutputFileNameListFileName,
+                commandOptions.FilesEncoding);
+            probe.EncodingDetectionMode = commandOptions.EncodingDetectionMode;
+
+            return probe.Probe(commandOptions.ReadEncoding);
         }
     }
 }

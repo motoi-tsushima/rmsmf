@@ -46,15 +46,20 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="SnowStack.EncodingProbe, Version=1.0.0.6, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SnowStack.EncodingProbe.1.0.0\lib\net48\SnowStack.EncodingProbe.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ColipexTests.cs" />
     <Compile Include="CsvParsingTests.cs" />
     <Compile Include="EncodingHelperTests.cs" />
+    <Compile Include="EncodingProbeLanguageTests.cs" />
     <Compile Include="FileConstantsTests.cs" />
     <Compile Include="OptionConstantsTests.cs" />
     <Compile Include="OptionValidatorTests.cs" />
     <Compile Include="CommandOptionsTests.cs" />
+    <Compile Include="ProgramEncodingDetectionModeTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

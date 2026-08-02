@@ -472,6 +472,8 @@ namespace txprobe
 
         /// <summary>
         /// 読み込んだ行をパースして検索単語テーブルに格納
+        /// 行にカンマが含まれる場合は、rmsmfの/r:置換単語リストCSVと同じ形式（ダブルクォート囲み対応）
+        /// として解釈し、一番左のカラムを検索単語として使用する
         /// </summary>
         /// <param name="lines">読み込んだ行のリスト</param>
         private void ParseAndStoreSearchWords(List<string> lines)
@@ -481,7 +483,18 @@ namespace txprobe
 
             for (int i = 0; i < this._searchWordsCount; i++)
             {
-                this._searchWords[i] = lines[i];
+                string line = lines[i];
+
+                if (line.IndexOf(',') >= 0)
+                {
+                    // カンマが存在する場合は置換単語リストCSVとして解釈し、一番左のカラムを検索単語とする
+                    string[] columns = ParseCsvLine(line);
+                    this._searchWords[i] = columns.Length > 0 ? columns[0] : line;
+                }
+                else
+                {
+                    this._searchWords[i] = line;
+                }
             }
         }
 
@@ -557,8 +570,7 @@ namespace txprobe
             if(this.FilesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
-                EncodingDetector encDetec = new EncodingDetector(0);
-                EncodingInfomation encInfo = encDetec.Detection(this._fileNameListFileName);
+                SnowStack.EncodingProbe.EncodingInformation encInfo = SnowStack.EncodingProbe.EncodingProbe.Detect(this._fileNameListFileName);
 
                 if (encInfo.CodePage > 0)
                 {

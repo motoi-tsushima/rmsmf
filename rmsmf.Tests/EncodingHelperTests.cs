@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using rmsmf;
+using SnowStack.EncodingProbe;
 
 namespace rmsmf.Tests
 {
@@ -105,17 +106,16 @@ namespace rmsmf.Tests
         {
             // Arrange
             var encoding = Encoding.UTF8;
-            var encInfo = new EncodingInfomation
-            {
-                EncodingName = "UTF-8",
-                CodePage = 65001
-            };
+            // EncodingInformationはSnowStack.EncodingProbe側でしか生成できないため、実際の判定結果を使用する
+            // ASCII文字だけだと"us-ascii"と判定されてしまうため、多バイト文字を含める
+            byte[] utf8Bytes = new UTF8Encoding(false).GetBytes("test data テスト");
+            EncodingInformation encInfo = EncodingProbe.Detect(utf8Bytes);
 
             // Act
             string name = EncodingHelper.GetEncodingName(encoding, encInfo);
 
             // Assert
-            Assert.AreEqual("UTF-8", name);
+            Assert.AreEqual("utf-8", name);
         }
 
         [TestMethod]
@@ -153,12 +153,16 @@ namespace rmsmf.Tests
         {
             // Arrange
             string fileName = "test.txt";
-            bool bomExists = true;
-            int codePage = 65001;
+            var encodingResult = new EncodingDetectionResult
+            {
+                BomExists = true,
+                CodePage = 65001,
+                LineBreak = LineBreakType.None,
+                EncodingInfo = null
+            };
 
             // Act
-            string result = EncodingHelper.CreateUnknownEncodingDisplayLine(
-                fileName, bomExists, codePage);
+            string result = EncodingHelper.CreateUnknownEncodingDisplayLine(fileName, encodingResult);
 
             // Assert
             Assert.IsTrue(result.Contains(fileName));
@@ -196,43 +200,22 @@ namespace rmsmf.Tests
         }
 
         [TestMethod]
-        public void GetEncodingName_WithEncodingVariant_ReturnsVariant()
+        public void GetEncodingName_WithEncInfoWithoutWebName_FallsBackToEncodingWebName()
         {
             // Arrange
+            // EncodingInformationはSnowStack.EncodingProbe側でしか生成できないため、
+            // どの独自判定にも一致しない1バイト（0x80）を使い、EncodingWebNameが未設定の
+            // 実際の判定結果を作る
             var encoding = Encoding.UTF8;
-            var encInfo = new EncodingInfomation
-            {
-                // EncodingName を設定しない（null）
-                EncodingVariant = "UTF-8-BOM",
-                CodePage = 65001
-            };
+            var options = new EncodingDetectorOptions { Strategy = DetectionStrategy.NativeOnly };
+            EncodingInformation encInfo = EncodingProbe.Detect(new byte[] { 0x80 }, options);
 
             // Act
             string name = EncodingHelper.GetEncodingName(encoding, encInfo);
 
             // Assert
-            // EncodingName が null の場合、EncodingVariant が使用される
-            Assert.AreEqual("UTF-8-BOM", name);
-        }
-
-        [TestMethod]
-        public void GetEncodingName_WithBothEncodingNameAndVariant_ReturnsEncodingName()
-        {
-            // Arrange
-            var encoding = Encoding.UTF8;
-            var encInfo = new EncodingInfomation
-            {
-                EncodingName = "UTF-8",
-                EncodingVariant = "UTF-8-BOM",
-                CodePage = 65001
-            };
-
-            // Act
-            string name = EncodingHelper.GetEncodingName(encoding, encInfo);
-
-            // Assert
-            // EncodingName が優先される
-            Assert.AreEqual("UTF-8", name);
+            // encInfo.EncodingWebNameが空の場合、encoding.WebNameにフォールバックする
+            Assert.AreEqual(encoding.WebName, name);
         }
     }
 }

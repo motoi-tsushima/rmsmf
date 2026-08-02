@@ -157,8 +157,7 @@ namespace rmsmf
         /// <param name="encodingResult">エンコーディング判定結果</param>
         private void HandleUnknownEncoding(string fileName, EncodingDetectionResult encodingResult)
         {
-            string dispLine = EncodingHelper.CreateUnknownEncodingDisplayLine(
-                fileName, encodingResult.BomExists, encodingResult.CodePage);
+            string dispLine = EncodingHelper.CreateUnknownEncodingDisplayLine(fileName, encodingResult);
             Console.WriteLine("{0}", dispLine);
         }
 

@@ -158,6 +158,90 @@ namespace txprobe.Tests
             Assert.AreEqual("word\n2", options.SearchWords[1]);
         }
 
+        [TestMethod]
+        public void ReadSearchWords_WithReplaceWordsCSV_UsesFirstColumnAsSearchWord()
+        {
+            // Arrange
+            // rmsmfの/r:置換単語リストCSV形式のファイルをそのまま/s:に指定しても、
+            // 一番左のカラムだけが検索単語として読み込まれる
+            string searchContent = "search1,replace1\nsearch2,replace2";
+            File.WriteAllText(_tempSearchFile, searchContent, Encoding.UTF8);
+
+            string[] args = { "*.txt", $"/s:{_tempSearchFile}" };
+            var options = new CommandOptions(args);
+
+            // Act
+            bool result = options.ReadSearchWords();
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(2, options.SearchWordsCount);
+            Assert.AreEqual("search1", options.SearchWords[0]);
+            Assert.AreEqual("search2", options.SearchWords[1]);
+        }
+
+        [TestMethod]
+        public void ReadSearchWords_WithQuotedCommaInFirstColumn_ParsesCorrectly()
+        {
+            // Arrange
+            // 一番左のカラムがダブルクォートで囲まれ、カンマを含む場合も正しく解析される
+            string searchContent = "\"search,word\",replace1";
+            File.WriteAllText(_tempSearchFile, searchContent, Encoding.UTF8);
+
+            string[] args = { "*.txt", $"/s:{_tempSearchFile}" };
+            var options = new CommandOptions(args);
+
+            // Act
+            bool result = options.ReadSearchWords();
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(1, options.SearchWordsCount);
+            Assert.AreEqual("search,word", options.SearchWords[0]);
+        }
+
+        [TestMethod]
+        public void ReadSearchWords_WithEscapedQuotesInFirstColumn_ParsesCorrectly()
+        {
+            // Arrange
+            // 一番左のカラムがダブルクォートのエスケープ（""）を含む場合も正しく解析される
+            string searchContent = "\"say \"\"Hello\"\"\",replace1";
+            File.WriteAllText(_tempSearchFile, searchContent, Encoding.UTF8);
+
+            string[] args = { "*.txt", $"/s:{_tempSearchFile}" };
+            var options = new CommandOptions(args);
+
+            // Act
+            bool result = options.ReadSearchWords();
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(1, options.SearchWordsCount);
+            Assert.AreEqual("say \"Hello\"", options.SearchWords[0]);
+        }
+
+        [TestMethod]
+        public void ReadSearchWords_WithMixedPlainAndCsvLines_ParsesCorrectly()
+        {
+            // Arrange
+            // カンマの無い行はそのまま検索単語として、カンマのある行はCSVとして解釈される
+            string searchContent = "plainword\n\"quoted,word\",replaceX\nsearch2,replace2";
+            File.WriteAllText(_tempSearchFile, searchContent, Encoding.UTF8);
+
+            string[] args = { "*.txt", $"/s:{_tempSearchFile}" };
+            var options = new CommandOptions(args);
+
+            // Act
+            bool result = options.ReadSearchWords();
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(3, options.SearchWordsCount);
+            Assert.AreEqual("plainword", options.SearchWords[0]);
+            Assert.AreEqual("quoted,word", options.SearchWords[1]);
+            Assert.AreEqual("search2", options.SearchWords[2]);
+        }
+
         #endregion
 
         #region ReadFileNameList Tests

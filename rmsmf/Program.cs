@@ -66,13 +66,7 @@ namespace rmsmf
                     return;
                 }
 
-                commandOptions.ReadReplaceWords();
-                commandOptions.ReadFileNameList();
-
-                // ファイルの文字列置換処理の実行
-                ReplaceStringsInFiles replace = new ReplaceStringsInFiles(commandOptions.ReplaceWords, commandOptions.Files, commandOptions.EnableBOM);
-
-                replace.Replace(commandOptions.ReadEncoding, commandOptions.WriteEncoding, commandOptions.WriteNewLine);
+                Run(commandOptions);
 
                 // 正常に処理を完了した
                 Console.WriteLine(ValidationMessages.ProcessingSuccessful);
@@ -88,6 +82,25 @@ namespace rmsmf
                 Console.WriteLine(ex.ToString());
                 return;
             }
+        }
+
+        /// <summary>
+        /// 置換単語リスト・ファイルリストの読み込みから文字列置換までの本処理。
+        /// CommandOptionsで解析したオプション（エンコーディング自動判定モードを含む）を
+        /// ReplaceStringsInFilesへ正しく連携できているかをテストできるように、Mainから分離している。
+        /// </summary>
+        /// <param name="commandOptions">解析済みのコマンドオプション</param>
+        /// <returns>置換処理が正常終了した場合はtrue</returns>
+        internal static bool Run(CommandOptions commandOptions)
+        {
+            commandOptions.ReadReplaceWords();
+            commandOptions.ReadFileNameList();
+
+            // ファイルの文字列置換処理の実行
+            ReplaceStringsInFiles replace = new ReplaceStringsInFiles(commandOptions.ReplaceWords, commandOptions.Files, commandOptions.EnableBOM);
+            replace.EncodingDetectionMode = commandOptions.EncodingDetectionMode;
+
+            return replace.Replace(commandOptions.ReadEncoding, commandOptions.WriteEncoding, commandOptions.WriteNewLine);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using SnowStack.EncodingProbe;
 
 namespace rmsmf
 {
@@ -18,8 +19,14 @@ namespace rmsmf
         /// <summary>コードページ</summary>
         public int CodePage { get; set; }
 
-        /// <summary>エンコーディング判定情報</summary>
-        public EncodingInfomation EncodingInfo { get; set; }
+        /// <summary>改行コードの種類</summary>
+        public LineBreakType LineBreak { get; set; } = LineBreakType.None;
+
+        /// <summary>
+        /// SnowStack.EncodingProbeによるエンコーディング判定情報
+        /// （読み取りエンコーディングが明示指定された場合はnull）
+        /// </summary>
+        public EncodingInformation EncodingInfo { get; set; }
     }
 
     /// <summary>
@@ -44,31 +51,28 @@ namespace rmsmf
         {
             var result = new EncodingDetectionResult();
 
+            byte[] buffer = ReadEntireFile(fs, fileName);
+
             // 読み込みエンコーディングの有無で分岐
             if (specifiedEncoding == null)
             {
                 // エンコーディング指定が無い場合：自動判定
-                DetectEncodingFromFile(fs, fileName, detectionMode, result);
+                DetectEncodingFromBuffer(buffer, fileName, detectionMode, result);
             }
             else
             {
                 // エンコーディング指定が有る場合
-                UseSpecifiedEncoding(fs, specifiedEncoding, result);
+                UseSpecifiedEncoding(buffer, specifiedEncoding, result);
             }
 
             return result;
         }
 
         /// <summary>
-        /// ファイルから自動的にエンコーディングを判定
+        /// ファイルを全て読み取ってバイト配列にする
         /// </summary>
-        private static void DetectEncodingFromFile(
-            FileStream fs,
-            string fileName,
-            CommandOptions.EncodingDetectionType detectionMode,
-            EncodingDetectionResult result)
+        private static byte[] ReadEntireFile(FileStream fs, string fileName)
         {
-            // 読み取りファイルの文字エンコーディングを判定する
             long fileLength = fs.Length;
 
             // ファイルサイズ検証：2GB以上のファイルはエラー
@@ -79,31 +83,32 @@ namespace rmsmf
 
             int fileSize = (int)fileLength;
             byte[] buffer = new byte[fileSize];
-            int readCount = fs.Read(buffer, 0, fileSize);
+            fs.Read(buffer, 0, fileSize);
 
             // ファイルポジションを先頭に戻す（StreamReaderが正しく読めるようにする）
             fs.Position = 0;
 
-            ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
+            return buffer;
+        }
 
-            if (bomJudg.IsBOM(buffer))
+        /// <summary>
+        /// バイト配列から自動的にエンコーディングを判定
+        /// </summary>
+        private static void DetectEncodingFromBuffer(
+            byte[] buffer,
+            string fileName,
+            CommandOptions.EncodingDetectionType detectionMode,
+            EncodingDetectionResult result)
+        {
+            var options = new EncodingDetectorOptions
             {
-                // BOMあり
-                result.BomExists = true;
-                result.CodePage = bomJudg.CodePage;
-                result.EncodingInfo = new EncodingInfomation
-                {
-                    CodePage = result.CodePage,
-                    Bom = true
-                };
-            }
-            else
-            {
-                // BOMなし：判定モードに応じてエンコーディングを判定
-                result.BomExists = false;
-                result.EncodingInfo = DetectEncodingByMode(buffer, detectionMode);
-                result.CodePage = result.EncodingInfo.CodePage;
-            }
+                Strategy = ToDetectionStrategy(detectionMode)
+            };
+
+            result.EncodingInfo = EncodingProbe.Detect(buffer, options);
+            result.BomExists = result.EncodingInfo.Bom;
+            result.CodePage = result.EncodingInfo.CodePage;
+            result.LineBreak = result.EncodingInfo.LineBreak;
 
             // エンコーディングオブジェクトの作成
             result.Encoding = CreateEncodingFromCodePage(result.CodePage, fileName);
@@ -111,61 +116,45 @@ namespace rmsmf
 
         /// <summary>
         /// 指定されたエンコーディングを使用
+        /// （BOMの有無と改行コードの種類はバイト列から判定する）
         /// </summary>
         private static void UseSpecifiedEncoding(
-            FileStream fs,
+            byte[] buffer,
             Encoding specifiedEncoding,
             EncodingDetectionResult result)
         {
             result.Encoding = specifiedEncoding;
+            result.CodePage = specifiedEncoding.CodePage;
 
-            byte[] bomBuffer = new byte[FileConstants.BomBufferSize];
-            for (int i = 0; i < FileConstants.BomBufferSize; i++)
-            {
-                bomBuffer[i] = 0xFF;
-            }
-            fs.Read(bomBuffer, 0, FileConstants.BomBufferSize);
-            fs.Position = 0;
+            // BOMと改行コードはバイト列から機械的に判定できるため、
+            // エンコーディング指定の有無にかかわらず独自実装のみで判定する
+            var options = new EncodingDetectorOptions { Strategy = DetectionStrategy.NativeOnly };
+            EncodingInformation detected = EncodingProbe.Detect(buffer, options);
 
-            ByteOrderMarkDetection bomJudg = new ByteOrderMarkDetection();
+            result.BomExists = detected.Bom;
+            result.LineBreak = detected.LineBreak;
 
-            if (bomJudg.IsBOM(bomBuffer))
-            {
-                result.BomExists = true;
-                result.CodePage = specifiedEncoding.CodePage;
-            }
-            else
-            {
-                result.BomExists = false;
-                result.CodePage = specifiedEncoding.CodePage;
-            }
-
-            // エンコーディング指定がある場合も簡略的なencInfoを作成
-            result.EncodingInfo = new EncodingInfomation
-            {
-                CodePage = result.CodePage,
-                Bom = result.BomExists
-            };
+            // EncodingInfoは指定エンコーディングとは無関係の判定結果になるため保持しない
+            // （GetEncodingNameが指定エンコーディングの名前を正しく返せるようにするため）
+            result.EncodingInfo = null;
         }
 
         /// <summary>
-        /// 判定モードに応じてエンコーディングを判定
+        /// 自動判定モードをSnowStack.EncodingProbeの判定戦略に変換する
         /// </summary>
-        private static EncodingInfomation DetectEncodingByMode(
-            byte[] buffer,
-            CommandOptions.EncodingDetectionType detectionMode)
+        private static DetectionStrategy ToDetectionStrategy(CommandOptions.EncodingDetectionType detectionMode)
         {
             switch (detectionMode)
             {
                 case CommandOptions.EncodingDetectionType.FirstParty:
-                    return EncodingDetectorControl.DetectEncoding(buffer);
+                    return DetectionStrategy.NativeOnly;
 
                 case CommandOptions.EncodingDetectionType.ThirdParty:
-                    return EncodingDetectorControl.DetectUtfUnknown(buffer);
+                    return DetectionStrategy.UtfUnknownOnly;
 
                 case CommandOptions.EncodingDetectionType.Normal:
                 default:
-                    return EncodingDetectorControl.NormalDetectEncoding(buffer);
+                    return DetectionStrategy.Combined;
             }
         }
 
@@ -200,23 +189,17 @@ namespace rmsmf
         /// <summary>
         /// エンコーディング名を取得（表示用）
         /// </summary>
-        public static string GetEncodingName(Encoding encoding, EncodingInfomation encInfo)
+        public static string GetEncodingName(Encoding encoding, EncodingInformation encInfo)
         {
             if (encoding == null)
             {
                 return "encoding Unknown";
             }
 
-            // encInfo.EncodingNameが設定されている場合はそれを優先使用
-            if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingName))
+            // encInfo.EncodingWebNameが設定されている場合はそれを優先使用
+            if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingWebName))
             {
-                return encInfo.EncodingName;
-            }
-
-            // EncodingVariantが設定されている場合はそれを使用
-            if (encInfo != null && !string.IsNullOrEmpty(encInfo.EncodingVariant))
-            {
-                return encInfo.EncodingVariant;
+                return encInfo.EncodingWebName;
             }
 
             return encoding.WebName;
@@ -231,22 +214,47 @@ namespace rmsmf
         }
 
         /// <summary>
+        /// 改行コード種類の表示文字列を取得
+        /// </summary>
+        public static string GetLineBreakDisplayString(LineBreakType lineBreak)
+        {
+            switch (lineBreak)
+            {
+                case LineBreakType.None:
+                    return "No";
+                case LineBreakType.CrLf:
+                    return "CR-LF";
+                case LineBreakType.Lf:
+                    return "LF";
+                case LineBreakType.Cr:
+                    return "CR";
+                case LineBreakType.LfAndCrLf:
+                    return "LF & CR-LF";
+                case LineBreakType.CrAndCrLf:
+                    return "CR & CR-LF";
+                case LineBreakType.LfAndCr:
+                    return "LF & CR";
+                case LineBreakType.LfAndCrAndCrLf:
+                    return "LF & CR & CR-LF";
+                default:
+                    return "EOL Unknown";
+            }
+        }
+
+        /// <summary>
         /// エンコーディング判定結果の表示行を生成（エンコーディング不明時用）
         /// </summary>
         public static string CreateUnknownEncodingDisplayLine(
             string fileName,
-            bool bomExists,
-            int codePage)
+            EncodingDetectionResult encodingResult)
         {
-            string dispBOM = GetBomDisplayString(bomExists);
-            string lineBreakType = "EOL Unknown";
-            string encodingName = "encoding Unknown";
+            string dispBOM = GetBomDisplayString(encodingResult.BomExists);
+            string lineBreakType = GetLineBreakDisplayString(encodingResult.LineBreak);
 
-            // コードページからエンコーディング名を取得を試みる
-            if (codePage > 0)
+            string encodingName = "encoding Unknown";
+            if (encodingResult.EncodingInfo != null && !string.IsNullOrEmpty(encodingResult.EncodingInfo.EncodingWebName))
             {
-                EncodingDetector ej = new EncodingDetector(0);
-                encodingName = ej.EncodingName(codePage);
+                encodingName = encodingResult.EncodingInfo.EncodingWebName;
             }
 
             return $"{fileName}\t,{encodingName}\t,{lineBreakType}\t,{dispBOM}";

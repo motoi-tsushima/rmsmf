@@ -554,55 +554,6 @@ namespace rmsmf
         }
 
         /// <summary>
-        /// CSV行を解析してフィールドの配列を返す
-        /// ダブルクォートで囲まれたフィールド内のカンマは区切り文字として扱わない
-        /// ダブルクォート内の連続した2つのダブルクォート("")は1つのダブルクォートとして扱う
-        /// </summary>
-        /// <param name="line">CSV行</param>
-        /// <returns>フィールドの配列</returns>
-        internal string[] ParseCsvLine(string line)
-        {
-            List<string> fields = new List<string>();
-            StringBuilder currentField = new StringBuilder();
-            bool inQuotes = false;
-            
-            for (int i = 0; i < line.Length; i++)
-            {
-                char c = line[i];
-                
-                if (c == '"')
-                {
-                    // 次の文字もダブルクォートの場合はエスケープされたダブルクォート
-                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
-                    {
-                        currentField.Append('"');
-                        i++; // 次のダブルクォートをスキップ
-                    }
-                    else
-                    {
-                        // クォートの開始または終了
-                        inQuotes = !inQuotes;
-                    }
-                }
-                else if (c == ',' && !inQuotes)
-                {
-                    // クォート外のカンマはフィールドの区切り
-                    fields.Add(currentField.ToString());
-                    currentField.Clear();
-                }
-                else
-                {
-                    currentField.Append(c);
-                }
-            }
-            
-            // 最後のフィールドを追加
-            fields.Add(currentField.ToString());
-            
-            return fields.ToArray();
-        }
-
-        /// <summary>
         /// ファイルリストの初期化
         /// </summary>
         /// <returns>true=正常に初期化した</returns>
@@ -672,8 +623,7 @@ namespace rmsmf
             if (this.FilesEncoding == null)
             {
                 //ファイル名リストファイルの文字エンコーディングを判定する。
-                EncodingDetector encDetec = new EncodingDetector(0);
-                EncodingInfomation encInfo = encDetec.Detection(this._fileNameListFileName);
+                SnowStack.EncodingProbe.EncodingInformation encInfo = SnowStack.EncodingProbe.EncodingProbe.Detect(this._fileNameListFileName);
 
                 if (encInfo.CodePage > 0)
                 {

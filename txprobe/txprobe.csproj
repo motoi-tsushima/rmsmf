@@ -52,16 +52,13 @@
     <Reference Include="UtfUnknown, Version=2.0.0.0, Culture=neutral, PublicKeyToken=90217ce7a23260d4, processorArchitecture=MSIL">
       <HintPath>..\packages\UTF.Unknown.2.6.0\lib\netstandard2.0\UtfUnknown.dll</HintPath>
     </Reference>
+    <Reference Include="SnowStack.EncodingProbe, Version=1.0.0.6, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SnowStack.EncodingProbe.1.0.0\lib\net48\SnowStack.EncodingProbe.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\rmsmf\ByteOrderMarkJudgment.cs">
-      <Link>ByteOrderMarkJudgment.cs</Link>
-    </Compile>
     <Compile Include="..\rmsmf\Colipex.cs">
       <Link>Colipex.cs</Link>
-    </Compile>
-    <Compile Include="..\rmsmf\EncodingDetector.cs">
-      <Link>EncodingDetector.cs</Link>
     </Compile>
     <Compile Include="..\rmsmf\ExecutionState.cs">
       <Link>ExecutionState.cs</Link>
