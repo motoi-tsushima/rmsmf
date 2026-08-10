@@ -1,0 +1,14 @@
+================================================================================
+rmsmf and txprobe
+Copyright (c) 2026 Motoi Tsushima
+Licensed under MIT License
+================================================================================
+
+This software uses the following third-party libraries:
+
+--------------------------------------------------------------------------------
+UTF.Unknown
+Copyright (c) 2018 Nikolay Pultsin
+Licensed under MIT License
+https://github.com/CharsetDetector/UTF-unknown
+--------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace rmsmf
 {
@@ -16,15 +16,6 @@ namespace rmsmf
         /// <param name="copyright">著作権表示</param>
         public static void WriteVersion(bool showLicense, string asmName, Version version, string copyright)
         {
-            string[] thirdParty = {
-                "This software includes the following third-party components:\n",
-                "UTF.Unknown",
-                "Copyright (c) 2018 Nikolay Pultsin",
-                "Licensed under MIT License",
-                "https://github.com/CharsetDetector/UTF-unknown",
-                ""
-            };
-
             Console.WriteLine("{0}  version {1}  {2}\n", asmName, version, copyright);
             Console.WriteLine("{0} is licensed under MIT License.", asmName);
             Console.WriteLine("https://github.com/motoi-tsushima/rmsmf");
@@ -32,10 +23,8 @@ namespace rmsmf
 
             if (showLicense)
             {
-                foreach (string s in thirdParty)
-                {
-                    Console.WriteLine(s);
-                }
+                Console.WriteLine("This software includes the following third-party components:\n");
+                Console.WriteLine(SnowStack.EncodingProbe.EncodingProbe.License);
             }
             else
             {
