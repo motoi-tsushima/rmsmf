@@ -77,8 +77,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SnowStack.EncodingProbe, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SnowStack.EncodingProbe.1.0.2\lib\net48\SnowStack.EncodingProbe.dll</HintPath>
+    <Reference Include="SnowStack.EncodingProbe, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SnowStack.EncodingProbe.1.2.0\lib\net48\SnowStack.EncodingProbe.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
